@@ -43,37 +43,70 @@ type SampleData = {
 }
 
 const SAMPLE_DATA: SampleData = {
-  refNo: "AET-2025-001",
-  name: "ZHANG, San (张三)",
-  dob: "January 15, 1998",
-  country: "China",
-  date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-  purpose: "Employment",
+  refNo: "AET-2024-0926",
+  name: "Maha Qadri",
+  dob: "September 5, 2003",
+  country: "Canada",
+  date: "September 5, 2024",
+  purpose: "Other",
   credential: {
-    native: "工学学士学位 (Bachelor of Engineering)",
-    english: "Bachelor of Engineering",
-    institution: "Beijing University of Technology",
-    year: "2020",
-    status: "Public Institution, Accredited by the Ministry of Education of China",
-    admissionReq: "Completion of National College Entrance Examination (Gaokao)",
-    programLength: "4 years",
-    access: "Grants access to graduate studies",
+    native: "N/A",
+    english: "Bachelor of Science, Honors (Major in Bio-Medical Science)",
+    institution: "University of Guelph",
+    year: "2025",
+    status: "Public institution recognized by the Ministry of Colleges and Universities of Ontario, Canada",
+    admissionReq:
+      "Secondary School Diploma or its equivalent (college preparatory program at an accredited high school in the United States)",
+    programLength: "4 years (2021-2025)",
+    access: "N/A",
   },
   equivalence: {
-    summary: "Bachelor of Science degree in Computer Science",
+    summary: "Bachelor of Science degree",
     regionalAccreditation:
-      "awarded by regionally accredited institutions of higher education in the United States",
-    major: "Computer Science and Technology",
-    gpa: "3.45",
-    totalCredits: "128.00",
+      "earned at a regionally accredited institution of higher education in the United States",
+    major: "Biomedical Science",
+    gpa: "3.72",
+    totalCredits: "120.00",
   },
   courses: [
-    { year: "2016-2017", name: "Advanced Mathematics I", level: "L", credits: "4.00", grade: "A" },
-    { year: "2016-2017", name: "College Physics", level: "L", credits: "3.00", grade: "B" },
-    { year: "2017-2018", name: "Data Structures", level: "U", credits: "3.50", grade: "A" },
-    { year: "2017-2018", name: "Operating Systems", level: "U", credits: "3.00", grade: "B" },
-    { year: "2018-2019", name: "Database Systems", level: "U", credits: "3.00", grade: "A" },
-    { year: "2019-2020", name: "Graduation Project", level: "U", credits: "8.00", grade: "A" },
+    { year: "2021-2022", name: "Art Historical Studies I", level: "L", credits: "3.00", grade: "A-" },
+    { year: "2021-2022", name: "Intro to Molecular & Cell Biology", level: "L", credits: "3.00", grade: "A-" },
+    { year: "2021-2022", name: "General Chemistry I", level: "L", credits: "3.00", grade: "A" },
+    { year: "2021-2022", name: "Elements of Calculus I", level: "L", credits: "3.00", grade: "A" },
+    { year: "2021-2022", name: "Fundamentals of Physics", level: "L", credits: "3.00", grade: "C" },
+    { year: "2021-2022", name: "Discovering Biodiversity", level: "L", credits: "3.00", grade: "A-" },
+    { year: "2021-2022", name: "Biological Concepts of Health", level: "L", credits: "3.00", grade: "A-" },
+    { year: "2021-2022", name: "General Chemistry II", level: "L", credits: "3.00", grade: "A-" },
+    { year: "2021-2022", name: "Physics for Life Sciences", level: "L", credits: "3.00", grade: "A-" },
+    { year: "2021-2022", name: "ST: Horror Night in Canada", level: "L", credits: "3.00", grade: "A-" },
+    { year: "2022-2023", name: "Introduction to Biochemistry", level: "L", credits: "3.00", grade: "A-" },
+    { year: "2022-2023", name: "Intro Nutritional & Food Sci", level: "L", credits: "3.00", grade: "B-" },
+    { year: "2022-2023", name: "Foundations of Molecular Biology & Genetics", level: "L", credits: "3.00", grade: "A-" },
+    { year: "2022-2023", name: "Introduction to Psychology", level: "L", credits: "3.00", grade: "A-" },
+    { year: "2022-2023", name: "Statistics I", level: "L", credits: "3.00", grade: "B-" },
+    { year: "2022-2023", name: "Biomedical Physiology", level: "L", credits: "6.00", grade: "A-" },
+    { year: "2023-2024", name: "Molecular Biology of the Cell", level: "U", credits: "3.00", grade: "A+" },
+    { year: "2023-2024", name: "Fundamentals of Nutrition", level: "U", credits: "3.00", grade: "A-" },
+    { year: "2023-2024", name: "Epidemiology", level: "U", credits: "3.00", grade: "A+" },
+    { year: "2023-2024", name: "Structure & Function in Biochemistry", level: "U", credits: "3.00", grade: "A-" },
+    { year: "2023-2024", name: "Introduction to Computing", level: "U", credits: "3.00", grade: "A+" },
+    { year: "2023-2024", name: "Foundations in Critical Reading", level: "U", credits: "3.00", grade: "A-" },
+    { year: "2023-2024", name: "Human Anatomy: Dissection", level: "U", credits: "4.50", grade: "A-" },
+    { year: "2023-2024", name: "Social Psychology", level: "U", credits: "3.00", grade: "A+" },
+    { year: "2023-2024", name: "Principles of Pharmacology", level: "U", credits: "3.00", grade: "A-" },
+    { year: "2024-2025", name: "Cardiology", level: "U", credits: "3.00", grade: "A-" },
+    { year: "2024-2025", name: "Human Anatomy: Dissection II", level: "U", credits: "4.50", grade: "A-" },
+    { year: "2024-2025", name: "Principles of Learning", level: "U", credits: "3.00", grade: "A-" },
+    { year: "2024-2025", name: "Immunology", level: "U", credits: "3.00", grade: "C-" },
+    { year: "2024-2025", name: "Principles of Disease", level: "U", credits: "3.00", grade: "A-" },
+    { year: "2024-2025", name: "Epidemiology of Food-Borne Diseases", level: "U", credits: "3.00", grade: "B+" },
+    { year: "2024-2025", name: "Medical Toxicology", level: "U", credits: "3.00", grade: "A" },
+    { year: "2024-2025", name: "Nutrition of Fish & Crustacea", level: "U", credits: "3.00", grade: "A-" },
+    { year: "2024-2025", name: "Endocrine Physiology", level: "U", credits: "3.00", grade: "A+" },
+    { year: "2024-2025", name: "Biomedical Aspects of Aging", level: "U", credits: "3.00", grade: "A" },
+    { year: "2024-2025", name: "Business & Professional Ethics", level: "U", credits: "3.00", grade: "A-" },
+    { year: "2024-2025", name: "Homicide", level: "U", credits: "3.00", grade: "A-" },
+    { year: "2024-2025", name: "Dynamics of Sport Fans", level: "U", credits: "3.00", grade: "A+" },
   ],
 }
 
@@ -201,7 +234,8 @@ export default function ReportEditor() {
             <section className="mb-8 bg-blue-50 p-4 border-l-4 border-blue-600 print:bg-transparent print:border-l-0 print:border print:border-gray-300 print:p-2">
               <h2 className="font-bold text-blue-900 uppercase text-sm mb-2">1. U.S. Equivalence Summary</h2>
               <p className="text-lg font-bold text-gray-900 font-serif leading-snug">
-                {data.equivalence.summary}, {data.equivalence.major}, {data.equivalence.regionalAccreditation}.
+                This is the equivalent of the U.S. degree of {data.equivalence.summary} in {data.equivalence.major}{" "}
+                {data.equivalence.regionalAccreditation}.
               </p>
             </section>
 
@@ -285,7 +319,7 @@ export default function ReportEditor() {
                   <table className="w-full border-collapse border border-gray-300 text-center">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="border border-gray-300 p-1">Indigenous</th>
+                        <th className="border border-gray-300 p-1">Canadian %</th>
                         <th className="border border-gray-300 p-1">U.S. Grade</th>
                       </tr>
                     </thead>
@@ -295,12 +329,40 @@ export default function ReportEditor() {
                         <td className="border border-gray-300 p-1">A</td>
                       </tr>
                       <tr>
-                        <td className="border border-gray-300 p-1">75-84</td>
+                        <td className="border border-gray-300 p-1">80-84</td>
+                        <td className="border border-gray-300 p-1">A-</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-300 p-1">77-79</td>
+                        <td className="border border-gray-300 p-1">B+</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-300 p-1">73-76</td>
                         <td className="border border-gray-300 p-1">B</td>
                       </tr>
                       <tr>
-                        <td className="border border-gray-300 p-1">60-74</td>
+                        <td className="border border-gray-300 p-1">70-72</td>
+                        <td className="border border-gray-300 p-1">B-</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-300 p-1">67-69</td>
+                        <td className="border border-gray-300 p-1">C+</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-300 p-1">63-66</td>
                         <td className="border border-gray-300 p-1">C</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-300 p-1">60-62</td>
+                        <td className="border border-gray-300 p-1">C-</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-300 p-1">50-59</td>
+                        <td className="border border-gray-300 p-1">D</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-300 p-1">0-49</td>
+                        <td className="border border-gray-300 p-1">F</td>
                       </tr>
                     </tbody>
                   </table>
@@ -308,9 +370,10 @@ export default function ReportEditor() {
                 <div className="w-1/2">
                   <h4 className="font-bold mb-1">References Consulted:</h4>
                   <ul className="list-decimal pl-4 space-y-1 text-gray-600">
+                    <li>University of Guelph Undergraduate Calendar: Grading System and Grade Interpretation.</li>
+                    <li>Ontario Ministry of Colleges and Universities: Postsecondary education guidelines.</li>
+                    <li>Universities Canada: institutional overview and degree structures.</li>
                     <li>AACRAO Electronic Database for Global Education (EDGE).</li>
-                    <li>Ministry of Education of the People's Republic of China.</li>
-                    <li>China Higher Education Student Information and Career Center (CHSI).</li>
                   </ul>
                 </div>
               </div>
@@ -327,10 +390,15 @@ export default function ReportEditor() {
                 30-32 U.S. semester credits.
               </div>
 
-              <div className="flex justify-between items-end">
+              <div className="flex justify-between items-end gap-6">
                 <div>
                   <div className="w-48 border-b border-black mb-1"></div>
                   <div className="font-bold text-sm">Senior Evaluator</div>
+                  <div className="text-xs text-gray-600">AET Evaluation Committee</div>
+                </div>
+                <div>
+                  <div className="w-48 border-b border-black mb-1"></div>
+                  <div className="font-bold text-sm">Evaluator</div>
                   <div className="text-xs text-gray-600">AET Evaluation Committee</div>
                 </div>
                 <div className="w-24 h-24 border-2 border-gray-300 rounded-full flex items-center justify-center text-center p-2 text-xs font-bold text-gray-300 uppercase tracking-widest select-none">
