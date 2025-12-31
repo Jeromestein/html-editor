@@ -226,7 +226,6 @@ export default function ReportEditor() {
                 <h3 className="font-bold text-blue-900 uppercase text-xs mb-3 tracking-wider">Report Details</h3>
                 <InfoRow label="Evaluation ID">{data.refNo}</InfoRow>
                 <InfoRow label="Date">{data.date}</InfoRow>
-                <InfoRow label="Page">1 of 2</InfoRow>
               </div>
             </div>
 
@@ -388,6 +387,56 @@ export default function ReportEditor() {
                 the Association of International Credential Evaluators (AICE).
                 <strong> Unit Conversion: </strong>1 year of full-time undergraduate study is generally equivalent to
                 30-32 U.S. semester credits.
+              </div>
+
+              <div className="text-xs text-gray-700 mb-6 leading-relaxed text-justify">
+                <div className="font-bold underline mb-2">Explanatory Notes:</div>
+                <p className="mb-3">
+                  AET provides reliable, accessible credential evaluations through a one-stop-shop for eligibility and
+                  credential evaluations, bringing together the eligibility and admissions processes for international
+                  student-athletes.
+                </p>
+                <p className="mb-3">
+                  This evaluation is based on the information provided by the student. Should additional information be
+                  discovered, this can change the nature of the evaluation. Additional costs are associated with
+                  additional educational information not provided at the time of the original evaluation.
+                </p>
+                <p className="mb-5">
+                  A credential evaluation indicates a suggested comparability to the U.S. educational system.
+                  Institutions can apply their own policies and are not obligated to award comparability in the exact
+                  same fashion as the credential evaluation.
+                </p>
+
+                <div className="font-bold underline mb-2">Cumulative Grade Point Average:</div>
+                <p className="mb-3">
+                  High school / secondary grade point averages are calculated as indicated in the NAIA Published
+                  Standards for international academic standards (http://www.playnaia.org/page/intldirectory.php),
+                  created in consultation with the International Student Records Advisory Committee. AET uses
+                  cumulative grade scores and whenever possible relies on the indigenous cumulative high school
+                  calculation and then converts to the U.S. comparable grade average. When not available, individual
+                  grades are converted line-by-line to formulate a cumulative high school grade average.
+                </p>
+                <p className="mb-5">
+                  University grade averages are computed based on the school&apos;s cumulative grade average when
+                  available, otherwise it is calculated line-by-line or by finding the indigenous grade average and
+                  converting that to the U.S. comparable grade average.
+                </p>
+
+                <div className="font-bold underline mb-2">Calculating Credit Conversions:</div>
+                <p>
+                  Transfer credit from international universities that are determined to be comparable to regionally
+                  accredited U.S. institutions are converted to U.S. comparable credits to apply NAIA transfer student
+                  rules. Credits from institutions not considered comparable to U.S. regionally accredited institutions
+                  do not count as transfer credits or apply towards credits earned in the eligibility process. The NAIA
+                  converts international credits based on the notion that a full U.S. course load is approximately 30-36
+                  U.S. semester credits for one year (or roughly 15-18 credits per semester). One year of attendance at
+                  an international university or post-secondary institution counts as two semesters or three quarters
+                  for the purposes of computing the duration of eligibility. After the credits are converted, the NAIA
+                  Eligibility Center determines for how many semesters (quarters) the student is eligible (either
+                  through intercollegiate athletics or through enrollment in sufficient course load), resulting in a
+                  determination of how many “Terms of Attendance” a student has used and thus has remaining (students
+                  have 10 semesters or 15 quarters of attendance).
+                </p>
               </div>
 
               <div className="flex justify-between items-end gap-6">
