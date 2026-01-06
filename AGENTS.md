@@ -6,3 +6,11 @@
 - Header height: 1.1in
 - Footer height: 0.8in
 - Page gap (screen only): 0.4in
+
+# Controlled PDF Notes
+
+- Use `app/api/pdf/route.ts` to generate PDFs via Playwright; do not rely on browser print for final output.
+- The print view is `app/report/print/page.tsx` and must stay layout-identical to the editor output.
+- Pagination is measurement-driven in `components/report-editor.tsx`; avoid hardcoding row counts.
+- The print page signals readiness via `document.documentElement.dataset.reportReady` after fonts + pagination settle.
+- If Chromium is missing locally, run `pnpm exec playwright install chromium`.

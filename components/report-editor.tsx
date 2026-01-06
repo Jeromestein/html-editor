@@ -1,49 +1,12 @@
 "use client"
 
-import { useMemo, useState, type ReactNode } from "react"
-import { Printer, RotateCcw, Plus, Trash2 } from "lucide-react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react"
+import { FileDown, Printer, RotateCcw, Plus, Trash2 } from "lucide-react"
+import { buildSampleData, type Course, type SampleData } from "@/lib/report-data"
 
 // -----------------------------------------------------------------------------
 // 1. Type definitions and sample data
 // -----------------------------------------------------------------------------
-
-type Course = {
-  id: number
-  year: string
-  name: string
-  level: string
-  credits: string
-  grade: string
-}
-
-type SampleData = {
-  refNo: string
-  name: string
-  dob: string
-  country: string
-  date: string
-  purpose: string
-  credential: {
-    native: string
-    english: string
-    institution: string
-    year: string
-    status: string
-    admissionReq: string
-    programLength: string
-    access: string
-  }
-  equivalence: {
-    summary: string
-    regionalAccreditation: string
-    major: string
-    gpa: string
-    totalCredits: string
-  }
-  courses: Course[]
-}
-
-type CourseSeed = Omit<Course, "id">
 
 type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose"
 
@@ -61,89 +24,12 @@ type UpdateDataField = (field: TopLevelField, value: string) => void
 
 type UpdateCourse = (id: number, field: CourseField, value: string) => void
 
-const SAMPLE_COURSES: CourseSeed[] = [
-  { year: "2021-2022", name: "Art Historical Studies I", level: "L", credits: "3.00", grade: "A-" },
-  { year: "2021-2022", name: "Intro to Molecular & Cell Biology", level: "L", credits: "3.00", grade: "A-" },
-  { year: "2021-2022", name: "General Chemistry I", level: "L", credits: "3.00", grade: "A" },
-  { year: "2021-2022", name: "Elements of Calculus I", level: "L", credits: "3.00", grade: "A" },
-  { year: "2021-2022", name: "Fundamentals of Physics", level: "L", credits: "3.00", grade: "C" },
-  { year: "2021-2022", name: "Discovering Biodiversity", level: "L", credits: "3.00", grade: "A-" },
-  { year: "2021-2022", name: "Biological Concepts of Health", level: "L", credits: "3.00", grade: "A-" },
-  { year: "2021-2022", name: "General Chemistry II", level: "L", credits: "3.00", grade: "A-" },
-  { year: "2021-2022", name: "Physics for Life Sciences", level: "L", credits: "3.00", grade: "A-" },
-  { year: "2021-2022", name: "ST: Horror Night in Canada", level: "L", credits: "3.00", grade: "A-" },
-  { year: "2022-2023", name: "Introduction to Biochemistry", level: "L", credits: "3.00", grade: "A-" },
-  { year: "2022-2023", name: "Intro Nutritional & Food Sci", level: "L", credits: "3.00", grade: "B-" },
-  {
-    year: "2022-2023",
-    name: "Foundations of Molecular Biology & Genetics",
-    level: "L",
-    credits: "3.00",
-    grade: "A-",
-  },
-  { year: "2022-2023", name: "Introduction to Psychology", level: "L", credits: "3.00", grade: "A-" },
-  { year: "2022-2023", name: "Statistics I", level: "L", credits: "3.00", grade: "B-" },
-  { year: "2022-2023", name: "Biomedical Physiology", level: "L", credits: "6.00", grade: "A-" },
-  { year: "2023-2024", name: "Molecular Biology of the Cell", level: "U", credits: "3.00", grade: "A+" },
-  { year: "2023-2024", name: "Fundamentals of Nutrition", level: "U", credits: "3.00", grade: "A-" },
-  { year: "2023-2024", name: "Epidemiology", level: "U", credits: "3.00", grade: "A+" },
-  { year: "2023-2024", name: "Structure & Function in Biochemistry", level: "U", credits: "3.00", grade: "A-" },
-  { year: "2023-2024", name: "Introduction to Computing", level: "U", credits: "3.00", grade: "A+" },
-  { year: "2023-2024", name: "Foundations in Critical Reading", level: "U", credits: "3.00", grade: "A-" },
-  { year: "2023-2024", name: "Human Anatomy: Dissection", level: "U", credits: "4.50", grade: "A-" },
-  { year: "2023-2024", name: "Social Psychology", level: "U", credits: "3.00", grade: "A+" },
-  { year: "2023-2024", name: "Principles of Pharmacology", level: "U", credits: "3.00", grade: "A-" },
-  { year: "2024-2025", name: "Cardiology", level: "U", credits: "3.00", grade: "A-" },
-  { year: "2024-2025", name: "Human Anatomy: Dissection II", level: "U", credits: "4.50", grade: "A-" },
-  { year: "2024-2025", name: "Principles of Learning", level: "U", credits: "3.00", grade: "A-" },
-  { year: "2024-2025", name: "Immunology", level: "U", credits: "3.00", grade: "C-" },
-  { year: "2024-2025", name: "Principles of Disease", level: "U", credits: "3.00", grade: "A-" },
-  { year: "2024-2025", name: "Epidemiology of Food-Borne Diseases", level: "U", credits: "3.00", grade: "B+" },
-  { year: "2024-2025", name: "Medical Toxicology", level: "U", credits: "3.00", grade: "A" },
-  { year: "2024-2025", name: "Nutrition of Fish & Crustacea", level: "U", credits: "3.00", grade: "A-" },
-  { year: "2024-2025", name: "Endocrine Physiology", level: "U", credits: "3.00", grade: "A+" },
-  { year: "2024-2025", name: "Biomedical Aspects of Aging", level: "U", credits: "3.00", grade: "A" },
-  { year: "2024-2025", name: "Business & Professional Ethics", level: "U", credits: "3.00", grade: "A-" },
-  { year: "2024-2025", name: "Homicide", level: "U", credits: "3.00", grade: "A-" },
-  { year: "2024-2025", name: "Dynamics of Sport Fans", level: "U", credits: "3.00", grade: "A+" },
-]
-
-const buildSampleData = (): SampleData => ({
-  refNo: "AET-2024-0926",
-  name: "Maha Qadri",
-  dob: "September 5, 2003",
-  country: "Canada",
-  date: "September 5, 2024",
-  purpose: "Employment",
-  credential: {
-    english: "Bachelor of Science, Honors (Major in Bio-Medical Science)",
-    native: "N/A",
-    institution: "University of Guelph",
-    year: "2025",
-    status: "Public institution recognized by the Ministry of Colleges and Universities of Ontario, Canada",
-    admissionReq: "Secondary School Diploma or equivalent",
-    programLength: "4 years (2021-2025)",
-    access: "N/A",
-  },
-  equivalence: {
-    summary: "Bachelor of Science degree",
-    major: "Biomedical Science",
-    regionalAccreditation: "regionally accredited institution",
-    gpa: "3.72",
-    totalCredits: "120.00",
-  },
-  courses: SAMPLE_COURSES.map((course, index) => ({
-    id: index + 1,
-    ...course,
-  })),
-})
-
 // -----------------------------------------------------------------------------
 // 2. Pagination logic
 // -----------------------------------------------------------------------------
 
-const ROWS_PER_FIRST_PAGE = 14
-const ROWS_PER_FULL_PAGE = 30
+const DEFAULT_ROWS_PER_FIRST_PAGE = 14
+const DEFAULT_ROWS_PER_FULL_PAGE = 30
 
 type PageData = {
   type: "first-page" | "course-continuation"
@@ -151,23 +37,52 @@ type PageData = {
   isLastPage: boolean
 }
 
-function paginateCourses(courses: Course[]): PageData[] {
+type PaginationCounts = {
+  first: number
+  firstWithTail: number
+  full: number
+  last: number
+}
+
+function paginateCourses(courses: Course[], counts: PaginationCounts): PageData[] {
   const pages: PageData[] = []
   const remainingCourses = [...courses]
+  const firstCount = Math.max(1, counts.first)
+  const firstWithTailCount = Math.max(1, counts.firstWithTail)
+  const fullCount = Math.max(1, counts.full)
+  const lastCount = Math.max(1, counts.last)
 
-  const firstPageCourses = remainingCourses.splice(0, ROWS_PER_FIRST_PAGE)
+  if (remainingCourses.length <= firstWithTailCount) {
+    pages.push({
+      type: "first-page",
+      courses: remainingCourses.splice(0),
+      isLastPage: true,
+    })
+    return pages
+  }
+
+  const firstPageCourses = remainingCourses.splice(0, Math.min(firstCount, remainingCourses.length))
   pages.push({
     type: "first-page",
     courses: firstPageCourses,
-    isLastPage: remainingCourses.length === 0,
+    isLastPage: false,
   })
 
-  while (remainingCourses.length > 0) {
-    const pageCourses = remainingCourses.splice(0, ROWS_PER_FULL_PAGE)
+  while (remainingCourses.length > lastCount) {
+    const take = Math.min(fullCount, remainingCourses.length - lastCount)
+    const pageCourses = remainingCourses.splice(0, take)
     pages.push({
       type: "course-continuation",
       courses: pageCourses,
-      isLastPage: remainingCourses.length === 0,
+      isLastPage: false,
+    })
+  }
+
+  if (remainingCourses.length > 0) {
+    pages.push({
+      type: "course-continuation",
+      courses: remainingCourses.splice(0),
+      isLastPage: true,
     })
   }
 
@@ -183,13 +98,18 @@ type EditableInputProps = {
   onChange: (value: string) => void
   className?: string
   placeholder?: string
+  readOnly?: boolean
 }
 
-const EditableInput = ({ value, onChange, className = "", placeholder = "" }: EditableInputProps) => (
+const EditableInput = ({ value, onChange, className = "", placeholder = "", readOnly = false }: EditableInputProps) => (
   <input
     type="text"
     value={value}
-    onChange={(event) => onChange(event.target.value)}
+    onChange={(event) => {
+      if (readOnly) return
+      onChange(event.target.value)
+    }}
+    readOnly={readOnly}
     className={`bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none focus:bg-blue-50 transition-colors w-full px-1 ${className}`}
     placeholder={placeholder}
   />
@@ -200,13 +120,24 @@ type EditableTextareaProps = {
   onChange: (value: string) => void
   className?: string
   rows?: number
+  readOnly?: boolean
 }
 
-const EditableTextarea = ({ value, onChange, className = "", rows = 3 }: EditableTextareaProps) => (
+const EditableTextarea = ({
+  value,
+  onChange,
+  className = "",
+  rows = 3,
+  readOnly = false,
+}: EditableTextareaProps) => (
   <textarea
     value={value}
-    onChange={(event) => onChange(event.target.value)}
+    onChange={(event) => {
+      if (readOnly) return
+      onChange(event.target.value)
+    }}
     rows={rows}
+    readOnly={readOnly}
     className={`bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none focus:bg-blue-50 transition-colors w-full p-1 resize-none ${className}`}
   />
 )
@@ -215,19 +146,185 @@ const EditableTextarea = ({ value, onChange, className = "", rows = 3 }: Editabl
 // 4. Main editor
 // -----------------------------------------------------------------------------
 
-export default function ReportEditor() {
-  const [data, setData] = useState(buildSampleData)
-  const pages = useMemo(() => paginateCourses(data.courses), [data.courses])
+type ReportEditorProps = {
+  initialData?: SampleData
+  readOnly?: boolean
+  showToolbar?: boolean
+  onReady?: () => void
+}
+
+export default function ReportEditor({
+  initialData,
+  readOnly = false,
+  showToolbar = true,
+  onReady,
+}: ReportEditorProps) {
+  const [data, setData] = useState<SampleData>(() => initialData ?? buildSampleData())
+  const [isExporting, setIsExporting] = useState(false)
+  const [rowsPerFirstPage, setRowsPerFirstPage] = useState(DEFAULT_ROWS_PER_FIRST_PAGE)
+  const [rowsPerFirstPageWithTail, setRowsPerFirstPageWithTail] = useState(DEFAULT_ROWS_PER_FIRST_PAGE)
+  const [rowsPerFullPage, setRowsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
+  const [rowsPerLastPage, setRowsPerLastPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const tableHeaderRef = useRef<HTMLTableSectionElement>(null)
+  const rowRef = useRef<HTMLTableRowElement>(null)
+  const tailRef = useRef<HTMLDivElement>(null)
+  const readySentRef = useRef(false)
+  const [fontsReady, setFontsReady] = useState(false)
+
+  const pages = useMemo(
+    () =>
+      paginateCourses(data.courses, {
+        first: rowsPerFirstPage,
+        firstWithTail: rowsPerFirstPageWithTail,
+        full: rowsPerFullPage,
+        last: rowsPerLastPage,
+      }),
+    [data.courses, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage, rowsPerLastPage]
+  )
+
+  useEffect(() => {
+    if (!onReady) return
+    let active = true
+    if (document.fonts?.ready) {
+      document.fonts.ready
+        .then(() => {
+          if (active) setFontsReady(true)
+        })
+        .catch(() => {
+          if (active) setFontsReady(true)
+        })
+    } else {
+      setFontsReady(true)
+    }
+    return () => {
+      active = false
+    }
+  }, [onReady])
+
+  useEffect(() => {
+    if (initialData) {
+      setData(initialData)
+    }
+  }, [initialData])
+
+  useEffect(() => {
+    if (!onReady) return
+    readySentRef.current = false
+  }, [data, onReady])
+
+  useLayoutEffect(() => {
+    const contentEl = contentRef.current
+    const headerEl = tableHeaderRef.current
+    const rowEl = rowRef.current
+    if (!contentEl || !headerEl || !rowEl) return
+
+    const contentRect = contentEl.getBoundingClientRect()
+    const headerRect = headerEl.getBoundingClientRect()
+    const rowRect = rowEl.getBoundingClientRect()
+
+    if (contentRect.height <= 0 || rowRect.height <= 0) return
+
+    const headerOffset = headerRect.top - contentRect.top
+    const safetyPadding = 4
+    let tailHeight = 0
+
+    if (tailRef.current) {
+      const tailRect = tailRef.current.getBoundingClientRect()
+      const tailStyle = window.getComputedStyle(tailRef.current)
+      const marginTop = Number.parseFloat(tailStyle.marginTop) || 0
+      const marginBottom = Number.parseFloat(tailStyle.marginBottom) || 0
+      tailHeight = tailRect.height + marginTop + marginBottom
+    }
+
+    const nextFirst = Math.max(
+      1,
+      Math.floor((contentRect.height - headerOffset - headerRect.height - safetyPadding) / rowRect.height)
+    )
+    const nextFirstWithTail = Math.max(
+      1,
+      Math.floor(
+        (contentRect.height - headerOffset - headerRect.height - tailHeight - safetyPadding) / rowRect.height
+      )
+    )
+    const nextFull = Math.max(
+      1,
+      Math.floor((contentRect.height - headerRect.height - safetyPadding) / rowRect.height)
+    )
+    const nextLast = Math.max(
+      1,
+      Math.floor((contentRect.height - headerRect.height - tailHeight - safetyPadding) / rowRect.height)
+    )
+
+    const changed =
+      nextFirst !== rowsPerFirstPage ||
+      nextFirstWithTail !== rowsPerFirstPageWithTail ||
+      nextFull !== rowsPerFullPage ||
+      nextLast !== rowsPerLastPage
+
+    if (changed) {
+      readySentRef.current = false
+      setRowsPerFirstPage(nextFirst)
+      setRowsPerFirstPageWithTail(nextFirstWithTail)
+      setRowsPerFullPage(nextFull)
+      setRowsPerLastPage(nextLast)
+      return
+    }
+
+    if (onReady && fontsReady && !readySentRef.current) {
+      readySentRef.current = true
+      onReady()
+    }
+  }, [
+    data,
+    fontsReady,
+    onReady,
+    rowsPerFirstPage,
+    rowsPerFirstPageWithTail,
+    rowsPerFullPage,
+    rowsPerLastPage,
+  ])
 
   const handlePrint = () => window.print()
 
   const handleReset = () => {
+    if (readOnly) return
     if (window.confirm("Reset data to sample?")) {
       setData(buildSampleData())
     }
   }
 
+  const handleExportPdf = async () => {
+    if (readOnly || isExporting) return
+    setIsExporting(true)
+    try {
+      const response = await fetch("/api/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        throw new Error("PDF export failed")
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `${data.refNo || "report"}.pdf`
+      link.click()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error(error)
+      window.alert("PDF export failed. Please try again.")
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   const updateField: UpdateField = (section, field, value) => {
+    if (readOnly) return
     setData((prev) => ({
       ...prev,
       [section]: {
@@ -238,6 +335,7 @@ export default function ReportEditor() {
   }
 
   const updateDataField: UpdateDataField = (field, value) => {
+    if (readOnly) return
     setData((prev) => ({
       ...prev,
       [field]: value,
@@ -245,6 +343,7 @@ export default function ReportEditor() {
   }
 
   const updateCourse: UpdateCourse = (id, field, value) => {
+    if (readOnly) return
     setData((prev) => ({
       ...prev,
       courses: prev.courses.map((course) => (course.id === id ? { ...course, [field]: value } : course)),
@@ -252,6 +351,7 @@ export default function ReportEditor() {
   }
 
   const deleteCourse = (id: number) => {
+    if (readOnly) return
     setData((prev) => ({
       ...prev,
       courses: prev.courses.filter((course) => course.id !== id),
@@ -259,6 +359,7 @@ export default function ReportEditor() {
   }
 
   const addCourse = () => {
+    if (readOnly) return
     const newCourse: Course = {
       id: Date.now(),
       year: "202X",
@@ -315,6 +416,7 @@ export default function ReportEditor() {
           }
 
           body {
+            margin: 0;
             print-color-adjust: exact;
             -webkit-print-color-adjust: exact;
             background-color: white !important;
@@ -340,33 +442,42 @@ export default function ReportEditor() {
         }
       `}</style>
 
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 w-full px-6 py-3 flex items-center justify-between shadow-sm no-print">
-        <h1 className="font-bold text-blue-900 flex items-center gap-2">
-          AET Smart Editor
-          <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-normal">Editable</span>
-        </h1>
-        <div className="flex gap-2">
-          <button
-            onClick={addCourse}
-            className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded text-sm font-medium transition-colors"
-          >
-            <Plus size={16} /> Add Course
-          </button>
-          <button
-            onClick={handleReset}
-            className="p-2 text-gray-600 hover:bg-gray-100 rounded"
-            title="Reset"
-          >
-            <RotateCcw size={18} />
-          </button>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold shadow-sm transition-colors"
-          >
-            <Printer size={18} /> Print / PDF
-          </button>
+      {showToolbar && (
+        <div className="sticky top-0 z-50 bg-white border-b border-gray-200 w-full px-6 py-3 flex items-center justify-between shadow-sm no-print">
+          <h1 className="font-bold text-blue-900 flex items-center gap-2">
+            AET Smart Editor
+            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-normal">Editable</span>
+          </h1>
+          <div className="flex gap-2">
+            <button
+              onClick={addCourse}
+              className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded text-sm font-medium transition-colors"
+            >
+              <Plus size={16} /> Add Course
+            </button>
+            <button
+              onClick={handleReset}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded"
+              title="Reset"
+            >
+              <RotateCcw size={18} />
+            </button>
+            <button
+              onClick={handleExportPdf}
+              className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 font-bold shadow-sm transition-colors disabled:opacity-60"
+              disabled={isExporting}
+            >
+              <FileDown size={16} /> {isExporting ? "Generating..." : "Controlled PDF"}
+            </button>
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold shadow-sm transition-colors"
+            >
+              <Printer size={18} /> Print / PDF
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="page-stack mt-8 print:mt-0">
         {pages.map((pageData, index) => (
@@ -382,6 +493,11 @@ export default function ReportEditor() {
             updateDataField={updateDataField}
             updateCourse={updateCourse}
             deleteCourse={deleteCourse}
+            readOnly={readOnly}
+            contentRef={index === 0 ? contentRef : undefined}
+            tableHeaderRef={index === 0 ? tableHeaderRef : undefined}
+            rowRef={index === 0 ? rowRef : undefined}
+            tailRef={pageData.isLastPage ? tailRef : undefined}
           />
         ))}
       </div>
@@ -404,6 +520,11 @@ type ReportPageProps = {
   updateDataField: UpdateDataField
   updateCourse: UpdateCourse
   deleteCourse: (id: number) => void
+  readOnly: boolean
+  contentRef?: RefObject<HTMLDivElement>
+  tableHeaderRef?: RefObject<HTMLTableSectionElement>
+  rowRef?: RefObject<HTMLTableRowElement>
+  tailRef?: RefObject<HTMLDivElement>
 }
 
 function ReportPage({
@@ -417,6 +538,11 @@ function ReportPage({
   updateDataField,
   updateCourse,
   deleteCourse,
+  readOnly,
+  contentRef,
+  tableHeaderRef,
+  rowRef,
+  tailRef,
 }: ReportPageProps) {
   return (
     <div
@@ -429,14 +555,14 @@ function ReportPage({
     >
       <Header />
 
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-hidden flex flex-col" ref={contentRef}>
         {type === "first-page" && (
           <>
             <h1 className="text-center text-xl font-bold uppercase underline decoration-double decoration-1 underline-offset-4 text-blue-900 mb-6 font-serif">
               Credential Evaluation Report
             </h1>
 
-            <ApplicantInfo data={data} updateDataField={updateDataField} />
+            <ApplicantInfo data={data} updateDataField={updateDataField} readOnly={readOnly} />
 
             <SectionTitle>1. U.S. Equivalence Summary</SectionTitle>
             <div className="mb-6 bg-blue-50 p-2 border-l-4 border-blue-600 print:bg-transparent print:border-gray-300 print:border group hover:bg-blue-100 transition-colors">
@@ -445,32 +571,42 @@ function ReportPage({
                 onChange={(value) => updateField("equivalence", "summary", value)}
                 className="font-bold font-serif text-lg leading-snug bg-transparent"
                 rows={2}
+                readOnly={readOnly}
               />
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <EditableInput
                   value={data.equivalence.major}
                   onChange={(value) => updateField("equivalence", "major", value)}
                   className="font-serif text-sm font-bold"
+                  readOnly={readOnly}
                 />
                 <EditableInput
                   value={data.equivalence.regionalAccreditation}
                   onChange={(value) => updateField("equivalence", "regionalAccreditation", value)}
                   className="font-serif text-sm"
+                  readOnly={readOnly}
                 />
               </div>
             </div>
 
             <SectionTitle>2. Credential Details</SectionTitle>
-            <CredentialDetails data={data.credential} updateField={updateField} />
+            <CredentialDetails data={data.credential} updateField={updateField} readOnly={readOnly} />
 
             <SectionTitle>3. Course-by-Course Analysis</SectionTitle>
           </>
         )}
 
-        <CourseTable courses={pageCourses} updateCourse={updateCourse} deleteCourse={deleteCourse} />
+        <CourseTable
+          courses={pageCourses}
+          updateCourse={updateCourse}
+          deleteCourse={deleteCourse}
+          readOnly={readOnly}
+          headerRef={tableHeaderRef}
+          rowRef={rowRef}
+        />
 
         {isLastPage && (
-          <div className="mt-4">
+          <div className="mt-4" ref={tailRef}>
             <div className="border-t border-gray-300 pt-2 mb-4">
               <div className="flex justify-between font-bold text-sm items-center">
                 <span>TOTALS</span>
@@ -481,6 +617,7 @@ function ReportPage({
                       value={data.equivalence.totalCredits}
                       onChange={(value) => updateField("equivalence", "totalCredits", value)}
                       className="w-16 text-right font-bold"
+                      readOnly={readOnly}
                     />
                   </div>
                   <div className="flex items-center">
@@ -489,6 +626,7 @@ function ReportPage({
                       value={data.equivalence.gpa}
                       onChange={(value) => updateField("equivalence", "gpa", value)}
                       className="w-12 text-right font-bold"
+                      readOnly={readOnly}
                     />
                   </div>
                 </div>
@@ -551,21 +689,42 @@ const SectionTitle = ({ children }: SectionTitleProps) => (
 type ApplicantInfoProps = {
   data: SampleData
   updateDataField: UpdateDataField
+  readOnly?: boolean
 }
 
-const ApplicantInfo = ({ data, updateDataField }: ApplicantInfoProps) => (
+const ApplicantInfo = ({ data, updateDataField, readOnly = false }: ApplicantInfoProps) => (
   <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-6 text-xs border-b border-gray-200 pb-4">
     <InfoRow label="Name of Applicant" labelClassName="uppercase tracking-wide">
-      <EditableInput value={data.name} onChange={(value) => updateDataField("name", value)} className="font-semibold"/>
+      <EditableInput
+        value={data.name}
+        onChange={(value) => updateDataField("name", value)}
+        className="font-semibold"
+        readOnly={readOnly}
+      />
     </InfoRow>
     <InfoRow label="Evaluation ID" labelClassName="uppercase tracking-wide">
-      <EditableInput value={data.refNo} onChange={(value) => updateDataField("refNo", value)} className="font-semibold"/>
+      <EditableInput
+        value={data.refNo}
+        onChange={(value) => updateDataField("refNo", value)}
+        className="font-semibold"
+        readOnly={readOnly}
+      />
     </InfoRow>
     <InfoRow label="Date of Birth" labelClassName="uppercase tracking-wide">
-      <EditableInput value={data.dob} onChange={(value) => updateDataField("dob", value)} className="font-semibold"/>
+      <EditableInput
+        value={data.dob}
+        onChange={(value) => updateDataField("dob", value)}
+        className="font-semibold"
+        readOnly={readOnly}
+      />
     </InfoRow>
     <InfoRow label="Date of Evaluation" labelClassName="uppercase tracking-wide">
-      <EditableInput value={data.date} onChange={(value) => updateDataField("date", value)} className="font-semibold" />
+      <EditableInput
+        value={data.date}
+        onChange={(value) => updateDataField("date", value)}
+        className="font-semibold"
+        readOnly={readOnly}
+      />
     </InfoRow>
     <div className="col-span-2">
       <InfoRow label="Purpose of evaluation" labelClassName="uppercase tracking-wide">
@@ -573,12 +732,18 @@ const ApplicantInfo = ({ data, updateDataField }: ApplicantInfoProps) => (
           value={data.purpose}
           onChange={(value) => updateDataField("purpose", value)}
           className="font-semibold"
+          readOnly={readOnly}
         />
       </InfoRow>
     </div>
     <div className="col-span-2">
       <InfoRow label="Country of Education" labelClassName="uppercase tracking-wide">
-        <EditableInput value={data.country} onChange={(value) => updateDataField("country", value)} className="font-semibold"/>
+        <EditableInput
+          value={data.country}
+          onChange={(value) => updateDataField("country", value)}
+          className="font-semibold"
+          readOnly={readOnly}
+        />
       </InfoRow>
     </div>
   </div>
@@ -600,9 +765,10 @@ const InfoRow = ({ label, children, labelClassName = "" }: InfoRowProps) => (
 type CredentialDetailsProps = {
   data: SampleData["credential"]
   updateField: UpdateField
+  readOnly?: boolean
 }
 
-const CredentialDetails = ({ data, updateField }: CredentialDetailsProps) => (
+const CredentialDetails = ({ data, updateField, readOnly = false }: CredentialDetailsProps) => (
   <table className="w-full text-xs border-collapse mb-4 table-fixed">
     <tbody>
       <Tr label="Credential">
@@ -611,12 +777,14 @@ const CredentialDetails = ({ data, updateField }: CredentialDetailsProps) => (
           onChange={(value) => updateField("credential", "english", value)}
           className="font-bold"
           placeholder="Credential English Name"
+          readOnly={readOnly}
         />
         <EditableInput
           value={data.native}
           onChange={(value) => updateField("credential", "native", value)}
           className="text-gray-500 italic"
           placeholder="Credential Native Name"
+          readOnly={readOnly}
         />
       </Tr>
       <Tr label="Institution">
@@ -624,16 +792,22 @@ const CredentialDetails = ({ data, updateField }: CredentialDetailsProps) => (
           value={data.institution}
           onChange={(value) => updateField("credential", "institution", value)}
           className="font-bold"
+          readOnly={readOnly}
         />
       </Tr>
       <Tr label="Status">
-        <EditableInput value={data.status} onChange={(value) => updateField("credential", "status", value)} />
+        <EditableInput
+          value={data.status}
+          onChange={(value) => updateField("credential", "status", value)}
+          readOnly={readOnly}
+        />
       </Tr>
       <Tr label="Length">
         <div className="flex gap-2">
           <EditableInput
             value={data.programLength}
             onChange={(value) => updateField("credential", "programLength", value)}
+            readOnly={readOnly}
           />
           <span className="text-gray-400">|</span>
           <EditableInput
@@ -641,6 +815,7 @@ const CredentialDetails = ({ data, updateField }: CredentialDetailsProps) => (
             onChange={(value) => updateField("credential", "year", value)}
             placeholder="Year"
             className="w-20"
+            readOnly={readOnly}
           />
         </div>
       </Tr>
@@ -664,33 +839,46 @@ type CourseTableProps = {
   courses: Course[]
   updateCourse: UpdateCourse
   deleteCourse: (id: number) => void
+  readOnly?: boolean
+  headerRef?: RefObject<HTMLTableSectionElement>
+  rowRef?: RefObject<HTMLTableRowElement>
 }
 
-const CourseTable = ({ courses, updateCourse, deleteCourse }: CourseTableProps) => {
+const CourseTable = ({
+  courses,
+  updateCourse,
+  deleteCourse,
+  readOnly = false,
+  headerRef,
+  rowRef,
+}: CourseTableProps) => {
   if (!courses || courses.length === 0) {
     return <div className="text-xs text-gray-400 italic p-2 text-center">No courses listed on this page.</div>
   }
 
+  const showActions = !readOnly
+
   return (
     <table className="w-full text-[10px] text-center border-collapse border border-gray-300 table-fixed">
-      <thead className="bg-gray-100 print:bg-gray-50">
+      <thead className="bg-gray-100 print:bg-gray-50" ref={headerRef}>
         <tr>
           <th className="border border-gray-300 p-1 w-14">Year</th>
           <th className="border border-gray-300 p-1 text-left">Course Title</th>
           <th className="border border-gray-300 p-1 w-8">Lvl</th>
           <th className="border border-gray-300 p-1 w-10">Credits</th>
           <th className="border border-gray-300 p-1 w-10">Grade</th>
-          <th className="border border-gray-300 p-1 w-6 no-print"></th>
+          {showActions && <th className="border border-gray-300 p-1 w-6 no-print"></th>}
         </tr>
       </thead>
       <tbody>
-        {courses.map((course) => (
-          <tr key={course.id} className="group hover:bg-blue-50">
+        {courses.map((course, index) => (
+          <tr key={course.id} className="group hover:bg-blue-50" ref={index === 0 ? rowRef : undefined}>
             <td className="border border-gray-300 p-0 editable-cell">
               <EditableInput
                 value={course.year}
                 onChange={(value) => updateCourse(course.id, "year", value)}
                 className="text-center h-full"
+                readOnly={readOnly}
               />
             </td>
             <td className="border border-gray-300 p-0 editable-cell">
@@ -698,6 +886,7 @@ const CourseTable = ({ courses, updateCourse, deleteCourse }: CourseTableProps) 
                 value={course.name}
                 onChange={(value) => updateCourse(course.id, "name", value)}
                 className="text-left px-2 h-full"
+                readOnly={readOnly}
               />
             </td>
             <td className="border border-gray-300 p-0 editable-cell">
@@ -705,6 +894,7 @@ const CourseTable = ({ courses, updateCourse, deleteCourse }: CourseTableProps) 
                 value={course.level}
                 onChange={(value) => updateCourse(course.id, "level", value)}
                 className="text-center h-full"
+                readOnly={readOnly}
               />
             </td>
             <td className="border border-gray-300 p-0 editable-cell">
@@ -712,6 +902,7 @@ const CourseTable = ({ courses, updateCourse, deleteCourse }: CourseTableProps) 
                 value={course.credits}
                 onChange={(value) => updateCourse(course.id, "credits", value)}
                 className="text-center h-full"
+                readOnly={readOnly}
               />
             </td>
             <td className="border border-gray-300 p-0 editable-cell">
@@ -719,17 +910,20 @@ const CourseTable = ({ courses, updateCourse, deleteCourse }: CourseTableProps) 
                 value={course.grade}
                 onChange={(value) => updateCourse(course.id, "grade", value)}
                 className="text-center h-full"
+                readOnly={readOnly}
               />
             </td>
-            <td className="border border-gray-300 p-0 no-print">
-              <button
-                onClick={() => deleteCourse(course.id)}
-                className="w-full h-full flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                title="Delete Row"
-              >
-                <Trash2 size={10} />
-              </button>
-            </td>
+            {showActions && (
+              <td className="border border-gray-300 p-0 no-print">
+                <button
+                  onClick={() => deleteCourse(course.id)}
+                  className="w-full h-full flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  title="Delete Row"
+                >
+                  <Trash2 size={10} />
+                </button>
+              </td>
+            )}
           </tr>
         ))}
       </tbody>
