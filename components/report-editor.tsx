@@ -517,13 +517,10 @@ const Header = () => (
     <div>
       <div className="text-3xl font-black text-blue-900 tracking-wider font-serif">AET</div>
       <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">
-        American Evaluation & Translation
+        American Evaluation & Translation Services
       </div>
     </div>
-    <div className="text-right text-[9px] text-gray-500 leading-tight font-sans">
-      <p>1234 Academic Way, Suite 100, New York, NY 10001</p>
-      <p>Phone: (212) 555-0199 | www.aet-service.com</p>
-    </div>
+
   </header>
 )
 
@@ -535,11 +532,9 @@ type FooterProps = {
 
 const Footer = ({ pageIndex, totalPages, refNo }: FooterProps) => (
   <footer className="report-footer border-t border-gray-300 pt-2 flex justify-between text-[9px] text-gray-400 mt-auto shrink-0">
-    <span>Ref: {refNo}</span>
     <span>
       Page {pageIndex + 1} of {totalPages}
     </span>
-    <span>© 2025 AET Corp.</span>
   </footer>
 )
 
