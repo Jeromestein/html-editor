@@ -561,16 +561,16 @@ type ApplicantInfoProps = {
 const ApplicantInfo = ({ data, updateDataField }: ApplicantInfoProps) => (
   <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-6 text-xs border-b border-gray-200 pb-4">
     <InfoRow label="Name of Applicant" labelClassName="uppercase tracking-wide">
-      <EditableInput value={data.name} onChange={(value) => updateDataField("name", value)} className="font-bold" />
+      <EditableInput value={data.name} onChange={(value) => updateDataField("name", value)} className="font-semibold"/>
     </InfoRow>
     <InfoRow label="Evaluation ID" labelClassName="uppercase tracking-wide">
-      <EditableInput value={data.refNo} onChange={(value) => updateDataField("refNo", value)} />
+      <EditableInput value={data.refNo} onChange={(value) => updateDataField("refNo", value)} className="font-semibold"/>
     </InfoRow>
     <InfoRow label="Date of Birth" labelClassName="uppercase tracking-wide">
-      <EditableInput value={data.dob} onChange={(value) => updateDataField("dob", value)} />
+      <EditableInput value={data.dob} onChange={(value) => updateDataField("dob", value)} className="font-semibold"/>
     </InfoRow>
     <InfoRow label="Date of Evaluation" labelClassName="uppercase tracking-wide">
-      <EditableInput value={data.date} onChange={(value) => updateDataField("date", value)} className="font-bold" />
+      <EditableInput value={data.date} onChange={(value) => updateDataField("date", value)} className="font-semibold" />
     </InfoRow>
     <div className="col-span-2">
       <InfoRow label="Purpose of evaluation" labelClassName="uppercase tracking-wide">
@@ -583,7 +583,7 @@ const ApplicantInfo = ({ data, updateDataField }: ApplicantInfoProps) => (
     </div>
     <div className="col-span-2">
       <InfoRow label="Country of Education" labelClassName="uppercase tracking-wide">
-        <EditableInput value={data.country} onChange={(value) => updateDataField("country", value)} />
+        <EditableInput value={data.country} onChange={(value) => updateDataField("country", value)} className="font-semibold"/>
       </InfoRow>
     </div>
   </div>
