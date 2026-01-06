@@ -382,7 +382,7 @@ export default function ReportEditor({
           --page-width: 8.5in;
           --page-height: 11in;
           --page-padding: 0.75in;
-          --page-header-height: 1.1in;
+          --page-header-height: 0.8in;
           --page-footer-height: 0.8in;
           --page-gap: 0.4in;
         }
@@ -521,10 +521,10 @@ type ReportPageProps = {
   updateCourse: UpdateCourse
   deleteCourse: (id: number) => void
   readOnly: boolean
-  contentRef?: RefObject<HTMLDivElement>
-  tableHeaderRef?: RefObject<HTMLTableSectionElement>
-  rowRef?: RefObject<HTMLTableRowElement>
-  tailRef?: RefObject<HTMLDivElement>
+  contentRef?: RefObject<HTMLDivElement | null>
+  tableHeaderRef?: RefObject<HTMLTableSectionElement | null>
+  rowRef?: RefObject<HTMLTableRowElement | null>
+  tailRef?: RefObject<HTMLDivElement | null>
 }
 
 function ReportPage({
@@ -558,7 +558,7 @@ function ReportPage({
       <div className="flex-1 overflow-hidden flex flex-col" ref={contentRef}>
         {type === "first-page" && (
           <>
-            <h1 className="text-center text-xl font-bold uppercase underline decoration-double decoration-1 underline-offset-4 text-blue-900 mb-6 font-serif">
+            <h1 className="text-center text-xl font-bold uppercase underline decoration-double decoration-1 underline-offset-4 text-blue-900 mb-6 mt-3 font-serif">
               Credential Evaluation Report
             </h1>
 
@@ -840,8 +840,8 @@ type CourseTableProps = {
   updateCourse: UpdateCourse
   deleteCourse: (id: number) => void
   readOnly?: boolean
-  headerRef?: RefObject<HTMLTableSectionElement>
-  rowRef?: RefObject<HTMLTableRowElement>
+  headerRef?: RefObject<HTMLTableSectionElement | null>
+  rowRef?: RefObject<HTMLTableRowElement | null>
 }
 
 const CourseTable = ({
