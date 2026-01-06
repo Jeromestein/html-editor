@@ -559,29 +559,31 @@ type ApplicantInfoProps = {
 }
 
 const ApplicantInfo = ({ data, updateDataField }: ApplicantInfoProps) => (
-  <div className="grid grid-cols-2 gap-8 mb-6 text-xs border-b border-gray-200 pb-4">
-    <div className="space-y-0.5">
-      <div className="font-bold text-blue-900 uppercase text-[10px] mb-1">Applicant</div>
-      <InfoRow label="Name">
-        <EditableInput value={data.name} onChange={(value) => updateDataField("name", value)} className="font-bold" />
-      </InfoRow>
-      <InfoRow label="DOB">
-        <EditableInput value={data.dob} onChange={(value) => updateDataField("dob", value)} />
-      </InfoRow>
-      <InfoRow label="Country">
-        <EditableInput value={data.country} onChange={(value) => updateDataField("country", value)} />
+  <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-6 text-xs border-b border-gray-200 pb-4">
+    <InfoRow label="Name of Applicant" labelClassName="uppercase tracking-wide">
+      <EditableInput value={data.name} onChange={(value) => updateDataField("name", value)} className="font-bold" />
+    </InfoRow>
+    <InfoRow label="Evaluation ID" labelClassName="uppercase tracking-wide">
+      <EditableInput value={data.refNo} onChange={(value) => updateDataField("refNo", value)} />
+    </InfoRow>
+    <InfoRow label="Date of Birth" labelClassName="uppercase tracking-wide">
+      <EditableInput value={data.dob} onChange={(value) => updateDataField("dob", value)} />
+    </InfoRow>
+    <InfoRow label="Date of Evaluation" labelClassName="uppercase tracking-wide">
+      <EditableInput value={data.date} onChange={(value) => updateDataField("date", value)} className="font-bold" />
+    </InfoRow>
+    <div className="col-span-2">
+      <InfoRow label="Purpose of evaluation" labelClassName="uppercase tracking-wide">
+        <EditableInput
+          value={data.purpose}
+          onChange={(value) => updateDataField("purpose", value)}
+          className="font-semibold"
+        />
       </InfoRow>
     </div>
-    <div className="space-y-0.5">
-      <div className="font-bold text-blue-900 uppercase text-[10px] mb-1">Report</div>
-      <InfoRow label="ID">
-        <EditableInput value={data.refNo} onChange={(value) => updateDataField("refNo", value)} />
-      </InfoRow>
-      <InfoRow label="Date">
-        <EditableInput value={data.date} onChange={(value) => updateDataField("date", value)} />
-      </InfoRow>
-      <InfoRow label="Purpose">
-        <EditableInput value={data.purpose} onChange={(value) => updateDataField("purpose", value)} />
+    <div className="col-span-2">
+      <InfoRow label="Country of Education" labelClassName="uppercase tracking-wide">
+        <EditableInput value={data.country} onChange={(value) => updateDataField("country", value)} />
       </InfoRow>
     </div>
   </div>
@@ -590,12 +592,13 @@ const ApplicantInfo = ({ data, updateDataField }: ApplicantInfoProps) => (
 type InfoRowProps = {
   label: string
   children: ReactNode
+  labelClassName?: string
 }
 
-const InfoRow = ({ label, children }: InfoRowProps) => (
-  <div className="flex items-center">
-    <span className="w-16 font-bold text-gray-500 shrink-0">{label}:</span>
-    <div className="flex-1">{children}</div>
+const InfoRow = ({ label, children, labelClassName = "" }: InfoRowProps) => (
+  <div className="grid grid-cols-[9.5rem_1fr] items-center gap-2">
+    <span className={`font-bold text-gray-500 ${labelClassName}`}>{label}:</span>
+    <div>{children}</div>
   </div>
 )
 
