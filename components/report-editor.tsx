@@ -53,8 +53,8 @@ type PaginationCounts = {
 function paginateCourses(courses: Course[], counts: PaginationCounts): PageData[] {
   const pages: PageData[] = []
   const remainingCourses = [...courses]
-  const firstCount = Math.max(1, counts.first)
-  const firstWithTailCount = Math.max(1, counts.firstWithTail)
+  const firstCount = Math.max(0, counts.first)
+  const firstWithTailCount = Math.max(0, counts.firstWithTail)
   const fullCount = Math.max(1, counts.full)
   const lastCount = Math.max(1, counts.last)
 
@@ -183,6 +183,7 @@ export default function ReportEditor({
   const [rowsPerFullPage, setRowsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
   const [rowsPerLastPage, setRowsPerLastPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
   const contentRef = useRef<HTMLDivElement>(null)
+  const tableStartRef = useRef<HTMLDivElement>(null)
   const tableHeaderRef = useRef<HTMLTableSectionElement>(null)
   const rowRef = useRef<HTMLTableRowElement>(null)
   const tailRef = useRef<HTMLDivElement>(null)
@@ -199,6 +200,13 @@ export default function ReportEditor({
       }),
     [data.courses, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage, rowsPerLastPage]
   )
+
+  const firstCoursePageIndex = useMemo(
+    () => pages.findIndex((page) => page.courses.length > 0),
+    [pages]
+  )
+  const measurementPageIndex = firstCoursePageIndex === -1 ? 0 : firstCoursePageIndex
+  const hasCourses = data.courses.length > 0
 
   useEffect(() => {
     if (!onReady) return
@@ -232,65 +240,71 @@ export default function ReportEditor({
 
   useLayoutEffect(() => {
     const contentEl = contentRef.current
+    const startEl = tableStartRef.current
     const headerEl = tableHeaderRef.current
     const rowEl = rowRef.current
-    if (!contentEl || !headerEl || !rowEl) return
+    if (!contentEl || !startEl || !headerEl || !rowEl) return
 
-    const contentRect = contentEl.getBoundingClientRect()
-    const headerRect = headerEl.getBoundingClientRect()
-    const rowRect = rowEl.getBoundingClientRect()
+    let rafId = requestAnimationFrame(() => {
+      const contentRect = contentEl.getBoundingClientRect()
+      const startRect = startEl.getBoundingClientRect()
+      const headerRect = headerEl.getBoundingClientRect()
+      const rowRect = rowEl.getBoundingClientRect()
 
-    if (contentRect.height <= 0 || rowRect.height <= 0) return
+      if (contentRect.height <= 0 || rowRect.height <= 0) return
 
-    const headerOffset = headerRect.top - contentRect.top
-    const safetyPadding = 4
-    let tailHeight = 0
+      const headerOffset = Math.max(0, startRect.top - contentRect.top)
+      const safetyPadding = 4
+      let tailHeight = 0
 
-    if (tailRef.current) {
-      const tailRect = tailRef.current.getBoundingClientRect()
-      const tailStyle = window.getComputedStyle(tailRef.current)
-      const marginTop = Number.parseFloat(tailStyle.marginTop) || 0
-      const marginBottom = Number.parseFloat(tailStyle.marginBottom) || 0
-      tailHeight = tailRect.height + marginTop + marginBottom
-    }
+      if (tailRef.current) {
+        const tailRect = tailRef.current.getBoundingClientRect()
+        const tailStyle = window.getComputedStyle(tailRef.current)
+        const marginTop = Number.parseFloat(tailStyle.marginTop) || 0
+        const marginBottom = Number.parseFloat(tailStyle.marginBottom) || 0
+        tailHeight = tailRect.height + marginTop + marginBottom
+      }
 
-    const nextFirst = Math.max(
-      1,
-      Math.floor((contentRect.height - headerOffset - headerRect.height - safetyPadding) / rowRect.height)
-    )
-    const nextFirstWithTail = Math.max(
-      1,
-      Math.floor(
-        (contentRect.height - headerOffset - headerRect.height - tailHeight - safetyPadding) / rowRect.height
-      )
-    )
-    const nextFull = Math.max(
-      1,
-      Math.floor((contentRect.height - headerRect.height - safetyPadding) / rowRect.height)
-    )
-    const nextLast = Math.max(
-      1,
-      Math.floor((contentRect.height - headerRect.height - tailHeight - safetyPadding) / rowRect.height)
-    )
+      const availableFirst = contentRect.height - headerOffset - headerRect.height - safetyPadding
+      const availableFirstWithTail = availableFirst - tailHeight
+      const availableFull = contentRect.height - headerRect.height - safetyPadding
+      const availableLast = availableFull - tailHeight
 
-    const changed =
-      nextFirst !== rowsPerFirstPage ||
-      nextFirstWithTail !== rowsPerFirstPageWithTail ||
-      nextFull !== rowsPerFullPage ||
-      nextLast !== rowsPerLastPage
+      let nextFirst = Math.max(0, Math.floor(availableFirst / rowRect.height))
+      let nextFirstWithTail = Math.max(0, Math.floor(availableFirstWithTail / rowRect.height))
+      const nextFull = Math.max(1, Math.floor(availableFull / rowRect.height))
+      const nextLast = Math.max(1, Math.floor(availableLast / rowRect.height))
 
-    if (changed) {
-      readySentRef.current = false
-      setRowsPerFirstPage(nextFirst)
-      setRowsPerFirstPageWithTail(nextFirstWithTail)
-      setRowsPerFullPage(nextFull)
-      setRowsPerLastPage(nextLast)
-      return
-    }
+      const overflow = contentEl.scrollHeight - contentRect.height
+      if (overflow > 0) {
+        const overflowRows = Math.ceil(overflow / rowRect.height)
+        nextFirst = Math.max(0, nextFirst - overflowRows)
+        nextFirstWithTail = Math.max(0, nextFirstWithTail - overflowRows)
+      }
 
-    if (onReady && fontsReady && !readySentRef.current) {
-      readySentRef.current = true
-      onReady()
+      const changed =
+        nextFirst !== rowsPerFirstPage ||
+        nextFirstWithTail !== rowsPerFirstPageWithTail ||
+        nextFull !== rowsPerFullPage ||
+        nextLast !== rowsPerLastPage
+
+      if (changed) {
+        readySentRef.current = false
+        setRowsPerFirstPage(nextFirst)
+        setRowsPerFirstPageWithTail(nextFirstWithTail)
+        setRowsPerFullPage(nextFull)
+        setRowsPerLastPage(nextLast)
+        return
+      }
+
+      if (onReady && fontsReady && !readySentRef.current) {
+        readySentRef.current = true
+        onReady()
+      }
+    })
+
+    return () => {
+      cancelAnimationFrame(rafId)
     }
   }, [
     data,
@@ -557,9 +571,11 @@ export default function ReportEditor({
             addDocument={addDocument}
             deleteDocument={deleteDocument}
             readOnly={readOnly}
+            hasCourses={hasCourses}
             contentRef={index === 0 ? contentRef : undefined}
-            tableHeaderRef={index === 0 ? tableHeaderRef : undefined}
-            rowRef={index === 0 ? rowRef : undefined}
+            tableStartRef={index === 0 ? tableStartRef : undefined}
+            tableHeaderRef={index === measurementPageIndex ? tableHeaderRef : undefined}
+            rowRef={index === measurementPageIndex ? rowRef : undefined}
             tailRef={pageData.isLastPage ? tailRef : undefined}
           />
         ))}
@@ -587,7 +603,9 @@ type ReportPageProps = {
   addDocument: () => void
   deleteDocument: DeleteDocument
   readOnly: boolean
+  hasCourses: boolean
   contentRef?: RefObject<HTMLDivElement | null>
+  tableStartRef?: RefObject<HTMLDivElement | null>
   tableHeaderRef?: RefObject<HTMLTableSectionElement | null>
   rowRef?: RefObject<HTMLTableRowElement | null>
   tailRef?: RefObject<HTMLDivElement | null>
@@ -608,11 +626,15 @@ function ReportPage({
   addDocument,
   deleteDocument,
   readOnly,
+  hasCourses,
   contentRef,
+  tableStartRef,
   tableHeaderRef,
   rowRef,
   tailRef,
 }: ReportPageProps) {
+  const showCourseTable = pageCourses.length > 0 || !hasCourses
+
   return (
     <div
       className="report-page shadow-xl print:shadow-none bg-white relative flex flex-col"
@@ -624,7 +646,7 @@ function ReportPage({
     >
       <Header />
 
-      <div className="flex-1 overflow-hidden flex flex-col" ref={contentRef}>
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col" ref={contentRef}>
         {type === "first-page" && (
           <>
             <h1 className="text-center text-xl font-bold uppercase underline decoration-double decoration-1 underline-offset-4 text-blue-900 mb-6 mt-3 font-serif">
@@ -673,17 +695,21 @@ function ReportPage({
             />
 
             <SectionTitle>3. Course-by-Course Analysis</SectionTitle>
+            <div ref={tableStartRef} />
           </>
         )}
 
-        <CourseTable
-          courses={pageCourses}
-          updateCourse={updateCourse}
-          deleteCourse={deleteCourse}
-          readOnly={readOnly}
-          headerRef={tableHeaderRef}
-          rowRef={rowRef}
-        />
+        {showCourseTable && (
+          <CourseTable
+            courses={pageCourses}
+            updateCourse={updateCourse}
+            deleteCourse={deleteCourse}
+            readOnly={readOnly}
+            headerRef={tableHeaderRef}
+            rowRef={rowRef}
+            showEmptyState={!hasCourses}
+          />
+        )}
 
         {isLastPage && (
           <div className="mt-4" ref={tailRef}>
@@ -1043,6 +1069,7 @@ type CourseTableProps = {
   readOnly?: boolean
   headerRef?: RefObject<HTMLTableSectionElement | null>
   rowRef?: RefObject<HTMLTableRowElement | null>
+  showEmptyState?: boolean
 }
 
 const CourseTable = ({
@@ -1052,8 +1079,10 @@ const CourseTable = ({
   readOnly = false,
   headerRef,
   rowRef,
+  showEmptyState = true,
 }: CourseTableProps) => {
   if (!courses || courses.length === 0) {
+    if (!showEmptyState) return null
     return <div className="text-xs text-gray-400 italic p-2 text-center">No courses listed on this page.</div>
   }
 
