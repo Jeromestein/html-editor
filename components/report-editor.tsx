@@ -801,6 +801,7 @@ function ReportPage({
   }
 
   return (
+    // Single report page container with print break behavior.
     <div
       className="report-page shadow-xl print:shadow-none bg-white relative flex flex-col"
       style={{
@@ -809,9 +810,12 @@ function ReportPage({
         overflow: "hidden",
       }}
     >
+      {/* Fixed header content for each page. */}
       <Header />
 
+      {/* Main page body that holds variable-length sections. */}
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col" ref={setContentRef}>
+        {/* Applicant info and summary section on the first page only. */}
         {showApplicantInfo && (
           <>
             <h1 className="text-center text-xl font-bold uppercase underline decoration-double decoration-1 underline-offset-4 text-blue-900 mb-6 mt-3 font-serif">
@@ -851,7 +855,9 @@ function ReportPage({
           </>
         )}
 
+        {/* Credential details section title (documents and/or table). */}
         {showDocumentsHeading && <SectionTitle>2. Credential Details</SectionTitle>}
+        {/* Credential details content: document list and credential table. */}
         {(showDocumentsHeading || showCredentialTable) && (
           <CredentialDetails
             data={data.credential}
@@ -869,6 +875,7 @@ function ReportPage({
           />
         )}
 
+        {/* Course analysis section title and measurement anchor. */}
         {showCourseSection && (
           <>
             <SectionTitle>3. Course-by-Course Analysis</SectionTitle>
@@ -876,6 +883,7 @@ function ReportPage({
           </>
         )}
 
+        {/* Course table for the current page. */}
         {showCourseTable && (
           <CourseTable
             courses={pageCourses}
@@ -888,6 +896,7 @@ function ReportPage({
           />
         )}
 
+        {/* Tail content only on the last page (totals, references, signatures). */}
         {isLastPage && (
           <div className="mt-4" ref={tailRef}>
             <div className="border-t border-gray-300 pt-2 mb-4">
@@ -924,6 +933,7 @@ function ReportPage({
         )}
       </div>
 
+      {/* Fixed footer with page index and reference number. */}
       <Footer pageIndex={pageIndex} totalPages={totalPages} refNo={data.refNo} />
     </div>
   )
