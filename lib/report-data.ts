@@ -7,6 +7,13 @@ export type Course = {
   grade: string
 }
 
+export type CredentialDocument = {
+  title: string
+  issuedBy: string
+  dateIssued: string
+  certificateNo: string
+}
+
 export type SampleData = {
   refNo: string
   name: string
@@ -15,19 +22,19 @@ export type SampleData = {
   date: string
   purpose: string
   credential: {
-    native: string
-    english: string
-    institution: string
-    year: string
-    status: string
-    admissionReq: string
-    programLength: string
-    access: string
+    awardingInstitution: string
+    awardingInstitutionNative: string
+    country: string
+    admissionRequirements: string
+    program: string
+    grantsAccessTo: string
+    standardProgramLength: string
+    yearsAttended: string
+    yearOfGraduation: string
+    documents: CredentialDocument[]
   }
   equivalence: {
     summary: string
-    regionalAccreditation: string
-    major: string
     gpa: string
     totalCredits: string
   }
@@ -91,21 +98,40 @@ export const buildSampleData = (): SampleData => ({
   date: "September 5, 2024",
   purpose: "Employment",
   credential: {
-    english: "Bachelor of Science, Honors (Major in Bio-Medical Science)",
-    native: "N/A",
-    institution: "University of Guelph",
-    year: "2025",
-    status: "Public institution recognized by the Ministry of Colleges and Universities of Ontario, Canada",
-    admissionReq: "Secondary School Diploma or equivalent",
-    programLength: "4 years (2021-2025)",
-    access: "N/A",
+    awardingInstitution: "Tongji University",
+    awardingInstitutionNative: "N/A",
+    country: "China",
+    admissionRequirements: "Completion of secondary education",
+    program: "Bachelor of Engineering program in Computer Science and Technology",
+    grantsAccessTo: "Graduate Programs",
+    standardProgramLength: "Four years",
+    yearsAttended: "2017 - 2021",
+    yearOfGraduation: "2021",
+    documents: [
+      {
+        title: "Graduation Certificate",
+        issuedBy: "Tongji University, Shanghai, China",
+        dateIssued: "Month DD, YYYY",
+        certificateNo: "00000000000000000000",
+      },
+      {
+        title: "Degree Certificate",
+        issuedBy: "Tongji University, Shanghai, China",
+        dateIssued: "Month DD, YYYY",
+        certificateNo: "00000000000000000000",
+      },
+      {
+        title: "Academic Record",
+        issuedBy: "Tongji University, Shanghai, China",
+        dateIssued: "Month DD, YYYY",
+        certificateNo: "00000000000000000000",
+      },
+    ],
   },
   equivalence: {
-    summary: "Bachelor of Science degree",
-    major: "Biomedical Science",
-    regionalAccreditation: "regionally accredited institution",
-    gpa: "3.72",
-    totalCredits: "120.00",
+    summary: "Bachelor of Science degree in Computer Science and Technology",
+    gpa: "2.978",
+    totalCredits: "124.75",
   },
   courses: SAMPLE_COURSES.map((course, index) => ({
     id: index + 1,

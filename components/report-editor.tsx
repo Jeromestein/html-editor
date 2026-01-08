@@ -14,6 +14,8 @@ type EditableSection = "credential" | "equivalence"
 
 type CourseField = "year" | "name" | "level" | "credits" | "grade"
 
+type DocumentField = keyof SampleData["credential"]["documents"][number]
+
 type UpdateField = <T extends EditableSection>(
   section: T,
   field: keyof SampleData[T],
@@ -23,6 +25,10 @@ type UpdateField = <T extends EditableSection>(
 type UpdateDataField = (field: TopLevelField, value: string) => void
 
 type UpdateCourse = (id: number, field: CourseField, value: string) => void
+
+type UpdateDocument = (index: number, field: DocumentField, value: string) => void
+
+type DeleteDocument = (index: number) => void
 
 // -----------------------------------------------------------------------------
 // 2. Pagination logic
@@ -129,18 +135,29 @@ const EditableTextarea = ({
   className = "",
   rows = 3,
   readOnly = false,
-}: EditableTextareaProps) => (
-  <textarea
-    value={value}
-    onChange={(event) => {
-      if (readOnly) return
-      onChange(event.target.value)
-    }}
-    rows={rows}
-    readOnly={readOnly}
-    className={`bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none focus:bg-blue-50 transition-colors w-full p-1 resize-none ${className}`}
-  />
-)
+}: EditableTextareaProps) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useLayoutEffect(() => {
+    if (!textareaRef.current) return
+    textareaRef.current.style.height = "auto"
+    textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+  })
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={(event) => {
+        if (readOnly) return
+        onChange(event.target.value)
+      }}
+      rows={rows}
+      readOnly={readOnly}
+      className={`bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none focus:bg-blue-50 transition-colors w-full p-1 resize-none ${className}`}
+    />
+  )
+}
 
 // -----------------------------------------------------------------------------
 // 4. Main editor
@@ -350,6 +367,30 @@ export default function ReportEditor({
     }))
   }
 
+  const updateDocument: UpdateDocument = (index, field, value) => {
+    if (readOnly) return
+    setData((prev) => ({
+      ...prev,
+      credential: {
+        ...prev.credential,
+        documents: prev.credential.documents.map((document, docIndex) =>
+          docIndex === index ? { ...document, [field]: value } : document
+        ),
+      },
+    }))
+  }
+
+  const deleteDocument: DeleteDocument = (index) => {
+    if (readOnly) return
+    setData((prev) => ({
+      ...prev,
+      credential: {
+        ...prev.credential,
+        documents: prev.credential.documents.filter((_, docIndex) => docIndex !== index),
+      },
+    }))
+  }
+
   const deleteCourse = (id: number) => {
     if (readOnly) return
     setData((prev) => ({
@@ -372,6 +413,25 @@ export default function ReportEditor({
     setData((prev) => ({
       ...prev,
       courses: [...prev.courses, newCourse],
+    }))
+  }
+
+  const addDocument = () => {
+    if (readOnly) return
+    setData((prev) => ({
+      ...prev,
+      credential: {
+        ...prev.credential,
+        documents: [
+          ...prev.credential.documents,
+          {
+            title: "Document Title",
+            issuedBy: "",
+            dateIssued: "",
+            certificateNo: "N/A",
+          },
+        ],
+      },
     }))
   }
 
@@ -493,6 +553,9 @@ export default function ReportEditor({
             updateDataField={updateDataField}
             updateCourse={updateCourse}
             deleteCourse={deleteCourse}
+            updateDocument={updateDocument}
+            addDocument={addDocument}
+            deleteDocument={deleteDocument}
             readOnly={readOnly}
             contentRef={index === 0 ? contentRef : undefined}
             tableHeaderRef={index === 0 ? tableHeaderRef : undefined}
@@ -520,6 +583,9 @@ type ReportPageProps = {
   updateDataField: UpdateDataField
   updateCourse: UpdateCourse
   deleteCourse: (id: number) => void
+  updateDocument: UpdateDocument
+  addDocument: () => void
+  deleteDocument: DeleteDocument
   readOnly: boolean
   contentRef?: RefObject<HTMLDivElement | null>
   tableHeaderRef?: RefObject<HTMLTableSectionElement | null>
@@ -538,6 +604,9 @@ function ReportPage({
   updateDataField,
   updateCourse,
   deleteCourse,
+  updateDocument,
+  addDocument,
+  deleteDocument,
   readOnly,
   contentRef,
   tableHeaderRef,
@@ -565,32 +634,43 @@ function ReportPage({
             <ApplicantInfo data={data} updateDataField={updateDataField} readOnly={readOnly} />
 
             <SectionTitle>1. U.S. Equivalence Summary</SectionTitle>
-            <div className="mb-6 bg-blue-50 p-2 border-l-4 border-blue-600 print:bg-transparent print:border-gray-300 print:border group hover:bg-blue-100 transition-colors">
-              <EditableTextarea
-                value={data.equivalence.summary}
-                onChange={(value) => updateField("equivalence", "summary", value)}
-                className="font-bold font-serif text-lg leading-snug bg-transparent"
-                rows={2}
-                readOnly={readOnly}
-              />
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                <EditableInput
-                  value={data.equivalence.major}
-                  onChange={(value) => updateField("equivalence", "major", value)}
-                  className="font-serif text-sm font-bold"
+            <div className="mb-6 text-xs space-y-1">
+              <SummaryRow label="U.S. Equivalency">
+                <EditableTextarea
+                  value={data.equivalence.summary}
+                  onChange={(value) => updateField("equivalence", "summary", value)}
+                  className="font-semibold leading-snug"
+                  rows={1}
                   readOnly={readOnly}
                 />
+              </SummaryRow>
+              <SummaryRow label="U.S. Credits">
                 <EditableInput
-                  value={data.equivalence.regionalAccreditation}
-                  onChange={(value) => updateField("equivalence", "regionalAccreditation", value)}
-                  className="font-serif text-sm"
+                  value={data.equivalence.totalCredits}
+                  onChange={(value) => updateField("equivalence", "totalCredits", value)}
+                  className="font-semibold"
                   readOnly={readOnly}
                 />
-              </div>
+              </SummaryRow>
+              <SummaryRow label="U.S. GPA">
+                <EditableInput
+                  value={data.equivalence.gpa}
+                  onChange={(value) => updateField("equivalence", "gpa", value)}
+                  className="font-semibold"
+                  readOnly={readOnly}
+                />
+              </SummaryRow>
             </div>
 
             <SectionTitle>2. Credential Details</SectionTitle>
-            <CredentialDetails data={data.credential} updateField={updateField} readOnly={readOnly} />
+            <CredentialDetails
+              data={data.credential}
+              updateField={updateField}
+              updateDocument={updateDocument}
+              addDocument={addDocument}
+              deleteDocument={deleteDocument}
+              readOnly={readOnly}
+            />
 
             <SectionTitle>3. Course-by-Course Analysis</SectionTitle>
           </>
@@ -762,77 +842,198 @@ const InfoRow = ({ label, children, labelClassName = "" }: InfoRowProps) => (
   </div>
 )
 
-type CredentialDetailsProps = {
-  data: SampleData["credential"]
-  updateField: UpdateField
-  readOnly?: boolean
-}
-
-const CredentialDetails = ({ data, updateField, readOnly = false }: CredentialDetailsProps) => (
-  <table className="w-full text-xs border-collapse mb-4 table-fixed">
-    <tbody>
-      <Tr label="Credential">
-        <EditableInput
-          value={data.english}
-          onChange={(value) => updateField("credential", "english", value)}
-          className="font-bold"
-          placeholder="Credential English Name"
-          readOnly={readOnly}
-        />
-        <EditableInput
-          value={data.native}
-          onChange={(value) => updateField("credential", "native", value)}
-          className="text-gray-500 italic"
-          placeholder="Credential Native Name"
-          readOnly={readOnly}
-        />
-      </Tr>
-      <Tr label="Institution">
-        <EditableInput
-          value={data.institution}
-          onChange={(value) => updateField("credential", "institution", value)}
-          className="font-bold"
-          readOnly={readOnly}
-        />
-      </Tr>
-      <Tr label="Status">
-        <EditableInput
-          value={data.status}
-          onChange={(value) => updateField("credential", "status", value)}
-          readOnly={readOnly}
-        />
-      </Tr>
-      <Tr label="Length">
-        <div className="flex gap-2">
-          <EditableInput
-            value={data.programLength}
-            onChange={(value) => updateField("credential", "programLength", value)}
-            readOnly={readOnly}
-          />
-          <span className="text-gray-400">|</span>
-          <EditableInput
-            value={data.year}
-            onChange={(value) => updateField("credential", "year", value)}
-            placeholder="Year"
-            className="w-20"
-            readOnly={readOnly}
-          />
-        </div>
-      </Tr>
-    </tbody>
-  </table>
-)
-
-type TrProps = {
+type SummaryRowProps = {
   label: string
   children: ReactNode
 }
 
-const Tr = ({ label, children }: TrProps) => (
+const SummaryRow = ({ label, children }: SummaryRowProps) => (
+  <div className="grid grid-cols-[9.5rem_1fr] items-start gap-2">
+    <span className="font-bold text-gray-600">{label}:</span>
+    <div>{children}</div>
+  </div>
+)
+
+type DetailRowProps = {
+  label: string
+  children: ReactNode
+}
+
+const DetailRow = ({ label, children }: DetailRowProps) => (
   <tr>
-    <td className="p-1 w-24 align-top font-bold text-gray-500 border-b border-gray-100">{label}</td>
-    <td className="p-1 align-top border-b border-gray-100">{children}</td>
+    <td className="py-1 pr-2 align-top font-semibold text-gray-600 w-[18rem] border-b border-gray-200">
+      {label}:
+    </td>
+    <td className="py-1 align-top border-b border-gray-200">{children}</td>
   </tr>
+)
+
+type DocumentFieldRowProps = {
+  label: string
+  children: ReactNode
+}
+
+const DocumentFieldRow = ({ label, children }: DocumentFieldRowProps) => (
+  <div className="grid grid-cols-[6.5rem_1fr] items-start gap-2">
+    <span className="font-semibold text-gray-600">{label}:</span>
+    <div>{children}</div>
+  </div>
+)
+
+type CredentialDetailsProps = {
+  data: SampleData["credential"]
+  updateField: UpdateField
+  updateDocument: UpdateDocument
+  addDocument: () => void
+  deleteDocument: DeleteDocument
+  readOnly?: boolean
+}
+
+const CredentialDetails = ({
+  data,
+  updateField,
+  updateDocument,
+  addDocument,
+  deleteDocument,
+  readOnly = false,
+}: CredentialDetailsProps) => (
+  <div className="text-xs">
+    <table className="w-full text-xs border-collapse mb-3 table-fixed">
+      <tbody>
+        <DetailRow label="Name of Awarding Institution">
+          <EditableInput
+            value={data.awardingInstitution}
+            onChange={(value) => updateField("credential", "awardingInstitution", value)}
+            className="font-semibold"
+            readOnly={readOnly}
+          />
+        </DetailRow>
+        <DetailRow label="Name of Awarding Institution in Native Language (Chinese Simplified)">
+          <EditableInput
+            value={data.awardingInstitutionNative}
+            onChange={(value) => updateField("credential", "awardingInstitutionNative", value)}
+            className="text-gray-600"
+            readOnly={readOnly}
+          />
+        </DetailRow>
+        <DetailRow label="Country">
+          <EditableInput
+            value={data.country}
+            onChange={(value) => updateField("credential", "country", value)}
+            readOnly={readOnly}
+          />
+        </DetailRow>
+        <DetailRow label="Admission Requirements">
+          <EditableTextarea
+            value={data.admissionRequirements}
+            onChange={(value) => updateField("credential", "admissionRequirements", value)}
+            rows={1}
+            className="leading-snug"
+            readOnly={readOnly}
+          />
+        </DetailRow>
+        <DetailRow label="Program">
+          <EditableTextarea
+            value={data.program}
+            onChange={(value) => updateField("credential", "program", value)}
+            rows={1}
+            className="leading-snug"
+            readOnly={readOnly}
+          />
+        </DetailRow>
+        <DetailRow label="Grants Access to">
+          <EditableInput
+            value={data.grantsAccessTo}
+            onChange={(value) => updateField("credential", "grantsAccessTo", value)}
+            readOnly={readOnly}
+          />
+        </DetailRow>
+        <DetailRow label="Standard Program Length">
+          <EditableInput
+            value={data.standardProgramLength}
+            onChange={(value) => updateField("credential", "standardProgramLength", value)}
+            readOnly={readOnly}
+          />
+        </DetailRow>
+        <DetailRow label="Years Attended">
+          <EditableInput
+            value={data.yearsAttended}
+            onChange={(value) => updateField("credential", "yearsAttended", value)}
+            readOnly={readOnly}
+          />
+        </DetailRow>
+        <DetailRow label="Year of Graduation">
+          <EditableInput
+            value={data.yearOfGraduation}
+            onChange={(value) => updateField("credential", "yearOfGraduation", value)}
+            readOnly={readOnly}
+          />
+        </DetailRow>
+      </tbody>
+    </table>
+
+    <div className="border-t border-gray-300 pt-2">
+      <div className="text-[10px] font-semibold text-gray-700 mb-1">
+        This evaluation is based on the following documents electronically submitted by the applicant:
+      </div>
+      <ul className="list-disc pl-4 space-y-2">
+        {data.documents.map((document, index) => (
+          <li key={`${document.title}-${index}`} className={`relative ${readOnly ? "" : "pr-5"}`}>
+            <EditableInput
+              value={document.title}
+              onChange={(value) => updateDocument(index, "title", value)}
+              className="font-semibold"
+              readOnly={readOnly}
+            />
+            <div className="mt-0.5 space-y-0.5">
+              <DocumentFieldRow label="Issued By">
+                <EditableTextarea
+                  value={document.issuedBy}
+                  onChange={(value) => updateDocument(index, "issuedBy", value)}
+                  rows={1}
+                  className="leading-snug"
+                  readOnly={readOnly}
+                />
+              </DocumentFieldRow>
+              <DocumentFieldRow label="Date of Issue">
+                <EditableInput
+                  value={document.dateIssued}
+                  onChange={(value) => updateDocument(index, "dateIssued", value)}
+                  readOnly={readOnly}
+                />
+              </DocumentFieldRow>
+              <DocumentFieldRow label="Certificate No.">
+                <EditableInput
+                  value={document.certificateNo}
+                  onChange={(value) => updateDocument(index, "certificateNo", value)}
+                  readOnly={readOnly}
+                />
+              </DocumentFieldRow>
+            </div>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => deleteDocument(index)}
+                className="no-print absolute right-0 top-0 text-gray-300 hover:text-red-500 transition-colors"
+                title="Remove Document"
+              >
+                <Trash2 size={12} />
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={addDocument}
+          className="no-print mt-2 flex items-center gap-1 text-[10px] text-blue-700 hover:text-blue-900 transition-colors"
+        >
+          <Plus size={12} /> Add Document
+        </button>
+      )}
+    </div>
+  </div>
 )
 
 type CourseTableProps = {
