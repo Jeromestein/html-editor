@@ -16,6 +16,8 @@ type CourseField = "year" | "name" | "level" | "credits" | "grade"
 
 type DocumentField = keyof SampleData["credential"]["documents"][number]
 
+type DocumentItem = SampleData["credential"]["documents"][number]
+
 type UpdateField = <T extends EditableSection>(
   section: T,
   field: keyof SampleData[T],
@@ -38,8 +40,12 @@ const DEFAULT_ROWS_PER_FIRST_PAGE = 14
 const DEFAULT_ROWS_PER_FULL_PAGE = 30
 
 type PageData = {
-  type: "first-page" | "course-continuation"
+  type: "first-page" | "document-page" | "course-continuation"
   courses: Course[]
+  documentIndices: number[]
+  documentTitle?: string
+  showCourseTitle: boolean
+  showCourseTable: boolean
   isLastPage: boolean
 }
 
@@ -50,8 +56,14 @@ type PaginationCounts = {
   last: number
 }
 
-function paginateCourses(courses: Course[], counts: PaginationCounts): PageData[] {
-  const pages: PageData[] = []
+type CoursePageData = {
+  type: "first-page" | "course-continuation"
+  courses: Course[]
+  isLastPage: boolean
+}
+
+function paginateCourses(courses: Course[], counts: PaginationCounts): CoursePageData[] {
+  const pages: CoursePageData[] = []
   const remainingCourses = [...courses]
   const firstCount = Math.max(0, counts.first)
   const firstWithTailCount = Math.max(0, counts.firstWithTail)
@@ -90,6 +102,37 @@ function paginateCourses(courses: Course[], counts: PaginationCounts): PageData[
       courses: remainingCourses.splice(0),
       isLastPage: true,
     })
+  }
+
+  return pages
+}
+
+function paginateDocuments(
+  documentIndices: number[],
+  itemHeights: number[],
+  baseHeight: number,
+  availableHeight: number
+): number[][] {
+  if (documentIndices.length === 0) return []
+  const pages: number[][] = []
+  const capacity = Math.max(0, availableHeight - baseHeight)
+  let remaining = capacity
+  let current: number[] = []
+
+  documentIndices.forEach((docIndex, orderIndex) => {
+    const height = itemHeights[orderIndex] ?? 0
+    if (current.length > 0 && height > remaining) {
+      pages.push(current)
+      current = []
+      remaining = capacity
+    }
+
+    current.push(docIndex)
+    remaining = remaining - height
+  })
+
+  if (current.length > 0) {
+    pages.push(current)
   }
 
   return pages
@@ -182,15 +225,26 @@ export default function ReportEditor({
   const [rowsPerFirstPageWithTail, setRowsPerFirstPageWithTail] = useState(DEFAULT_ROWS_PER_FIRST_PAGE)
   const [rowsPerFullPage, setRowsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
   const [rowsPerLastPage, setRowsPerLastPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
+  const [documentsOnFirstPage, setDocumentsOnFirstPage] = useState(true)
+  const [documentPages, setDocumentPages] = useState<number[][]>([])
   const contentRef = useRef<HTMLDivElement>(null)
+  const courseContentRef = useRef<HTMLDivElement>(null)
+  const documentContentRef = useRef<HTMLDivElement>(null)
   const tableStartRef = useRef<HTMLDivElement>(null)
   const tableHeaderRef = useRef<HTMLTableSectionElement>(null)
   const rowRef = useRef<HTMLTableRowElement>(null)
   const tailRef = useRef<HTMLDivElement>(null)
+  const documentStartRef = useRef<HTMLDivElement>(null)
+  const documentSectionRef = useRef<HTMLDivElement>(null)
+  const documentListRef = useRef<HTMLUListElement>(null)
+  const documentItemRefs = useRef<Array<HTMLLIElement | null>>([])
   const readySentRef = useRef(false)
   const [fontsReady, setFontsReady] = useState(false)
+  const getDocumentItemRef = (index: number) => (node: HTMLLIElement | null) => {
+    documentItemRefs.current[index] = node
+  }
 
-  const pages = useMemo(
+  const coursePages = useMemo(
     () =>
       paginateCourses(data.courses, {
         first: rowsPerFirstPage,
@@ -201,11 +255,85 @@ export default function ReportEditor({
     [data.courses, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage, rowsPerLastPage]
   )
 
-  const firstCoursePageIndex = useMemo(
-    () => pages.findIndex((page) => page.courses.length > 0),
-    [pages]
+  const allDocumentIndices = useMemo(
+    () => data.credential.documents.map((_, index) => index),
+    [data.credential.documents]
   )
+
+  const normalizedDocumentPages = useMemo(() => {
+    if (data.credential.documents.length === 0) return []
+    if (documentsOnFirstPage) return [allDocumentIndices]
+    return documentPages.length > 0 ? documentPages : [allDocumentIndices]
+  }, [allDocumentIndices, data.credential.documents.length, documentPages, documentsOnFirstPage])
+
+  const pages = useMemo(() => {
+    const nextPages: PageData[] = []
+
+    if (documentsOnFirstPage) {
+      const firstCoursePage = coursePages[0] ?? { courses: [], isLastPage: true, type: "first-page" }
+      nextPages.push({
+        type: "first-page",
+        courses: firstCoursePage.courses,
+        documentIndices: allDocumentIndices,
+        documentTitle: "Documents",
+        showCourseTitle: true,
+        showCourseTable: true,
+        isLastPage: false,
+      })
+
+      coursePages.slice(1).forEach((page) => {
+        nextPages.push({
+          type: "course-continuation",
+          courses: page.courses,
+          documentIndices: [],
+          showCourseTitle: false,
+          showCourseTable: true,
+          isLastPage: false,
+        })
+      })
+    } else {
+      nextPages.push({
+        type: "first-page",
+        courses: [],
+        documentIndices: [],
+        showCourseTitle: false,
+        showCourseTable: false,
+        isLastPage: false,
+      })
+
+      normalizedDocumentPages.forEach((documentPage, index) => {
+        nextPages.push({
+          type: "document-page",
+          courses: [],
+          documentIndices: documentPage,
+          documentTitle: index === 0 ? "Documents" : "Documents (continued)",
+          showCourseTitle: false,
+          showCourseTable: false,
+          isLastPage: false,
+        })
+      })
+
+      coursePages.forEach((page, index) => {
+        nextPages.push({
+          type: "course-continuation",
+          courses: page.courses,
+          documentIndices: [],
+          showCourseTitle: index === 0,
+          showCourseTable: true,
+          isLastPage: false,
+        })
+      })
+    }
+
+    return nextPages.map((page, index) => ({
+      ...page,
+      isLastPage: index === nextPages.length - 1,
+    }))
+  }, [coursePages, data.credential.documents, documentsOnFirstPage, normalizedDocumentPages, allDocumentIndices])
+
+  const firstCoursePageIndex = useMemo(() => pages.findIndex((page) => page.showCourseTitle), [pages])
   const measurementPageIndex = firstCoursePageIndex === -1 ? 0 : firstCoursePageIndex
+  const firstDocumentPageIndex = useMemo(() => pages.findIndex((page) => page.documentIndices.length > 0), [pages])
   const hasCourses = data.courses.length > 0
 
   useEffect(() => {
@@ -240,61 +368,137 @@ export default function ReportEditor({
 
   useLayoutEffect(() => {
     const contentEl = contentRef.current
-    const startEl = tableStartRef.current
-    const headerEl = tableHeaderRef.current
-    const rowEl = rowRef.current
-    if (!contentEl || !startEl || !headerEl || !rowEl) return
+    if (!contentEl) return
 
     let rafId = requestAnimationFrame(() => {
-      const contentRect = contentEl.getBoundingClientRect()
-      const startRect = startEl.getBoundingClientRect()
-      const headerRect = headerEl.getBoundingClientRect()
-      const rowRect = rowEl.getBoundingClientRect()
-
-      if (contentRect.height <= 0 || rowRect.height <= 0) return
-
-      const headerOffset = Math.max(0, startRect.top - contentRect.top)
       const safetyPadding = 4
-      let tailHeight = 0
+      const documentCount = data.credential.documents.length
 
-      if (tailRef.current) {
-        const tailRect = tailRef.current.getBoundingClientRect()
-        const tailStyle = window.getComputedStyle(tailRef.current)
-        const marginTop = Number.parseFloat(tailStyle.marginTop) || 0
-        const marginBottom = Number.parseFloat(tailStyle.marginBottom) || 0
-        tailHeight = tailRect.height + marginTop + marginBottom
-      }
+      if (documentCount > 0 && documentStartRef.current && documentSectionRef.current && documentListRef.current) {
+        const documentStartRect = documentStartRef.current.getBoundingClientRect()
+        const contentRect = contentEl.getBoundingClientRect()
+        const documentStartOffset = Math.max(0, documentStartRect.top - contentRect.top)
 
-      const availableFirst = contentRect.height - headerOffset - headerRect.height - safetyPadding
-      const availableFirstWithTail = availableFirst - tailHeight
-      const availableFull = contentRect.height - headerRect.height - safetyPadding
-      const availableLast = availableFull - tailHeight
+        const itemHeights = data.credential.documents.map((_, index) => {
+          const item = documentItemRefs.current[index]
+          if (!item) return 0
+          const rect = item.getBoundingClientRect()
+          const style = window.getComputedStyle(item)
+          const marginTop = Number.parseFloat(style.marginTop) || 0
+          const marginBottom = Number.parseFloat(style.marginBottom) || 0
+          return rect.height + marginTop + marginBottom
+        })
 
-      let nextFirst = Math.max(0, Math.floor(availableFirst / rowRect.height))
-      let nextFirstWithTail = Math.max(0, Math.floor(availableFirstWithTail / rowRect.height))
-      const nextFull = Math.max(1, Math.floor(availableFull / rowRect.height))
-      const nextLast = Math.max(1, Math.floor(availableLast / rowRect.height))
+        if (itemHeights.some((height) => height <= 0)) {
+          return
+        }
 
-      const overflow = contentEl.scrollHeight - contentRect.height
-      if (overflow > 0) {
-        const overflowRows = Math.ceil(overflow / rowRect.height)
-        nextFirst = Math.max(0, nextFirst - overflowRows)
-        nextFirstWithTail = Math.max(0, nextFirstWithTail - overflowRows)
-      }
+        const sectionRect = documentSectionRef.current.getBoundingClientRect()
+        const sectionItems = Array.from(documentSectionRef.current.querySelectorAll("[data-document-item]"))
+        const sectionItemsHeight = sectionItems.reduce((total, item) => {
+          const rect = item.getBoundingClientRect()
+          const style = window.getComputedStyle(item)
+          const marginTop = Number.parseFloat(style.marginTop) || 0
+          const marginBottom = Number.parseFloat(style.marginBottom) || 0
+          return total + rect.height + marginTop + marginBottom
+        }, 0)
 
-      const changed =
-        nextFirst !== rowsPerFirstPage ||
-        nextFirstWithTail !== rowsPerFirstPageWithTail ||
-        nextFull !== rowsPerFullPage ||
-        nextLast !== rowsPerLastPage
+        const baseHeight = Math.max(0, sectionRect.height - sectionItemsHeight)
+        const totalDocumentHeight = baseHeight + itemHeights.reduce((sum, height) => sum + height, 0)
+        const availableFirst = contentRect.height - documentStartOffset - safetyPadding
+        const nextDocumentsOnFirstPage = totalDocumentHeight <= availableFirst
 
-      if (changed) {
+        if (nextDocumentsOnFirstPage !== documentsOnFirstPage) {
+          readySentRef.current = false
+          setDocumentsOnFirstPage(nextDocumentsOnFirstPage)
+          return
+        }
+
+        const documentContentEl = documentsOnFirstPage ? contentEl : documentContentRef.current
+        if (documentContentEl) {
+          const documentContentRect = documentContentEl.getBoundingClientRect()
+          const sectionOffset = Math.max(0, sectionRect.top - documentContentRect.top)
+          const availableDocHeight = documentContentRect.height - sectionOffset - safetyPadding
+          const nextDocumentPages = documentsOnFirstPage
+            ? [allDocumentIndices]
+            : paginateDocuments(allDocumentIndices, itemHeights, baseHeight, availableDocHeight)
+          const pagesChanged =
+            nextDocumentPages.length !== documentPages.length ||
+            nextDocumentPages.some((page, index) =>
+              page.length !== documentPages[index]?.length ||
+              page.some((docIndex, docPosition) => docIndex !== documentPages[index]?.[docPosition])
+            )
+
+          if (pagesChanged) {
+            readySentRef.current = false
+            setDocumentPages(nextDocumentPages)
+            return
+          }
+        }
+      } else if (documentCount === 0 && documentPages.length > 0) {
         readySentRef.current = false
-        setRowsPerFirstPage(nextFirst)
-        setRowsPerFirstPageWithTail(nextFirstWithTail)
-        setRowsPerFullPage(nextFull)
-        setRowsPerLastPage(nextLast)
+        setDocumentPages([])
         return
+      } else if (documentCount === 0 && !documentsOnFirstPage) {
+        readySentRef.current = false
+        setDocumentsOnFirstPage(true)
+        return
+      }
+
+      const startEl = tableStartRef.current
+      const headerEl = tableHeaderRef.current
+      const rowEl = rowRef.current
+      const courseContentEl = courseContentRef.current ?? contentEl
+      if (startEl && headerEl && rowEl && courseContentEl) {
+        const contentRect = courseContentEl.getBoundingClientRect()
+        const startRect = startEl.getBoundingClientRect()
+        const headerRect = headerEl.getBoundingClientRect()
+        const rowRect = rowEl.getBoundingClientRect()
+
+        if (contentRect.height <= 0 || rowRect.height <= 0) return
+
+        const headerOffset = Math.max(0, startRect.top - contentRect.top)
+        let tailHeight = 0
+
+        if (tailRef.current) {
+          const tailRect = tailRef.current.getBoundingClientRect()
+          const tailStyle = window.getComputedStyle(tailRef.current)
+          const marginTop = Number.parseFloat(tailStyle.marginTop) || 0
+          const marginBottom = Number.parseFloat(tailStyle.marginBottom) || 0
+          tailHeight = tailRect.height + marginTop + marginBottom
+        }
+
+        const availableFirst = contentRect.height - headerOffset - headerRect.height - safetyPadding
+        const availableFirstWithTail = availableFirst - tailHeight
+        const availableFull = contentRect.height - headerRect.height - safetyPadding
+        const availableLast = availableFull - tailHeight
+
+        let nextFirst = Math.max(0, Math.floor(availableFirst / rowRect.height))
+        let nextFirstWithTail = Math.max(0, Math.floor(availableFirstWithTail / rowRect.height))
+        const nextFull = Math.max(1, Math.floor(availableFull / rowRect.height))
+        const nextLast = Math.max(1, Math.floor(availableLast / rowRect.height))
+
+        const overflow = courseContentEl.scrollHeight - contentRect.height
+        if (overflow > 0) {
+          const overflowRows = Math.ceil(overflow / rowRect.height)
+          nextFirst = Math.max(0, nextFirst - overflowRows)
+          nextFirstWithTail = Math.max(0, nextFirstWithTail - overflowRows)
+        }
+
+        const changed =
+          nextFirst !== rowsPerFirstPage ||
+          nextFirstWithTail !== rowsPerFirstPageWithTail ||
+          nextFull !== rowsPerFullPage ||
+          nextLast !== rowsPerLastPage
+
+        if (changed) {
+          readySentRef.current = false
+          setRowsPerFirstPage(nextFirst)
+          setRowsPerFirstPageWithTail(nextFirstWithTail)
+          setRowsPerFullPage(nextFull)
+          setRowsPerLastPage(nextLast)
+          return
+        }
       }
 
       if (onReady && fontsReady && !readySentRef.current) {
@@ -308,6 +512,9 @@ export default function ReportEditor({
     }
   }, [
     data,
+    allDocumentIndices,
+    documentPages,
+    documentsOnFirstPage,
     fontsReady,
     onReady,
     rowsPerFirstPage,
@@ -562,6 +769,10 @@ export default function ReportEditor({
             type={pageData.type}
             data={data}
             pageCourses={pageData.courses}
+            pageDocumentIndices={pageData.documentIndices}
+            documentTitle={pageData.documentTitle}
+            showCourseTitle={pageData.showCourseTitle}
+            showCourseTable={pageData.showCourseTable}
             isLastPage={pageData.isLastPage}
             updateField={updateField}
             updateDataField={updateDataField}
@@ -573,7 +784,13 @@ export default function ReportEditor({
             readOnly={readOnly}
             hasCourses={hasCourses}
             contentRef={index === 0 ? contentRef : undefined}
-            tableStartRef={index === 0 ? tableStartRef : undefined}
+            courseContentRef={index === firstCoursePageIndex ? courseContentRef : undefined}
+            documentContentRef={index === firstDocumentPageIndex ? documentContentRef : undefined}
+            documentStartRef={index === 0 ? documentStartRef : undefined}
+            documentSectionRef={index === firstDocumentPageIndex ? documentSectionRef : undefined}
+            documentListRef={index === firstDocumentPageIndex ? documentListRef : undefined}
+            documentItemRef={getDocumentItemRef}
+            tableStartRef={index === firstCoursePageIndex ? tableStartRef : undefined}
             tableHeaderRef={index === measurementPageIndex ? tableHeaderRef : undefined}
             rowRef={index === measurementPageIndex ? rowRef : undefined}
             tailRef={pageData.isLastPage ? tailRef : undefined}
@@ -594,6 +811,10 @@ type ReportPageProps = {
   type: PageData["type"]
   data: SampleData
   pageCourses: Course[]
+  pageDocumentIndices: number[]
+  documentTitle?: string
+  showCourseTitle: boolean
+  showCourseTable: boolean
   isLastPage: boolean
   updateField: UpdateField
   updateDataField: UpdateDataField
@@ -605,6 +826,12 @@ type ReportPageProps = {
   readOnly: boolean
   hasCourses: boolean
   contentRef?: RefObject<HTMLDivElement | null>
+  courseContentRef?: RefObject<HTMLDivElement | null>
+  documentContentRef?: RefObject<HTMLDivElement | null>
+  documentStartRef?: RefObject<HTMLDivElement | null>
+  documentSectionRef?: RefObject<HTMLDivElement | null>
+  documentListRef?: RefObject<HTMLUListElement | null>
+  documentItemRef?: (index: number) => (node: HTMLLIElement | null) => void
   tableStartRef?: RefObject<HTMLDivElement | null>
   tableHeaderRef?: RefObject<HTMLTableSectionElement | null>
   rowRef?: RefObject<HTMLTableRowElement | null>
@@ -617,6 +844,10 @@ function ReportPage({
   type,
   data,
   pageCourses,
+  pageDocumentIndices,
+  documentTitle,
+  showCourseTitle,
+  showCourseTable,
   isLastPage,
   updateField,
   updateDataField,
@@ -628,12 +859,19 @@ function ReportPage({
   readOnly,
   hasCourses,
   contentRef,
+  courseContentRef,
+  documentContentRef,
+  documentStartRef,
+  documentSectionRef,
+  documentListRef,
+  documentItemRef,
   tableStartRef,
   tableHeaderRef,
   rowRef,
   tailRef,
 }: ReportPageProps) {
-  const showCourseTable = pageCourses.length > 0 || !hasCourses
+  const shouldShowCourseTable = showCourseTable && (pageCourses.length > 0 || !hasCourses)
+  const pageDocuments = pageDocumentIndices.map((index) => data.credential.documents[index])
 
   return (
     <div
@@ -646,7 +884,10 @@ function ReportPage({
     >
       <Header />
 
-      <div className="flex-1 min-h-0 overflow-hidden flex flex-col" ref={contentRef}>
+      <div
+        className="flex-1 min-h-0 overflow-hidden flex flex-col"
+        ref={contentRef ?? documentContentRef ?? courseContentRef}
+      >
         {type === "first-page" && (
           <>
             <h1 className="text-center text-xl font-bold uppercase underline decoration-double decoration-1 underline-offset-4 text-blue-900 mb-6 mt-3 font-serif">
@@ -685,21 +926,60 @@ function ReportPage({
             </div>
 
             <SectionTitle>2. Credential Details</SectionTitle>
-            <CredentialDetails
-              data={data.credential}
-              updateField={updateField}
-              updateDocument={updateDocument}
-              addDocument={addDocument}
-              deleteDocument={deleteDocument}
-              readOnly={readOnly}
-            />
+            <CredentialDetailsTable data={data.credential} updateField={updateField} readOnly={readOnly} />
+            <div ref={documentStartRef} />
+            {pageDocuments.length > 0 && (
+              <DocumentsSection
+                documents={pageDocuments}
+                documentIndices={pageDocumentIndices}
+                updateDocument={updateDocument}
+                addDocument={addDocument}
+                deleteDocument={deleteDocument}
+                readOnly={readOnly}
+                title={documentTitle}
+                sectionRef={documentSectionRef}
+                listRef={documentListRef}
+                itemRef={documentItemRef}
+              />
+            )}
 
+            {showCourseTitle && (
+              <>
+                <SectionTitle>3. Course-by-Course Analysis</SectionTitle>
+                <div ref={tableStartRef} />
+              </>
+            )}
+          </>
+        )}
+
+        {type === "document-page" && (
+          <>
+            <SectionTitle>2. Credential Details (continued)</SectionTitle>
+            {pageDocuments.length > 0 && (
+              <DocumentsSection
+                documents={pageDocuments}
+                documentIndices={pageDocumentIndices}
+                updateDocument={updateDocument}
+                addDocument={addDocument}
+                deleteDocument={deleteDocument}
+                readOnly={readOnly}
+                title={documentTitle}
+                sectionRef={documentSectionRef}
+                listRef={documentListRef}
+                itemRef={documentItemRef}
+              />
+            )}
+          </>
+        )}
+
+        {type === "course-continuation" && showCourseTitle && (
+          <>
             <SectionTitle>3. Course-by-Course Analysis</SectionTitle>
             <div ref={tableStartRef} />
           </>
         )}
 
-        {showCourseTable && (
+        {shouldShowCourseTable && (
           <CourseTable
             courses={pageCourses}
             updateCourse={updateCourse}
@@ -909,105 +1189,124 @@ const DocumentFieldRow = ({ label, children }: DocumentFieldRowProps) => (
 type CredentialDetailsProps = {
   data: SampleData["credential"]
   updateField: UpdateField
+  readOnly?: boolean
+}
+
+const CredentialDetailsTable = ({ data, updateField, readOnly = false }: CredentialDetailsProps) => (
+  <table className="w-full text-xs border-collapse mb-3 table-fixed">
+    <tbody>
+      <DetailRow label="Name of Awarding Institution">
+        <EditableInput
+          value={data.awardingInstitution}
+          onChange={(value) => updateField("credential", "awardingInstitution", value)}
+          className="font-semibold"
+          readOnly={readOnly}
+        />
+      </DetailRow>
+      <DetailRow label="Name of Awarding Institution in Native Language (Chinese Simplified)">
+        <EditableInput
+          value={data.awardingInstitutionNative}
+          onChange={(value) => updateField("credential", "awardingInstitutionNative", value)}
+          className="text-gray-600"
+          readOnly={readOnly}
+        />
+      </DetailRow>
+      <DetailRow label="Country">
+        <EditableInput value={data.country} onChange={(value) => updateField("credential", "country", value)} readOnly={readOnly} />
+      </DetailRow>
+      <DetailRow label="Admission Requirements">
+        <EditableTextarea
+          value={data.admissionRequirements}
+          onChange={(value) => updateField("credential", "admissionRequirements", value)}
+          rows={1}
+          className="leading-snug"
+          readOnly={readOnly}
+        />
+      </DetailRow>
+      <DetailRow label="Program">
+        <EditableTextarea
+          value={data.program}
+          onChange={(value) => updateField("credential", "program", value)}
+          rows={1}
+          className="leading-snug"
+          readOnly={readOnly}
+        />
+      </DetailRow>
+      <DetailRow label="Grants Access to">
+        <EditableInput
+          value={data.grantsAccessTo}
+          onChange={(value) => updateField("credential", "grantsAccessTo", value)}
+          readOnly={readOnly}
+        />
+      </DetailRow>
+      <DetailRow label="Standard Program Length">
+        <EditableInput
+          value={data.standardProgramLength}
+          onChange={(value) => updateField("credential", "standardProgramLength", value)}
+          readOnly={readOnly}
+        />
+      </DetailRow>
+      <DetailRow label="Years Attended">
+        <EditableInput
+          value={data.yearsAttended}
+          onChange={(value) => updateField("credential", "yearsAttended", value)}
+          readOnly={readOnly}
+        />
+      </DetailRow>
+      <DetailRow label="Year of Graduation">
+        <EditableInput
+          value={data.yearOfGraduation}
+          onChange={(value) => updateField("credential", "yearOfGraduation", value)}
+          readOnly={readOnly}
+        />
+      </DetailRow>
+    </tbody>
+  </table>
+)
+
+type DocumentsSectionProps = {
+  documents: DocumentItem[]
+  documentIndices: number[]
   updateDocument: UpdateDocument
   addDocument: () => void
   deleteDocument: DeleteDocument
   readOnly?: boolean
+  title?: string
+  sectionRef?: RefObject<HTMLDivElement | null>
+  listRef?: RefObject<HTMLUListElement | null>
+  itemRef?: (index: number) => (node: HTMLLIElement | null) => void
 }
 
-const CredentialDetails = ({
-  data,
-  updateField,
+const DocumentsSection = ({
+  documents,
+  documentIndices,
   updateDocument,
   addDocument,
   deleteDocument,
   readOnly = false,
-}: CredentialDetailsProps) => (
-  <div className="text-xs">
-    <table className="w-full text-xs border-collapse mb-3 table-fixed">
-      <tbody>
-        <DetailRow label="Name of Awarding Institution">
-          <EditableInput
-            value={data.awardingInstitution}
-            onChange={(value) => updateField("credential", "awardingInstitution", value)}
-            className="font-semibold"
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Name of Awarding Institution in Native Language (Chinese Simplified)">
-          <EditableInput
-            value={data.awardingInstitutionNative}
-            onChange={(value) => updateField("credential", "awardingInstitutionNative", value)}
-            className="text-gray-600"
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Country">
-          <EditableInput
-            value={data.country}
-            onChange={(value) => updateField("credential", "country", value)}
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Admission Requirements">
-          <EditableTextarea
-            value={data.admissionRequirements}
-            onChange={(value) => updateField("credential", "admissionRequirements", value)}
-            rows={1}
-            className="leading-snug"
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Program">
-          <EditableTextarea
-            value={data.program}
-            onChange={(value) => updateField("credential", "program", value)}
-            rows={1}
-            className="leading-snug"
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Grants Access to">
-          <EditableInput
-            value={data.grantsAccessTo}
-            onChange={(value) => updateField("credential", "grantsAccessTo", value)}
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Standard Program Length">
-          <EditableInput
-            value={data.standardProgramLength}
-            onChange={(value) => updateField("credential", "standardProgramLength", value)}
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Years Attended">
-          <EditableInput
-            value={data.yearsAttended}
-            onChange={(value) => updateField("credential", "yearsAttended", value)}
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Year of Graduation">
-          <EditableInput
-            value={data.yearOfGraduation}
-            onChange={(value) => updateField("credential", "yearOfGraduation", value)}
-            readOnly={readOnly}
-          />
-        </DetailRow>
-      </tbody>
-    </table>
-
-    <div className="border-t border-gray-300 pt-2">
-      <div className="text-[10px] font-semibold text-gray-700 mb-1">
-        This evaluation is based on the following documents electronically submitted by the applicant:
-      </div>
-      <ul className="list-disc pl-4 space-y-2">
-        {data.documents.map((document, index) => (
-          <li key={`${document.title}-${index}`} className={`relative ${readOnly ? "" : "pr-5"}`}>
+  title,
+  sectionRef,
+  listRef,
+  itemRef,
+}: DocumentsSectionProps) => (
+  <div className="border-t border-gray-300 pt-2" ref={sectionRef}>
+    {title && <div className="text-[10px] font-bold uppercase text-gray-700 mb-1">{title}</div>}
+    <div className="text-[10px] font-semibold text-gray-700 mb-1">
+      This evaluation is based on the following documents electronically submitted by the applicant:
+    </div>
+    <ul className="list-disc pl-4 space-y-2" ref={listRef}>
+      {documents.map((document, index) => {
+        const documentIndex = documentIndices[index]
+        return (
+          <li
+            key={`${document.title}-${documentIndex}`}
+            className={`relative ${readOnly ? "" : "pr-5"}`}
+            data-document-item
+            ref={itemRef ? itemRef(documentIndex) : undefined}
+          >
             <EditableInput
               value={document.title}
-              onChange={(value) => updateDocument(index, "title", value)}
+              onChange={(value) => updateDocument(documentIndex, "title", value)}
               className="font-semibold"
               readOnly={readOnly}
             />
@@ -1015,7 +1314,7 @@ const CredentialDetails = ({
               <DocumentFieldRow label="Issued By">
                 <EditableTextarea
                   value={document.issuedBy}
-                  onChange={(value) => updateDocument(index, "issuedBy", value)}
+                  onChange={(value) => updateDocument(documentIndex, "issuedBy", value)}
                   rows={1}
                   className="leading-snug"
                   readOnly={readOnly}
@@ -1024,14 +1323,14 @@ const CredentialDetails = ({
               <DocumentFieldRow label="Date of Issue">
                 <EditableInput
                   value={document.dateIssued}
-                  onChange={(value) => updateDocument(index, "dateIssued", value)}
+                  onChange={(value) => updateDocument(documentIndex, "dateIssued", value)}
                   readOnly={readOnly}
                 />
               </DocumentFieldRow>
               <DocumentFieldRow label="Certificate No.">
                 <EditableInput
                   value={document.certificateNo}
-                  onChange={(value) => updateDocument(index, "certificateNo", value)}
+                  onChange={(value) => updateDocument(documentIndex, "certificateNo", value)}
                   readOnly={readOnly}
                 />
               </DocumentFieldRow>
@@ -1039,7 +1338,7 @@ const CredentialDetails = ({
             {!readOnly && (
               <button
                 type="button"
-                onClick={() => deleteDocument(index)}
+                onClick={() => deleteDocument(documentIndex)}
                 className="no-print absolute right-0 top-0 text-gray-300 hover:text-red-500 transition-colors"
                 title="Remove Document"
               >
@@ -1047,18 +1346,18 @@ const CredentialDetails = ({
               </button>
             )}
           </li>
-        ))}
-      </ul>
-      {!readOnly && (
-        <button
-          type="button"
-          onClick={addDocument}
-          className="no-print mt-2 flex items-center gap-1 text-[10px] text-blue-700 hover:text-blue-900 transition-colors"
-        >
-          <Plus size={12} /> Add Document
-        </button>
-      )}
-    </div>
+        )
+      })}
+    </ul>
+    {!readOnly && (
+      <button
+        type="button"
+        onClick={addDocument}
+        className="no-print mt-2 flex items-center gap-1 text-[10px] text-blue-700 hover:text-blue-900 transition-colors"
+      >
+        <Plus size={12} /> Add Document
+      </button>
+    )}
   </div>
 )
 
