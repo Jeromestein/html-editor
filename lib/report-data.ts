@@ -14,6 +14,11 @@ export type CredentialDocument = {
   certificateNo: string
 }
 
+export type GradeConversionRow = {
+  grade: string
+  usGrade: string
+}
+
 export type Credential = {
   id: number
   awardingInstitution: string
@@ -25,6 +30,10 @@ export type Credential = {
   standardProgramLength: string
   yearsAttended: string
   yearOfGraduation: string
+  equivalenceStatement: string
+  gpa: string
+  totalCredits: string
+  gradeConversion: GradeConversionRow[]
   courses: Course[]
 }
 
@@ -37,11 +46,8 @@ export type SampleData = {
   purpose: string
   documents: CredentialDocument[]
   credentials: Credential[]
-  equivalence: {
-    summary: string
-    gpa: string
-    totalCredits: string
-  }
+  // Global equivalence fields removed/deprecated in favor of per-credential fields
+  // Keeping simple remarks or footer data if needed, but main summary moves to credentials
 }
 
 type CourseSeed = Omit<Course, "id">
@@ -93,6 +99,13 @@ const SAMPLE_COURSES: CourseSeed[] = [
   { year: "2024-2025", name: "Dynamics of Sport Fans", level: "U", credits: "3.00", grade: "A+" },
 ]
 
+const DEFAULT_GRADE_ROWS: GradeConversionRow[] = [
+  { grade: "80-100", usGrade: "A" },
+  { grade: "70-79", usGrade: "B" },
+  { grade: "60-69", usGrade: "C" },
+  { grade: "0-59", usGrade: "F" },
+]
+
 export const buildSampleData = (): SampleData => ({
   refNo: "AET-2024-0926",
   name: "Maha Qadri",
@@ -132,6 +145,10 @@ export const buildSampleData = (): SampleData => ({
       standardProgramLength: "Four years",
       yearsAttended: "2017 - 2021",
       yearOfGraduation: "2021",
+      equivalenceStatement: "Bachelor of Science degree in Computer Science and Technology",
+      gpa: "3.12",
+      totalCredits: "128.00",
+      gradeConversion: DEFAULT_GRADE_ROWS,
       courses: SAMPLE_COURSES.slice(0, 18).map((course, index) => ({
         id: 1000 + index + 1,
         ...course,
@@ -148,15 +165,14 @@ export const buildSampleData = (): SampleData => ({
       standardProgramLength: "Four years",
       yearsAttended: "2021 - 2025",
       yearOfGraduation: "2025",
+      equivalenceStatement: "Bachelor of Science degree in Nutritional Sciences",
+      gpa: "3.85",
+      totalCredits: "60.00",
+      gradeConversion: DEFAULT_GRADE_ROWS,
       courses: SAMPLE_COURSES.slice(18).map((course, index) => ({
         id: 2000 + index + 1,
         ...course,
       })),
     },
   ],
-  equivalence: {
-    summary: "Bachelor of Science degree in Computer Science and Technology",
-    gpa: "2.978",
-    totalCredits: "124.75",
-  },
 })

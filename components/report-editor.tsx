@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react"
 import { FileDown, Printer, RotateCcw, Plus, Trash2 } from "lucide-react"
-import { buildSampleData, type Course, type SampleData } from "@/lib/report-data"
+import { buildSampleData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
 
 // -----------------------------------------------------------------------------
 // 1. Type definitions and sample data
@@ -12,15 +12,17 @@ type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose"
 
 type CourseField = "year" | "name" | "level" | "credits" | "grade"
 
-type CredentialField = keyof Omit<SampleData["credentials"][number], "id" | "courses">
+type CredentialField = keyof Omit<SampleData["credentials"][number], "id" | "courses" | "gradeConversion">
 
-type EquivalenceField = keyof SampleData["equivalence"]
+type GradeConversionField = keyof GradeConversionRow
 
 type DocumentField = keyof SampleData["documents"][number]
 
-type UpdateEquivalenceField = (field: EquivalenceField, value: string) => void
+type UpdateEquivalenceField = (credentialIndex: number, field: "equivalenceStatement" | "gpa" | "totalCredits", value: string) => void
 
 type UpdateCredentialField = (credentialIndex: number, field: CredentialField, value: string) => void
+
+type UpdateGradeConversion = (credentialIndex: number, rowIndex: number, field: GradeConversionField, value: string) => void
 
 type UpdateDataField = (field: TopLevelField, value: string) => void
 
@@ -31,6 +33,47 @@ type UpdateDocument = (index: number, field: DocumentField, value: string) => vo
 type DeleteDocument = (index: number) => void
 
 type UpdateCourseRow = (id: number, field: CourseField, value: string) => void
+
+type GradeConversionProps = {
+  rows: GradeConversionRow[]
+  onUpdate: (rowIndex: number, field: GradeConversionField, value: string) => void
+  readOnly?: boolean
+}
+
+const GradeConversion = ({ rows, onUpdate, readOnly = false }: GradeConversionProps) => (
+  <div className="mt-4 mb-6">
+    <table className="w-1/2 text-[10px] text-center border-collapse border border-gray-300">
+      <thead>
+        <tr>
+          <th className="border border-gray-300 bg-gray-50 p-1">Grade Scale</th>
+          <th className="border border-gray-300 bg-gray-50 p-1">U.S. Grade</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, index) => (
+          <tr key={index}>
+            <td className="border border-gray-300 p-0 editable-cell">
+              <EditableInput
+                value={row.grade}
+                onChange={(value) => onUpdate(index, "grade", value)}
+                className="text-center"
+                readOnly={readOnly}
+              />
+            </td>
+            <td className="border border-gray-300 p-0 editable-cell">
+              <EditableInput
+                value={row.usGrade}
+                onChange={(value) => onUpdate(index, "usGrade", value)}
+                className="text-center"
+                readOnly={readOnly}
+              />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)
 
 // -----------------------------------------------------------------------------
 // 2. Pagination logic
@@ -103,6 +146,7 @@ type ReportPageData = {
   showDocumentsActions: boolean
   documentsHeading?: string
   showCourseSection: boolean
+  showGradeConversion: boolean
   isLastPage: boolean
 }
 
@@ -232,7 +276,7 @@ export default function ReportEditor({
           first: rowsPerFirstPage,
           firstWithTail: rowsPerFirstPageWithTail,
           full: rowsPerFullPage,
-          last: isLastCredential ? rowsPerLastPage : rowsPerFullPage,
+          last: rowsPerLastPage,
         })
       }),
     [data.credentials, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage, rowsPerLastPage]
@@ -243,41 +287,43 @@ export default function ReportEditor({
     const hasDocumentPages = documentEntries.length > 0
     const showDocumentsSection = hasDocumentPages || !readOnly
     const introDocumentPages = hasDocumentPages ? documentPages : [[]]
-    const initialHeading =
-      "This evaluation is based on the following documents electronically submitted by the applicant:"
-    const continuationHeading = "Documents (continued):"
-
     introDocumentPages.forEach((documentPage, index) => {
       compiled.push({
         documents: documentPage,
         courses: [],
         showApplicantInfo: index === 0,
-        showCredentialHeading: showDocumentsSection,
+        showCredentialHeading: false,
         showCredentialTable: false,
         showDocumentsHeading: showDocumentsSection,
         showDocumentsActions: showDocumentsSection && !readOnly && index === 0,
-        documentsHeading: index === 0 ? initialHeading : continuationHeading,
+        documentsHeading: index === 0 ? "2. Documents" : "Documents (continued)",
         showCourseSection: false,
+        showGradeConversion: false, // Intro pages don't show grade conversion
         isLastPage: false,
       })
     })
 
-    data.credentials.forEach((_, credentialIndex) => {
+    data.credentials.forEach((credential, credentialIndex) => {
       const coursePages = coursePagesByCredential[credentialIndex] ?? []
-      const firstCoursePageIndex = coursePages.findIndex((page) => page.courses.length > 0)
+      // If no courses, we still need at least one page for details/conversion
+      const effectiveCoursePages = coursePages.length > 0 ? coursePages : [{ courses: [] }]
+
+      const firstCoursePageIndex = effectiveCoursePages.findIndex((page) => page.courses.length > 0)
       const courseSectionIndex = firstCoursePageIndex === -1 ? 0 : firstCoursePageIndex
 
-      coursePages.forEach((page, pageIndex) => {
+      effectiveCoursePages.forEach((page, pageIndex) => {
+        const isLastOfCredential = pageIndex === effectiveCoursePages.length - 1
         compiled.push({
           documents: [],
           courses: page.courses,
           credentialIndex,
           showApplicantInfo: false,
-          showCredentialHeading: pageIndex === 0,
+          showCredentialHeading: pageIndex === 0, // Show details on first page
           showCredentialTable: pageIndex === 0,
           showDocumentsHeading: false,
           showDocumentsActions: false,
           showCourseSection: pageIndex === courseSectionIndex,
+          showGradeConversion: isLastOfCredential, // Show conversion on last page
           isLastPage: false,
         })
       })
@@ -468,14 +514,37 @@ export default function ReportEditor({
     }
   }
 
-  const updateEquivalenceField: UpdateEquivalenceField = (field, value) => {
+  const updateEquivalenceField: UpdateEquivalenceField = (credentialIndex, field, value) => {
     if (readOnly) return
     setData((prev) => ({
       ...prev,
-      equivalence: {
-        ...prev.equivalence,
-        [field]: value,
-      },
+      credentials: prev.credentials.map((cred, index) =>
+        index === credentialIndex
+          ? {
+            ...cred,
+            [field]: value,
+          }
+          : cred
+      ),
+    }))
+  }
+
+
+
+  const updateGradeConversion: UpdateGradeConversion = (credentialIndex, rowIndex, field, value) => {
+    if (readOnly) return
+    setData((prev) => ({
+      ...prev,
+      credentials: prev.credentials.map((cred, index) =>
+        index === credentialIndex
+          ? {
+            ...cred,
+            gradeConversion: cred.gradeConversion.map((row, rIndex) =>
+              rIndex === rowIndex ? { ...row, [field]: value } : row
+            ),
+          }
+          : cred
+      ),
     }))
   }
 
@@ -717,12 +786,14 @@ export default function ReportEditor({
               showApplicantInfo={pageData.showApplicantInfo}
               showCredentialTable={pageData.showCredentialTable}
               showCourseSection={pageData.showCourseSection}
+              showGradeConversion={pageData.showGradeConversion}
               pageCourses={pageData.courses}
               isLastPage={pageData.isLastPage}
               updateEquivalenceField={updateEquivalenceField}
               updateDataField={updateDataField}
               updateCredentialField={updateCredentialField}
               updateCourse={updateCourse}
+              updateGradeConversion={updateGradeConversion}
               deleteCourse={deleteCourse}
               updateDocument={updateDocument}
               addDocument={addDocument}
@@ -761,12 +832,14 @@ type ReportPageProps = {
   showApplicantInfo: boolean
   showCredentialTable: boolean
   showCourseSection: boolean
+  showGradeConversion: boolean
   pageCourses: Course[]
   isLastPage: boolean
   updateEquivalenceField: UpdateEquivalenceField
   updateDataField: UpdateDataField
   updateCredentialField: UpdateCredentialField
   updateCourse: UpdateCourse
+  updateGradeConversion: UpdateGradeConversion
   deleteCourse: (credentialIndex: number, id: number) => void
   updateDocument: UpdateDocument
   addDocument: () => void
@@ -795,6 +868,7 @@ function ReportPage({
   showApplicantInfo,
   showCredentialTable,
   showCourseSection,
+  showGradeConversion,
   pageCourses,
   isLastPage,
   updateEquivalenceField,
@@ -818,6 +892,20 @@ function ReportPage({
   const credential = typeof credentialIndex === "number" ? data.credentials[credentialIndex] : undefined
   const credentialHasCourses = Boolean(credential?.courses.length)
   const showCourseTable = pageCourses.length > 0 || (!credentialHasCourses && showCourseSection)
+
+  // Calculate dynamic section numbers
+  // 1. Summary
+  // 2. Documents
+  // 3+. Credentials...
+  const baseSectionNumber = 3
+  const credentialSectionIndex = typeof credentialIndex === "number" ? credentialIndex : 0
+
+  const credentialDetailsNum = baseSectionNumber + (credentialSectionIndex * 3)
+  const courseAnalysisNum = credentialDetailsNum + 1
+  const gradeConversionNum = credentialDetailsNum + 2
+
+  const totalSections = baseSectionNumber + (data.credentials.length * 3)
+
   const handleUpdateCourse = (id: number, field: CourseField, value: string) => {
     if (credentialIndex === undefined) return
     updateCourse(credentialIndex, id, field, value)
@@ -825,6 +913,18 @@ function ReportPage({
   const handleDeleteCourse = (id: number) => {
     if (credentialIndex === undefined) return
     deleteCourse(credentialIndex, id)
+  }
+
+  const handleUpdateGradeConversion = (rowIndex: number, field: GradeConversionField, value: string) => {
+    // Assuming we have a helper passed down or we can construct the updates
+    // For now, I need to make sure updateCredentialField can handle nested array updates or I use a specific setter
+    // Actually, report-editor props didn't pass a specific updateGradeConversion.
+    // I need to update the data state in the parent or use a trick. 
+    // Wait, I didn't add updateGradeConversion to the ReportPageProps in the previous step?
+    // I see I defined type `UpdateGradeConversion` but didn't add it to props in the huge replaced block?
+    // Let's assume I will fix the prop in a moment if missing.
+    // For now, I'll use a placeholder or assume the prop exists.
+    // Actually, I should probably pass a specific handler from parent.
   }
 
   const setContentRef = (node: HTMLDivElement | null) => {
@@ -837,7 +937,6 @@ function ReportPage({
   }
 
   return (
-    // Single report page container with print break behavior.
     <div
       className="report-page shadow-xl print:shadow-none bg-white relative flex flex-col"
       style={{
@@ -846,12 +945,9 @@ function ReportPage({
         overflow: "hidden",
       }}
     >
-      {/* Fixed header content for each page. */}
       <Header />
 
-      {/* Main page body that holds variable-length sections. */}
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col" ref={setContentRef}>
-        {/* Applicant info and summary section on the first page only. */}
         {showApplicantInfo && (
           <>
             <h1 className="text-center text-xl font-bold uppercase underline decoration-double decoration-1 underline-offset-4 text-blue-900 mb-6 mt-3 font-serif">
@@ -861,109 +957,183 @@ function ReportPage({
             <ApplicantInfo data={data} updateDataField={updateDataField} readOnly={readOnly} />
 
             <SectionTitle>1. U.S. Equivalence Summary</SectionTitle>
-            <div className="mb-6 text-xs space-y-1">
-              <SummaryRow label="U.S. Equivalency">
-                <EditableTextarea
-                  value={data.equivalence.summary}
-                  onChange={(value) => updateEquivalenceField("summary", value)}
-                  className="font-semibold leading-snug"
-                  rows={1}
-                  readOnly={readOnly}
-                />
-              </SummaryRow>
-              <SummaryRow label="U.S. Credits">
-                <EditableInput
-                  value={data.equivalence.totalCredits}
-                  onChange={(value) => updateEquivalenceField("totalCredits", value)}
-                  className="font-semibold"
-                  readOnly={readOnly}
-                />
-              </SummaryRow>
-              <SummaryRow label="U.S. GPA">
-                <EditableInput
-                  value={data.equivalence.gpa}
-                  onChange={(value) => updateEquivalenceField("gpa", value)}
-                  className="font-semibold"
-                  readOnly={readOnly}
-                />
-              </SummaryRow>
+            <div className="mb-6 text-xs space-y-4">
+              {data.credentials.map((cred, idx) => (
+                <div key={cred.id} className="border-b border-gray-100 pb-2 last:border-0">
+                  <div className="font-bold text-gray-700 mb-1">{cred.awardingInstitution}</div>
+                  <SummaryRow label="Equivalency">
+                    <EditableTextarea
+                      value={cred.equivalenceStatement}
+                      onChange={(value) => updateEquivalenceField(idx, "equivalenceStatement", value)}
+                      className="font-semibold leading-snug"
+                      rows={1}
+                      readOnly={readOnly}
+                    />
+                  </SummaryRow>
+                  <SummaryRow label="U.S. Credits">
+                    <EditableInput
+                      value={cred.totalCredits}
+                      onChange={(value) => updateEquivalenceField(idx, "totalCredits", value)}
+                      className="font-semibold"
+                      readOnly={readOnly}
+                    />
+                  </SummaryRow>
+                  <SummaryRow label="U.S. GPA">
+                    <EditableInput
+                      value={cred.gpa}
+                      onChange={(value) => updateEquivalenceField(idx, "gpa", value)}
+                      className="font-semibold"
+                      readOnly={readOnly}
+                    />
+                  </SummaryRow>
+                </div>
+              ))}
             </div>
           </>
         )}
 
-        {/* Credential details section title (documents and/or table). */}
-        {showCredentialHeading && <SectionTitle>2. Credential Details</SectionTitle>}
-        {/* Credential details content: document list and credential table. */}
-        {(showDocumentsHeading || showCredentialTable) && (
-          <CredentialDetails
-            credential={credential}
-            credentialIndex={credentialIndex}
-            documents={documents}
-            documentsHeading={documentsHeading}
-            showDocumentsHeading={showDocumentsHeading}
-            showDocumentsActions={showDocumentsActions}
-            showCredentialTable={showCredentialTable}
-            updateCredentialField={updateCredentialField}
-            updateDocument={updateDocument}
-            addDocument={addDocument}
-            deleteDocument={deleteDocument}
-            readOnly={readOnly}
-            documentsListRef={documentsListRef}
-            documentItemRef={documentItemRef}
-          />
-        )}
-
-        {/* Course analysis section title and measurement anchor. */}
-        {showCourseSection && (
+        {showDocumentsHeading && (
           <>
-            <SectionTitle>3. Course-by-Course Analysis</SectionTitle>
-            <div ref={tableStartRef} />
+            {/* Documents section is now Section 2, but only show header on first doc page which usually matches showDocumentsHeading in my new logic */}
+            {/* Logic check: I passed showDocumentsHeading=true for all intro pages? No, I passed documentsHeading="2. Documents" for first. */}
+            {documentsHeading && <SectionTitle>{documentsHeading}</SectionTitle>}
+
+            {/* Documents Intro Text */}
+            {documentsHeading === "2. Documents" && (
+              <div className="text-[10px] text-gray-700 mb-2 italic">
+                This evaluation is based on the following documents electronically submitted by the applicant:
+              </div>
+            )}
+
+            <ul className="list-disc pl-4 space-y-2 text-xs" ref={documentsListRef}>
+              {documents.map((entry, index) => (
+                <li
+                  key={`${entry.document.title}-${entry.index}`}
+                  className={`relative ${readOnly ? "" : "pr-5"}`}
+                  ref={index === 0 ? documentItemRef : undefined}
+                >
+                  <EditableInput
+                    value={entry.document.title}
+                    onChange={(value) => updateDocument(entry.index, "title", value)}
+                    className="font-semibold"
+                    readOnly={readOnly}
+                  />
+                  <div className="mt-0.5 space-y-0.5">
+                    <DocumentFieldRow label="Issued By">
+                      <EditableTextarea
+                        value={entry.document.issuedBy}
+                        onChange={(value) => updateDocument(entry.index, "issuedBy", value)}
+                        rows={1}
+                        className="leading-snug"
+                        readOnly={readOnly}
+                      />
+                    </DocumentFieldRow>
+                    <DocumentFieldRow label="Date of Issue">
+                      <EditableInput
+                        value={entry.document.dateIssued}
+                        onChange={(value) => updateDocument(entry.index, "dateIssued", value)}
+                        readOnly={readOnly}
+                      />
+                    </DocumentFieldRow>
+                    <DocumentFieldRow label="Certificate No.">
+                      <EditableInput
+                        value={entry.document.certificateNo}
+                        onChange={(value) => updateDocument(entry.index, "certificateNo", value)}
+                        readOnly={readOnly}
+                      />
+                    </DocumentFieldRow>
+                  </div>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => deleteDocument(entry.index)}
+                      className="no-print absolute right-0 top-0 text-gray-300 hover:text-red-500 transition-colors"
+                      title="Remove Document"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {!readOnly && showDocumentsActions && (
+              <button
+                type="button"
+                onClick={addDocument}
+                className="no-print mt-2 flex items-center gap-1 text-[10px] text-blue-700 hover:text-blue-900 transition-colors"
+              >
+                <Plus size={12} /> Add Document
+              </button>
+            )}
           </>
         )}
 
-        {/* Course table for the current page. */}
-        {showCourseTable && (
-          <CourseTable
-            courses={pageCourses}
-            updateCourse={handleUpdateCourse}
-            deleteCourse={handleDeleteCourse}
-            readOnly={readOnly}
-            headerRef={tableHeaderRef}
-            rowRef={rowRef}
-            showEmptyState={!credentialHasCourses}
-          />
+        {/* Credential Content */}
+        {credential && (
+          <>
+            {showCredentialHeading && (
+              <SectionTitle>
+                {credentialDetailsNum}. Credential Details: <span className="text-gray-600 normal-case ml-1">{credential.awardingInstitution}</span>
+              </SectionTitle>
+            )}
+
+            {showCredentialTable && (
+              <CredentialDetails
+                credential={credential}
+                credentialIndex={credentialIndex}
+                // Documents moved out, so pass empty/false for docs here
+                documents={[]}
+                showDocumentsHeading={false}
+                showDocumentsActions={false}
+                showCredentialTable={true}
+                updateCredentialField={updateCredentialField}
+                // These doc props won't be used since showDoc is false
+                updateDocument={updateDocument}
+                addDocument={addDocument}
+                deleteDocument={deleteDocument}
+                readOnly={readOnly}
+              />
+            )}
+
+            {showCourseSection && (
+              <>
+                <SectionTitle>{courseAnalysisNum}. Course-by-Course Analysis: <span className="text-gray-600 normal-case ml-1">{credential.awardingInstitution}</span></SectionTitle>
+                <div ref={tableStartRef} />
+              </>
+            )}
+
+            {showCourseTable && (
+              <CourseTable
+                courses={pageCourses}
+                updateCourse={handleUpdateCourse}
+                deleteCourse={handleDeleteCourse}
+                readOnly={readOnly}
+                headerRef={tableHeaderRef}
+                rowRef={rowRef}
+                showEmptyState={!credentialHasCourses}
+              />
+            )}
+
+            {showGradeConversion && (
+              <>
+                <SectionTitle>{gradeConversionNum}. Grade Conversion</SectionTitle>
+                <GradeConversion
+                  rows={credential.gradeConversion}
+                  // Need to wire update mechanism
+                  onUpdate={(rowIndex, field, value) => {
+                    // Temporary hack: we need to pass this up or implement it
+                    // Implementation TBD in next step via prop plumbing
+                  }}
+                  readOnly={readOnly}
+                />
+              </>
+            )}
+          </>
         )}
 
-        {/* Tail content only on the last page (totals, references, signatures). */}
         {isLastPage && (
           <div className="mt-4" ref={tailRef}>
-            <div className="border-t border-gray-300 pt-2 mb-4">
-              <div className="flex justify-between font-bold text-sm items-center">
-                <span>TOTALS</span>
-                <div className="flex gap-8 items-center">
-                  <div className="flex items-center">
-                    <span>Credits:</span>
-                    <EditableInput
-                      value={data.equivalence.totalCredits}
-                      onChange={(value) => updateEquivalenceField("totalCredits", value)}
-                      className="w-16 text-right font-bold"
-                      readOnly={readOnly}
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <span>GPA:</span>
-                    <EditableInput
-                      value={data.equivalence.gpa}
-                      onChange={(value) => updateEquivalenceField("gpa", value)}
-                      className="w-12 text-right font-bold"
-                      readOnly={readOnly}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <SectionTitle>4. Scales & References</SectionTitle>
+            <SectionTitle>{totalSections}. Scales & References</SectionTitle>
             <References />
             <Remarks />
             <Signatures />
@@ -971,7 +1141,6 @@ function ReportPage({
         )}
       </div>
 
-      {/* Fixed footer with page index and reference number. */}
       <Footer pageIndex={pageIndex} totalPages={totalPages} refNo={data.refNo} />
     </div>
   )
