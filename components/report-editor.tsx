@@ -349,7 +349,7 @@ export default function ReportEditor({
 
         if (contentRect.height > 0 && rowRect.height > 0) {
           const headerOffset = Math.max(0, startRect.top - contentRect.top)
-          const safetyPadding = 40
+          const safetyPadding = 36
           let tailHeight = 0
 
           if (tailRef.current) {
