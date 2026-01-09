@@ -1571,7 +1571,7 @@ const CourseTable = ({
     <table className="course-table w-full text-[10px] text-center border-collapse border border-gray-300 table-fixed">
       <thead className="bg-gray-100 print:bg-gray-50" ref={headerRef}>
         <tr>
-          <th className="border border-gray-300 p-1 w-14">Year</th>
+          <th className="border border-gray-300 p-1 w-20">Year</th>
           <th className="border border-gray-300 p-1 text-left">Course Title</th>
           <th className="border border-gray-300 p-1 w-8">Lvl</th>
           <th className="border border-gray-300 p-1 w-10">Credits</th>
