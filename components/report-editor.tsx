@@ -726,6 +726,19 @@ export default function ReportEditor({
         .editable-cell:hover {
           background-color: #f3f4f6;
         }
+
+        .course-table tbody tr,
+        .course-table td {
+          height: 18px;
+        }
+
+        .course-table input {
+          height: 18px;
+          line-height: 18px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
       `}</style>
 
       {showToolbar && (
@@ -1515,7 +1528,7 @@ const CourseTable = ({
   const showActions = !readOnly
 
   return (
-    <table className="w-full text-[10px] text-center border-collapse border border-gray-300 table-fixed">
+    <table className="course-table w-full text-[10px] text-center border-collapse border border-gray-300 table-fixed">
       <thead className="bg-gray-100 print:bg-gray-50" ref={headerRef}>
         <tr>
           <th className="border border-gray-300 p-1 w-14">Year</th>
