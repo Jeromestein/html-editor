@@ -975,7 +975,9 @@ function ReportPage({
             <div className="mb-6 text-xs space-y-4">
               {data.credentials.map((cred, idx) => (
                 <div key={cred.id} className="border-b border-gray-100 pb-2 last:border-0">
-                  <div className="font-bold text-gray-700 mb-1">{cred.awardingInstitution}</div>
+                  <div className="font-bold text-gray-700 mb-1">
+                    Credential #{idx + 1}: {cred.awardingInstitution}
+                  </div>
                   <SummaryRow label="Equivalency">
                     <EditableTextarea
                       value={cred.equivalenceStatement}
@@ -1088,7 +1090,7 @@ function ReportPage({
           <>
             {showCredentialHeading && (
               <SectionTitle>
-                {credentialDetailsNum}. Credential Details: <span className="text-gray-600 normal-case ml-1">{credential.awardingInstitution}</span>
+                {credentialDetailsNum}. Credential Details: <span className="text-gray-600 normal-case ml-1">Credential #{(credentialIndex ?? 0) + 1}</span>
               </SectionTitle>
             )}
 
@@ -1112,7 +1114,7 @@ function ReportPage({
 
             {showCourseSection && (
               <>
-                <SectionTitle>{courseAnalysisNum}. Course-by-Course Analysis: <span className="text-gray-600 normal-case ml-1">{credential.awardingInstitution}</span></SectionTitle>
+                <SectionTitle>{courseAnalysisNum}. Course-by-Course Analysis: <span className="text-gray-600 normal-case ml-1">Credential #{(credentialIndex ?? 0) + 1}</span></SectionTitle>
                 <div ref={tableStartRef} />
               </>
             )}
@@ -1131,7 +1133,32 @@ function ReportPage({
 
             {showGradeConversion && (
               <>
-                <SectionTitle>{gradeConversionNum}. Grade Conversion</SectionTitle>
+                <div className="border-t border-gray-300 pt-2 mb-4">
+                  <div className="flex justify-between font-bold text-sm items-center">
+                    <span>TOTALS</span>
+                    <div className="flex gap-8 items-center">
+                      <div className="flex items-center">
+                        <span>Credits:</span>
+                        <EditableInput
+                          value={credential.totalCredits}
+                          onChange={(value) => updateEquivalenceField(credentialIndex!, "totalCredits", value)}
+                          className="w-16 text-right font-bold"
+                          readOnly={readOnly}
+                        />
+                      </div>
+                      <div className="flex items-center">
+                        <span>GPA:</span>
+                        <EditableInput
+                          value={credential.gpa}
+                          onChange={(value) => updateEquivalenceField(credentialIndex!, "gpa", value)}
+                          className="w-12 text-right font-bold"
+                          readOnly={readOnly}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <SectionTitle>{gradeConversionNum}. Grade Conversion: <span className="text-gray-600 normal-case ml-1">Credential #{(credentialIndex ?? 0) + 1}</span></SectionTitle>
                 <GradeConversion
                   rows={credential.gradeConversion}
                   // Need to wire update mechanism
@@ -1148,24 +1175,7 @@ function ReportPage({
 
         {isLastPage && (
           <div className="mt-4" ref={tailRef}>
-            <div className="border-t border-gray-300 pt-2 mb-4">
-              <div className="flex justify-between font-bold text-sm items-center">
-                <span>TOTALS</span>
-                <div className="flex gap-8 items-center">
-                  <div className="flex items-center">
-                    <span>Credits:</span>
-                    <EditableInput
-                      value={data.credentials
-                        .reduce((acc, cred) => acc + (Number.parseFloat(cred.totalCredits) || 0), 0)
-                        .toFixed(2)}
-                      onChange={() => { }}
-                      className="w-16 text-right font-bold"
-                      readOnly={true}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+
 
             <SectionTitle>{referencesNum}. References</SectionTitle>
             <References />
