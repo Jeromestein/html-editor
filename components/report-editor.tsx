@@ -8,7 +8,7 @@ import { buildSampleData, type Course, type SampleData, type GradeConversionRow 
 // 1. Type definitions and sample data
 // -----------------------------------------------------------------------------
 
-type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose"
+type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes"
 
 type CourseField = "year" | "name" | "level" | "credits" | "grade"
 
@@ -918,6 +918,8 @@ function ReportPage({
   const gradeConversionNum = credentialDetailsNum + 2
 
   const totalSections = baseSectionNumber + (data.credentials.length * 3)
+  const referencesNum = totalSections
+  const notesNum = totalSections + 1
 
   const handleUpdateCourse = (id: number, field: CourseField, value: string) => {
     if (credentialIndex === undefined) return
@@ -1146,8 +1148,36 @@ function ReportPage({
 
         {isLastPage && (
           <div className="mt-4" ref={tailRef}>
-            <SectionTitle>{totalSections}. Scales & References</SectionTitle>
+            <div className="border-t border-gray-300 pt-2 mb-4">
+              <div className="flex justify-between font-bold text-sm items-center">
+                <span>TOTALS</span>
+                <div className="flex gap-8 items-center">
+                  <div className="flex items-center">
+                    <span>Credits:</span>
+                    <EditableInput
+                      value={data.credentials
+                        .reduce((acc, cred) => acc + (Number.parseFloat(cred.totalCredits) || 0), 0)
+                        .toFixed(2)}
+                      onChange={() => { }}
+                      className="w-16 text-right font-bold"
+                      readOnly={true}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <SectionTitle>{referencesNum}. References</SectionTitle>
             <References />
+
+            <SectionTitle>{notesNum}. Evaluation Notes</SectionTitle>
+            <EditableTextarea
+              value={data.evaluationNotes || ""}
+              onChange={(value) => updateDataField("evaluationNotes", value)}
+              className="text-[10px] text-gray-500 text-justify mb-4 leading-tight min-h-[3rem]"
+              readOnly={readOnly}
+            />
+
             <Remarks />
             <Signatures />
           </div>
@@ -1601,38 +1631,12 @@ const CourseTable = ({
 }
 
 const References = () => (
-  <div className="flex gap-4 text-[9px] mb-4 mt-2">
-    <div className="w-1/2">
-      <table className="w-full text-center border-collapse border border-gray-300">
-        <thead>
-          <tr>
-            <th className="border border-gray-300 bg-gray-50">Grade Scale</th>
-            <th className="border border-gray-300 bg-gray-50">US Grade</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td className="border border-gray-300 p-0.5">80-100</td>
-            <td className="border border-gray-300 p-0.5">A</td>
-          </tr>
-          <tr>
-            <td className="border border-gray-300 p-0.5">70-79</td>
-            <td className="border border-gray-300 p-0.5">B</td>
-          </tr>
-          <tr>
-            <td className="border border-gray-300 p-0.5">60-69</td>
-            <td className="border border-gray-300 p-0.5">C</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div className="w-1/2">
-      <ul className="list-disc pl-4 space-y-1 text-gray-600">
-        <li>AACRAO EDGE Database</li>
-        <li>Ministry of Education of Canada</li>
-        <li>Official Transcripts</li>
-      </ul>
-    </div>
+  <div className="text-[9px] mb-4 mt-2">
+    <ul className="list-disc pl-4 space-y-1 text-gray-600">
+      <li>AACRAO EDGE Database</li>
+      <li>Ministry of Education of Canada</li>
+      <li>Official Transcripts</li>
+    </ul>
   </div>
 )
 

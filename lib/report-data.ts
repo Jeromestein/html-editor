@@ -46,8 +46,7 @@ export type SampleData = {
   purpose: string
   documents: CredentialDocument[]
   credentials: Credential[]
-  // Global equivalence fields removed/deprecated in favor of per-credential fields
-  // Keeping simple remarks or footer data if needed, but main summary moves to credentials
+  evaluationNotes: string
 }
 
 type CourseSeed = Omit<Course, "id">
@@ -113,6 +112,7 @@ export const buildSampleData = (): SampleData => ({
   country: "Canada",
   date: "September 5, 2024",
   purpose: "Employment",
+  evaluationNotes: "This report is based on the documents provided...",
   documents: [
     {
       title: "Graduation Certificate",
