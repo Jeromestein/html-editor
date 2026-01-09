@@ -14,6 +14,20 @@ export type CredentialDocument = {
   certificateNo: string
 }
 
+export type Credential = {
+  id: number
+  awardingInstitution: string
+  awardingInstitutionNative: string
+  country: string
+  admissionRequirements: string
+  program: string
+  grantsAccessTo: string
+  standardProgramLength: string
+  yearsAttended: string
+  yearOfGraduation: string
+  courses: Course[]
+}
+
 export type SampleData = {
   refNo: string
   name: string
@@ -21,24 +35,13 @@ export type SampleData = {
   country: string
   date: string
   purpose: string
-  credential: {
-    awardingInstitution: string
-    awardingInstitutionNative: string
-    country: string
-    admissionRequirements: string
-    program: string
-    grantsAccessTo: string
-    standardProgramLength: string
-    yearsAttended: string
-    yearOfGraduation: string
-    documents: CredentialDocument[]
-  }
+  documents: CredentialDocument[]
+  credentials: Credential[]
   equivalence: {
     summary: string
     gpa: string
     totalCredits: string
   }
-  courses: Course[]
 }
 
 type CourseSeed = Omit<Course, "id">
@@ -97,44 +100,63 @@ export const buildSampleData = (): SampleData => ({
   country: "Canada",
   date: "September 5, 2024",
   purpose: "Employment",
-  credential: {
-    awardingInstitution: "Tongji University",
-    awardingInstitutionNative: "N/A",
-    country: "China",
-    admissionRequirements: "Completion of secondary education",
-    program: "Bachelor of Engineering program in Computer Science and Technology",
-    grantsAccessTo: "Graduate Programs",
-    standardProgramLength: "Four years",
-    yearsAttended: "2017 - 2021",
-    yearOfGraduation: "2021",
-    documents: [
-      {
-        title: "Graduation Certificate",
-        issuedBy: "Tongji University, Shanghai, China",
-        dateIssued: "Month DD, YYYY",
-        certificateNo: "00000000000000000000",
-      },
-      {
-        title: "Degree Certificate",
-        issuedBy: "Tongji University, Shanghai, China",
-        dateIssued: "Month DD, YYYY",
-        certificateNo: "00000000000000000000",
-      },
-      {
-        title: "Academic Record",
-        issuedBy: "Tongji University, Shanghai, China",
-        dateIssued: "Month DD, YYYY",
-        certificateNo: "00000000000000000000",
-      },
-    ],
-  },
+  documents: [
+    {
+      title: "Graduation Certificate",
+      issuedBy: "Tongji University, Shanghai, China",
+      dateIssued: "Month DD, YYYY",
+      certificateNo: "00000000000000000000",
+    },
+    {
+      title: "Degree Certificate",
+      issuedBy: "Tongji University, Shanghai, China",
+      dateIssued: "Month DD, YYYY",
+      certificateNo: "00000000000000000000",
+    },
+    {
+      title: "Academic Record",
+      issuedBy: "Tongji University, Shanghai, China",
+      dateIssued: "Month DD, YYYY",
+      certificateNo: "00000000000000000000",
+    },
+  ],
+  credentials: [
+    {
+      id: 1,
+      awardingInstitution: "Tongji University",
+      awardingInstitutionNative: "N/A",
+      country: "China",
+      admissionRequirements: "Completion of secondary education",
+      program: "Bachelor of Engineering program in Computer Science and Technology",
+      grantsAccessTo: "Graduate Programs",
+      standardProgramLength: "Four years",
+      yearsAttended: "2017 - 2021",
+      yearOfGraduation: "2021",
+      courses: SAMPLE_COURSES.slice(0, 18).map((course, index) => ({
+        id: 1000 + index + 1,
+        ...course,
+      })),
+    },
+    {
+      id: 2,
+      awardingInstitution: "University of Toronto",
+      awardingInstitutionNative: "N/A",
+      country: "Canada",
+      admissionRequirements: "Secondary school diploma with prerequisite coursework",
+      program: "Bachelor of Science program in Nutritional Sciences",
+      grantsAccessTo: "Graduate Programs",
+      standardProgramLength: "Four years",
+      yearsAttended: "2021 - 2025",
+      yearOfGraduation: "2025",
+      courses: SAMPLE_COURSES.slice(18).map((course, index) => ({
+        id: 2000 + index + 1,
+        ...course,
+      })),
+    },
+  ],
   equivalence: {
     summary: "Bachelor of Science degree in Computer Science and Technology",
     gpa: "2.978",
     totalCredits: "124.75",
   },
-  courses: SAMPLE_COURSES.map((course, index) => ({
-    id: index + 1,
-    ...course,
-  })),
 })

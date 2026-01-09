@@ -10,25 +10,27 @@ import { buildSampleData, type Course, type SampleData } from "@/lib/report-data
 
 type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose"
 
-type EditableSection = "credential" | "equivalence"
-
 type CourseField = "year" | "name" | "level" | "credits" | "grade"
 
-type DocumentField = keyof SampleData["credential"]["documents"][number]
+type CredentialField = keyof Omit<SampleData["credentials"][number], "id" | "courses">
 
-type UpdateField = <T extends EditableSection>(
-  section: T,
-  field: keyof SampleData[T],
-  value: string
-) => void
+type EquivalenceField = keyof SampleData["equivalence"]
+
+type DocumentField = keyof SampleData["documents"][number]
+
+type UpdateEquivalenceField = (field: EquivalenceField, value: string) => void
+
+type UpdateCredentialField = (credentialIndex: number, field: CredentialField, value: string) => void
 
 type UpdateDataField = (field: TopLevelField, value: string) => void
 
-type UpdateCourse = (id: number, field: CourseField, value: string) => void
+type UpdateCourse = (credentialIndex: number, id: number, field: CourseField, value: string) => void
 
 type UpdateDocument = (index: number, field: DocumentField, value: string) => void
 
 type DeleteDocument = (index: number) => void
+
+type UpdateCourseRow = (id: number, field: CourseField, value: string) => void
 
 // -----------------------------------------------------------------------------
 // 2. Pagination logic
@@ -37,10 +39,8 @@ type DeleteDocument = (index: number) => void
 const DEFAULT_ROWS_PER_FIRST_PAGE = 14
 const DEFAULT_ROWS_PER_FULL_PAGE = 30
 
-type PageData = {
-  type: "first-page" | "course-continuation"
+type CoursePage = {
   courses: Course[]
-  isLastPage: boolean
 }
 
 type PaginationCounts = {
@@ -50,8 +50,8 @@ type PaginationCounts = {
   last: number
 }
 
-function paginateCourses(courses: Course[], counts: PaginationCounts): PageData[] {
-  const pages: PageData[] = []
+function paginateCourses(courses: Course[], counts: PaginationCounts): CoursePage[] {
+  const pages: CoursePage[] = []
   const remainingCourses = [...courses]
   const firstCount = Math.max(0, counts.first)
   const firstWithTailCount = Math.max(0, counts.firstWithTail)
@@ -60,39 +60,59 @@ function paginateCourses(courses: Course[], counts: PaginationCounts): PageData[
 
   if (remainingCourses.length <= firstWithTailCount) {
     pages.push({
-      type: "first-page",
       courses: remainingCourses.splice(0),
-      isLastPage: true,
     })
     return pages
   }
 
   const firstPageCourses = remainingCourses.splice(0, Math.min(firstCount, remainingCourses.length))
   pages.push({
-    type: "first-page",
     courses: firstPageCourses,
-    isLastPage: false,
   })
 
   while (remainingCourses.length > lastCount) {
     const take = Math.min(fullCount, remainingCourses.length - lastCount)
     const pageCourses = remainingCourses.splice(0, take)
     pages.push({
-      type: "course-continuation",
       courses: pageCourses,
-      isLastPage: false,
     })
   }
 
   if (remainingCourses.length > 0) {
     pages.push({
-      type: "course-continuation",
       courses: remainingCourses.splice(0),
-      isLastPage: true,
     })
   }
 
   return pages
+}
+
+type DocumentEntry = {
+  document: SampleData["documents"][number]
+  index: number
+}
+
+type ReportPageData = {
+  documents: DocumentEntry[]
+  courses: Course[]
+  credentialIndex?: number
+  showCredentialHeading: boolean
+  showApplicantInfo: boolean
+  showCredentialTable: boolean
+  showDocumentsHeading: boolean
+  showDocumentsActions: boolean
+  documentsHeading?: string
+  showCourseSection: boolean
+  isLastPage: boolean
+}
+
+function chunkArray<T>(items: T[], size: number): T[][] {
+  if (size <= 0) return [items]
+  const result: T[][] = []
+  for (let i = 0; i < items.length; i += size) {
+    result.push(items.slice(i, i + size))
+  }
+  return result
 }
 
 // -----------------------------------------------------------------------------
@@ -182,31 +202,99 @@ export default function ReportEditor({
   const [rowsPerFirstPageWithTail, setRowsPerFirstPageWithTail] = useState(DEFAULT_ROWS_PER_FIRST_PAGE)
   const [rowsPerFullPage, setRowsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
   const [rowsPerLastPage, setRowsPerLastPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const courseContentRef = useRef<HTMLDivElement>(null)
+  const introContentRef = useRef<HTMLDivElement>(null)
   const tableStartRef = useRef<HTMLDivElement>(null)
   const tableHeaderRef = useRef<HTMLTableSectionElement>(null)
   const rowRef = useRef<HTMLTableRowElement>(null)
   const tailRef = useRef<HTMLDivElement>(null)
+  const documentsListRef = useRef<HTMLUListElement>(null)
+  const documentItemRef = useRef<HTMLLIElement>(null)
   const readySentRef = useRef(false)
   const [fontsReady, setFontsReady] = useState(false)
+  const [documentsPerPage, setDocumentsPerPage] = useState(() =>
+    Math.max(1, data.documents.length)
+  )
 
-  const pages = useMemo(
+  const documentEntries = useMemo(
+    () => data.documents.map((document, index) => ({ document, index })),
+    [data.documents]
+  )
+  const documentPages = useMemo(
+    () => chunkArray(documentEntries, documentsPerPage),
+    [documentEntries, documentsPerPage]
+  )
+  const coursePagesByCredential = useMemo(
     () =>
-      paginateCourses(data.courses, {
-        first: rowsPerFirstPage,
-        firstWithTail: rowsPerFirstPageWithTail,
-        full: rowsPerFullPage,
-        last: rowsPerLastPage,
+      data.credentials.map((credential, credentialIndex) => {
+        const isLastCredential = credentialIndex === data.credentials.length - 1
+        return paginateCourses(credential.courses, {
+          first: rowsPerFirstPage,
+          firstWithTail: rowsPerFirstPageWithTail,
+          full: rowsPerFullPage,
+          last: isLastCredential ? rowsPerLastPage : rowsPerFullPage,
+        })
       }),
-    [data.courses, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage, rowsPerLastPage]
+    [data.credentials, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage, rowsPerLastPage]
   )
 
-  const firstCoursePageIndex = useMemo(
-    () => pages.findIndex((page) => page.courses.length > 0),
-    [pages]
-  )
+  const reportPages = useMemo(() => {
+    const compiled: ReportPageData[] = []
+    const hasDocumentPages = documentEntries.length > 0
+    const showDocumentsSection = hasDocumentPages || !readOnly
+    const introDocumentPages = hasDocumentPages ? documentPages : [[]]
+    const initialHeading =
+      "This evaluation is based on the following documents electronically submitted by the applicant:"
+    const continuationHeading = "Documents (continued):"
+
+    introDocumentPages.forEach((documentPage, index) => {
+      compiled.push({
+        documents: documentPage,
+        courses: [],
+        showApplicantInfo: index === 0,
+        showCredentialHeading: showDocumentsSection,
+        showCredentialTable: false,
+        showDocumentsHeading: showDocumentsSection,
+        showDocumentsActions: showDocumentsSection && !readOnly && index === 0,
+        documentsHeading: index === 0 ? initialHeading : continuationHeading,
+        showCourseSection: false,
+        isLastPage: false,
+      })
+    })
+
+    data.credentials.forEach((_, credentialIndex) => {
+      const coursePages = coursePagesByCredential[credentialIndex] ?? []
+      const firstCoursePageIndex = coursePages.findIndex((page) => page.courses.length > 0)
+      const courseSectionIndex = firstCoursePageIndex === -1 ? 0 : firstCoursePageIndex
+
+      coursePages.forEach((page, pageIndex) => {
+        compiled.push({
+          documents: [],
+          courses: page.courses,
+          credentialIndex,
+          showApplicantInfo: false,
+          showCredentialHeading: pageIndex === 0,
+          showCredentialTable: pageIndex === 0,
+          showDocumentsHeading: false,
+          showDocumentsActions: false,
+          showCourseSection: pageIndex === courseSectionIndex,
+          isLastPage: false,
+        })
+      })
+    })
+
+    if (compiled.length > 0) {
+      compiled[compiled.length - 1].isLastPage = true
+    }
+    return compiled
+  }, [coursePagesByCredential, data.credentials, documentEntries.length, documentPages, readOnly])
+
+  const firstCoursePageIndex = useMemo(() => {
+    const pageWithCourses = reportPages.findIndex((page) => page.courses.length > 0)
+    if (pageWithCourses !== -1) return pageWithCourses
+    return reportPages.findIndex((page) => page.showCourseSection)
+  }, [reportPages])
   const measurementPageIndex = firstCoursePageIndex === -1 ? 0 : firstCoursePageIndex
-  const hasCourses = data.courses.length > 0
 
   useEffect(() => {
     if (!onReady) return
@@ -239,54 +327,78 @@ export default function ReportEditor({
   }, [data, onReady])
 
   useLayoutEffect(() => {
-    const contentEl = contentRef.current
+    const courseContentEl = courseContentRef.current
+    const introContentEl = introContentRef.current
     const startEl = tableStartRef.current
     const headerEl = tableHeaderRef.current
     const rowEl = rowRef.current
-    if (!contentEl || !startEl || !headerEl || !rowEl) return
-
+    const listEl = documentsListRef.current
+    const itemEl = documentItemRef.current
     let rafId = requestAnimationFrame(() => {
-      const contentRect = contentEl.getBoundingClientRect()
-      const startRect = startEl.getBoundingClientRect()
-      const headerRect = headerEl.getBoundingClientRect()
-      const rowRect = rowEl.getBoundingClientRect()
+      let nextFirst = rowsPerFirstPage
+      let nextFirstWithTail = rowsPerFirstPageWithTail
+      let nextFull = rowsPerFullPage
+      let nextLast = rowsPerLastPage
+      let nextDocumentsPerPage = documentsPerPage
 
-      if (contentRect.height <= 0 || rowRect.height <= 0) return
+      if (courseContentEl && startEl && headerEl && rowEl) {
+        const contentRect = courseContentEl.getBoundingClientRect()
+        const startRect = startEl.getBoundingClientRect()
+        const headerRect = headerEl.getBoundingClientRect()
+        const rowRect = rowEl.getBoundingClientRect()
 
-      const headerOffset = Math.max(0, startRect.top - contentRect.top)
-      const safetyPadding = 4
-      let tailHeight = 0
+        if (contentRect.height > 0 && rowRect.height > 0) {
+          const headerOffset = Math.max(0, startRect.top - contentRect.top)
+          const safetyPadding = 4
+          let tailHeight = 0
 
-      if (tailRef.current) {
-        const tailRect = tailRef.current.getBoundingClientRect()
-        const tailStyle = window.getComputedStyle(tailRef.current)
-        const marginTop = Number.parseFloat(tailStyle.marginTop) || 0
-        const marginBottom = Number.parseFloat(tailStyle.marginBottom) || 0
-        tailHeight = tailRect.height + marginTop + marginBottom
+          if (tailRef.current) {
+            const tailRect = tailRef.current.getBoundingClientRect()
+            const tailStyle = window.getComputedStyle(tailRef.current)
+            const marginTop = Number.parseFloat(tailStyle.marginTop) || 0
+            const marginBottom = Number.parseFloat(tailStyle.marginBottom) || 0
+            tailHeight = tailRect.height + marginTop + marginBottom
+          }
+
+          const availableFirst = contentRect.height - headerOffset - headerRect.height - safetyPadding
+          const availableFirstWithTail = availableFirst - tailHeight
+          const availableFull = contentRect.height - headerRect.height - safetyPadding
+          const availableLast = availableFull - tailHeight
+
+          nextFirst = Math.max(0, Math.floor(availableFirst / rowRect.height))
+          nextFirstWithTail = Math.max(0, Math.floor(availableFirstWithTail / rowRect.height))
+          nextFull = Math.max(1, Math.floor(availableFull / rowRect.height))
+          nextLast = Math.max(1, Math.floor(availableLast / rowRect.height))
+
+          const overflow = courseContentEl.scrollHeight - contentRect.height
+          if (overflow > 0) {
+            const overflowRows = Math.ceil(overflow / rowRect.height)
+            nextFirst = Math.max(0, nextFirst - overflowRows)
+            nextFirstWithTail = Math.max(0, nextFirstWithTail - overflowRows)
+          }
+        }
       }
 
-      const availableFirst = contentRect.height - headerOffset - headerRect.height - safetyPadding
-      const availableFirstWithTail = availableFirst - tailHeight
-      const availableFull = contentRect.height - headerRect.height - safetyPadding
-      const availableLast = availableFull - tailHeight
+      if (introContentEl && listEl && itemEl) {
+        const introRect = introContentEl.getBoundingClientRect()
+        const listRect = listEl.getBoundingClientRect()
+        const itemRect = itemEl.getBoundingClientRect()
+        const itemStyle = window.getComputedStyle(itemEl)
 
-      let nextFirst = Math.max(0, Math.floor(availableFirst / rowRect.height))
-      let nextFirstWithTail = Math.max(0, Math.floor(availableFirstWithTail / rowRect.height))
-      const nextFull = Math.max(1, Math.floor(availableFull / rowRect.height))
-      const nextLast = Math.max(1, Math.floor(availableLast / rowRect.height))
-
-      const overflow = contentEl.scrollHeight - contentRect.height
-      if (overflow > 0) {
-        const overflowRows = Math.ceil(overflow / rowRect.height)
-        nextFirst = Math.max(0, nextFirst - overflowRows)
-        nextFirstWithTail = Math.max(0, nextFirstWithTail - overflowRows)
+        const safetyPadding = 4
+        const itemMarginTop = Number.parseFloat(itemStyle.marginTop) || 0
+        const itemMarginBottom = Number.parseFloat(itemStyle.marginBottom) || 0
+        const itemHeight = itemRect.height + itemMarginTop + itemMarginBottom
+        const availableDocuments = introRect.bottom - listRect.top - safetyPadding
+        nextDocumentsPerPage = Math.max(1, Math.floor(availableDocuments / itemHeight))
       }
 
       const changed =
         nextFirst !== rowsPerFirstPage ||
         nextFirstWithTail !== rowsPerFirstPageWithTail ||
         nextFull !== rowsPerFullPage ||
-        nextLast !== rowsPerLastPage
+        nextLast !== rowsPerLastPage ||
+        nextDocumentsPerPage !== documentsPerPage
 
       if (changed) {
         readySentRef.current = false
@@ -294,6 +406,7 @@ export default function ReportEditor({
         setRowsPerFirstPageWithTail(nextFirstWithTail)
         setRowsPerFullPage(nextFull)
         setRowsPerLastPage(nextLast)
+        setDocumentsPerPage(nextDocumentsPerPage)
         return
       }
 
@@ -308,6 +421,7 @@ export default function ReportEditor({
     }
   }, [
     data,
+    documentsPerPage,
     fontsReady,
     onReady,
     rowsPerFirstPage,
@@ -354,12 +468,12 @@ export default function ReportEditor({
     }
   }
 
-  const updateField: UpdateField = (section, field, value) => {
+  const updateEquivalenceField: UpdateEquivalenceField = (field, value) => {
     if (readOnly) return
     setData((prev) => ({
       ...prev,
-      [section]: {
-        ...prev[section],
+      equivalence: {
+        ...prev.equivalence,
         [field]: value,
       },
     }))
@@ -373,11 +487,35 @@ export default function ReportEditor({
     }))
   }
 
-  const updateCourse: UpdateCourse = (id, field, value) => {
+  const updateCredentialField: UpdateCredentialField = (credentialIndex, field, value) => {
     if (readOnly) return
     setData((prev) => ({
       ...prev,
-      courses: prev.courses.map((course) => (course.id === id ? { ...course, [field]: value } : course)),
+      credentials: prev.credentials.map((credential, index) =>
+        index === credentialIndex
+          ? {
+              ...credential,
+              [field]: value,
+            }
+          : credential
+      ),
+    }))
+  }
+
+  const updateCourse: UpdateCourse = (credentialIndex, id, field, value) => {
+    if (readOnly) return
+    setData((prev) => ({
+      ...prev,
+      credentials: prev.credentials.map((credential, index) =>
+        index === credentialIndex
+          ? {
+              ...credential,
+              courses: credential.courses.map((course) =>
+                course.id === id ? { ...course, [field]: value } : course
+              ),
+            }
+          : credential
+      ),
     }))
   }
 
@@ -385,12 +523,9 @@ export default function ReportEditor({
     if (readOnly) return
     setData((prev) => ({
       ...prev,
-      credential: {
-        ...prev.credential,
-        documents: prev.credential.documents.map((document, docIndex) =>
-          docIndex === index ? { ...document, [field]: value } : document
-        ),
-      },
+      documents: prev.documents.map((document, docIndex) =>
+        docIndex === index ? { ...document, [field]: value } : document
+      ),
     }))
   }
 
@@ -398,22 +533,26 @@ export default function ReportEditor({
     if (readOnly) return
     setData((prev) => ({
       ...prev,
-      credential: {
-        ...prev.credential,
-        documents: prev.credential.documents.filter((_, docIndex) => docIndex !== index),
-      },
+      documents: prev.documents.filter((_, docIndex) => docIndex !== index),
     }))
   }
 
-  const deleteCourse = (id: number) => {
+  const deleteCourse = (credentialIndex: number, id: number) => {
     if (readOnly) return
     setData((prev) => ({
       ...prev,
-      courses: prev.courses.filter((course) => course.id !== id),
+      credentials: prev.credentials.map((credential, index) =>
+        index === credentialIndex
+          ? {
+              ...credential,
+              courses: credential.courses.filter((course) => course.id !== id),
+            }
+          : credential
+      ),
     }))
   }
 
-  const addCourse = () => {
+  const addCourse = (credentialIndex: number) => {
     if (readOnly) return
     const newCourse: Course = {
       id: Date.now(),
@@ -426,7 +565,14 @@ export default function ReportEditor({
 
     setData((prev) => ({
       ...prev,
-      courses: [...prev.courses, newCourse],
+      credentials: prev.credentials.map((credential, index) =>
+        index === credentialIndex
+          ? {
+              ...credential,
+              courses: [...credential.courses, newCourse],
+            }
+          : credential
+      ),
     }))
   }
 
@@ -434,18 +580,15 @@ export default function ReportEditor({
     if (readOnly) return
     setData((prev) => ({
       ...prev,
-      credential: {
-        ...prev.credential,
-        documents: [
-          ...prev.credential.documents,
-          {
-            title: "Document Title",
-            issuedBy: "",
-            dateIssued: "",
-            certificateNo: "N/A",
-          },
-        ],
-      },
+      documents: [
+        ...prev.documents,
+        {
+          title: "Document Title",
+          issuedBy: "",
+          dateIssued: "",
+          certificateNo: "N/A",
+        },
+      ],
     }))
   }
 
@@ -524,7 +667,10 @@ export default function ReportEditor({
           </h1>
           <div className="flex gap-2">
             <button
-              onClick={addCourse}
+              onClick={() => {
+                if (data.credentials.length === 0) return
+                addCourse(0)
+              }}
               className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded text-sm font-medium transition-colors"
             >
               <Plus size={16} /> Add Course
@@ -554,31 +700,45 @@ export default function ReportEditor({
       )}
 
       <div className="page-stack mt-8 print:mt-0">
-        {pages.map((pageData, index) => (
-          <ReportPage
-            key={`${pageData.type}-${index}`}
-            pageIndex={index}
-            totalPages={pages.length}
-            type={pageData.type}
-            data={data}
-            pageCourses={pageData.courses}
-            isLastPage={pageData.isLastPage}
-            updateField={updateField}
-            updateDataField={updateDataField}
-            updateCourse={updateCourse}
-            deleteCourse={deleteCourse}
-            updateDocument={updateDocument}
-            addDocument={addDocument}
-            deleteDocument={deleteDocument}
-            readOnly={readOnly}
-            hasCourses={hasCourses}
-            contentRef={index === 0 ? contentRef : undefined}
-            tableStartRef={index === 0 ? tableStartRef : undefined}
-            tableHeaderRef={index === measurementPageIndex ? tableHeaderRef : undefined}
-            rowRef={index === measurementPageIndex ? rowRef : undefined}
-            tailRef={pageData.isLastPage ? tailRef : undefined}
-          />
-        ))}
+        {reportPages.map((pageData, index) => {
+          const isFirstCoursePage = index === measurementPageIndex
+          return (
+            <ReportPage
+              key={`report-page-${index}`}
+              pageIndex={index}
+              totalPages={reportPages.length}
+              data={data}
+              credentialIndex={pageData.credentialIndex}
+              documents={pageData.documents}
+              documentsHeading={pageData.documentsHeading}
+              showDocumentsHeading={pageData.showDocumentsHeading}
+              showDocumentsActions={pageData.showDocumentsActions}
+              showCredentialHeading={pageData.showCredentialHeading}
+              showApplicantInfo={pageData.showApplicantInfo}
+              showCredentialTable={pageData.showCredentialTable}
+              showCourseSection={pageData.showCourseSection}
+              pageCourses={pageData.courses}
+              isLastPage={pageData.isLastPage}
+              updateEquivalenceField={updateEquivalenceField}
+              updateDataField={updateDataField}
+              updateCredentialField={updateCredentialField}
+              updateCourse={updateCourse}
+              deleteCourse={deleteCourse}
+              updateDocument={updateDocument}
+              addDocument={addDocument}
+              deleteDocument={deleteDocument}
+              readOnly={readOnly}
+              introContentRef={index === 0 ? introContentRef : undefined}
+              courseContentRef={isFirstCoursePage ? courseContentRef : undefined}
+              tableStartRef={isFirstCoursePage ? tableStartRef : undefined}
+              tableHeaderRef={isFirstCoursePage ? tableHeaderRef : undefined}
+              rowRef={isFirstCoursePage ? rowRef : undefined}
+              documentsListRef={index === 0 ? documentsListRef : undefined}
+              documentItemRef={index === 0 ? documentItemRef : undefined}
+              tailRef={pageData.isLastPage ? tailRef : undefined}
+            />
+          )
+        })}
       </div>
     </div>
   )
@@ -591,51 +751,93 @@ export default function ReportEditor({
 type ReportPageProps = {
   pageIndex: number
   totalPages: number
-  type: PageData["type"]
   data: SampleData
+  credentialIndex?: number
+  documents: DocumentEntry[]
+  documentsHeading?: string
+  showCredentialHeading: boolean
+  showDocumentsHeading: boolean
+  showDocumentsActions: boolean
+  showApplicantInfo: boolean
+  showCredentialTable: boolean
+  showCourseSection: boolean
   pageCourses: Course[]
   isLastPage: boolean
-  updateField: UpdateField
+  updateEquivalenceField: UpdateEquivalenceField
   updateDataField: UpdateDataField
+  updateCredentialField: UpdateCredentialField
   updateCourse: UpdateCourse
-  deleteCourse: (id: number) => void
+  deleteCourse: (credentialIndex: number, id: number) => void
   updateDocument: UpdateDocument
   addDocument: () => void
   deleteDocument: DeleteDocument
   readOnly: boolean
-  hasCourses: boolean
-  contentRef?: RefObject<HTMLDivElement | null>
+  introContentRef?: RefObject<HTMLDivElement | null>
+  courseContentRef?: RefObject<HTMLDivElement | null>
   tableStartRef?: RefObject<HTMLDivElement | null>
   tableHeaderRef?: RefObject<HTMLTableSectionElement | null>
   rowRef?: RefObject<HTMLTableRowElement | null>
+  documentsListRef?: RefObject<HTMLUListElement | null>
+  documentItemRef?: RefObject<HTMLLIElement | null>
   tailRef?: RefObject<HTMLDivElement | null>
 }
 
 function ReportPage({
   pageIndex,
   totalPages,
-  type,
   data,
+  credentialIndex,
+  documents,
+  documentsHeading,
+  showCredentialHeading,
+  showDocumentsHeading,
+  showDocumentsActions,
+  showApplicantInfo,
+  showCredentialTable,
+  showCourseSection,
   pageCourses,
   isLastPage,
-  updateField,
+  updateEquivalenceField,
   updateDataField,
+  updateCredentialField,
   updateCourse,
   deleteCourse,
   updateDocument,
   addDocument,
   deleteDocument,
   readOnly,
-  hasCourses,
-  contentRef,
+  introContentRef,
+  courseContentRef,
   tableStartRef,
   tableHeaderRef,
   rowRef,
+  documentsListRef,
+  documentItemRef,
   tailRef,
 }: ReportPageProps) {
-  const showCourseTable = pageCourses.length > 0 || !hasCourses
+  const credential = typeof credentialIndex === "number" ? data.credentials[credentialIndex] : undefined
+  const credentialHasCourses = Boolean(credential?.courses.length)
+  const showCourseTable = pageCourses.length > 0 || (!credentialHasCourses && showCourseSection)
+  const handleUpdateCourse = (id: number, field: CourseField, value: string) => {
+    if (credentialIndex === undefined) return
+    updateCourse(credentialIndex, id, field, value)
+  }
+  const handleDeleteCourse = (id: number) => {
+    if (credentialIndex === undefined) return
+    deleteCourse(credentialIndex, id)
+  }
+
+  const setContentRef = (node: HTMLDivElement | null) => {
+    if (courseContentRef) {
+      courseContentRef.current = node
+    }
+    if (introContentRef) {
+      introContentRef.current = node
+    }
+  }
 
   return (
+    // Single report page container with print break behavior.
     <div
       className="report-page shadow-xl print:shadow-none bg-white relative flex flex-col"
       style={{
@@ -644,10 +846,13 @@ function ReportPage({
         overflow: "hidden",
       }}
     >
+      {/* Fixed header content for each page. */}
       <Header />
 
-      <div className="flex-1 min-h-0 overflow-hidden flex flex-col" ref={contentRef}>
-        {type === "first-page" && (
+      {/* Main page body that holds variable-length sections. */}
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col" ref={setContentRef}>
+        {/* Applicant info and summary section on the first page only. */}
+        {showApplicantInfo && (
           <>
             <h1 className="text-center text-xl font-bold uppercase underline decoration-double decoration-1 underline-offset-4 text-blue-900 mb-6 mt-3 font-serif">
               Credential Evaluation Report
@@ -660,7 +865,7 @@ function ReportPage({
               <SummaryRow label="U.S. Equivalency">
                 <EditableTextarea
                   value={data.equivalence.summary}
-                  onChange={(value) => updateField("equivalence", "summary", value)}
+                  onChange={(value) => updateEquivalenceField("summary", value)}
                   className="font-semibold leading-snug"
                   rows={1}
                   readOnly={readOnly}
@@ -669,7 +874,7 @@ function ReportPage({
               <SummaryRow label="U.S. Credits">
                 <EditableInput
                   value={data.equivalence.totalCredits}
-                  onChange={(value) => updateField("equivalence", "totalCredits", value)}
+                  onChange={(value) => updateEquivalenceField("totalCredits", value)}
                   className="font-semibold"
                   readOnly={readOnly}
                 />
@@ -677,40 +882,59 @@ function ReportPage({
               <SummaryRow label="U.S. GPA">
                 <EditableInput
                   value={data.equivalence.gpa}
-                  onChange={(value) => updateField("equivalence", "gpa", value)}
+                  onChange={(value) => updateEquivalenceField("gpa", value)}
                   className="font-semibold"
                   readOnly={readOnly}
                 />
               </SummaryRow>
             </div>
+          </>
+        )}
 
-            <SectionTitle>2. Credential Details</SectionTitle>
-            <CredentialDetails
-              data={data.credential}
-              updateField={updateField}
-              updateDocument={updateDocument}
-              addDocument={addDocument}
-              deleteDocument={deleteDocument}
-              readOnly={readOnly}
-            />
+        {/* Credential details section title (documents and/or table). */}
+        {showCredentialHeading && <SectionTitle>2. Credential Details</SectionTitle>}
+        {/* Credential details content: document list and credential table. */}
+        {(showDocumentsHeading || showCredentialTable) && (
+          <CredentialDetails
+            credential={credential}
+            credentialIndex={credentialIndex}
+            documents={documents}
+            documentsHeading={documentsHeading}
+            showDocumentsHeading={showDocumentsHeading}
+            showDocumentsActions={showDocumentsActions}
+            showCredentialTable={showCredentialTable}
+            updateCredentialField={updateCredentialField}
+            updateDocument={updateDocument}
+            addDocument={addDocument}
+            deleteDocument={deleteDocument}
+            readOnly={readOnly}
+            documentsListRef={documentsListRef}
+            documentItemRef={documentItemRef}
+          />
+        )}
 
+        {/* Course analysis section title and measurement anchor. */}
+        {showCourseSection && (
+          <>
             <SectionTitle>3. Course-by-Course Analysis</SectionTitle>
             <div ref={tableStartRef} />
           </>
         )}
 
+        {/* Course table for the current page. */}
         {showCourseTable && (
           <CourseTable
             courses={pageCourses}
-            updateCourse={updateCourse}
-            deleteCourse={deleteCourse}
+            updateCourse={handleUpdateCourse}
+            deleteCourse={handleDeleteCourse}
             readOnly={readOnly}
             headerRef={tableHeaderRef}
             rowRef={rowRef}
-            showEmptyState={!hasCourses}
+            showEmptyState={!credentialHasCourses}
           />
         )}
 
+        {/* Tail content only on the last page (totals, references, signatures). */}
         {isLastPage && (
           <div className="mt-4" ref={tailRef}>
             <div className="border-t border-gray-300 pt-2 mb-4">
@@ -721,7 +945,7 @@ function ReportPage({
                     <span>Credits:</span>
                     <EditableInput
                       value={data.equivalence.totalCredits}
-                      onChange={(value) => updateField("equivalence", "totalCredits", value)}
+                      onChange={(value) => updateEquivalenceField("totalCredits", value)}
                       className="w-16 text-right font-bold"
                       readOnly={readOnly}
                     />
@@ -730,7 +954,7 @@ function ReportPage({
                     <span>GPA:</span>
                     <EditableInput
                       value={data.equivalence.gpa}
-                      onChange={(value) => updateField("equivalence", "gpa", value)}
+                      onChange={(value) => updateEquivalenceField("gpa", value)}
                       className="w-12 text-right font-bold"
                       readOnly={readOnly}
                     />
@@ -747,6 +971,7 @@ function ReportPage({
         )}
       </div>
 
+      {/* Fixed footer with page index and reference number. */}
       <Footer pageIndex={pageIndex} totalPages={totalPages} refNo={data.refNo} />
     </div>
   )
@@ -907,164 +1132,196 @@ const DocumentFieldRow = ({ label, children }: DocumentFieldRowProps) => (
 )
 
 type CredentialDetailsProps = {
-  data: SampleData["credential"]
-  updateField: UpdateField
+  credential?: SampleData["credentials"][number]
+  credentialIndex?: number
+  documents: DocumentEntry[]
+  documentsHeading?: string
+  showDocumentsHeading: boolean
+  showDocumentsActions: boolean
+  showCredentialTable: boolean
+  updateCredentialField: UpdateCredentialField
   updateDocument: UpdateDocument
   addDocument: () => void
   deleteDocument: DeleteDocument
   readOnly?: boolean
+  documentsListRef?: RefObject<HTMLUListElement | null>
+  documentItemRef?: RefObject<HTMLLIElement | null>
 }
 
 const CredentialDetails = ({
-  data,
-  updateField,
+  credential,
+  credentialIndex,
+  documents,
+  documentsHeading,
+  showDocumentsHeading,
+  showDocumentsActions,
+  showCredentialTable,
+  updateCredentialField,
   updateDocument,
   addDocument,
   deleteDocument,
   readOnly = false,
-}: CredentialDetailsProps) => (
-  <div className="text-xs">
-    <table className="w-full text-xs border-collapse mb-3 table-fixed">
-      <tbody>
-        <DetailRow label="Name of Awarding Institution">
-          <EditableInput
-            value={data.awardingInstitution}
-            onChange={(value) => updateField("credential", "awardingInstitution", value)}
-            className="font-semibold"
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Name of Awarding Institution in Native Language (Chinese Simplified)">
-          <EditableInput
-            value={data.awardingInstitutionNative}
-            onChange={(value) => updateField("credential", "awardingInstitutionNative", value)}
-            className="text-gray-600"
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Country">
-          <EditableInput
-            value={data.country}
-            onChange={(value) => updateField("credential", "country", value)}
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Admission Requirements">
-          <EditableTextarea
-            value={data.admissionRequirements}
-            onChange={(value) => updateField("credential", "admissionRequirements", value)}
-            rows={1}
-            className="leading-snug"
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Program">
-          <EditableTextarea
-            value={data.program}
-            onChange={(value) => updateField("credential", "program", value)}
-            rows={1}
-            className="leading-snug"
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Grants Access to">
-          <EditableInput
-            value={data.grantsAccessTo}
-            onChange={(value) => updateField("credential", "grantsAccessTo", value)}
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Standard Program Length">
-          <EditableInput
-            value={data.standardProgramLength}
-            onChange={(value) => updateField("credential", "standardProgramLength", value)}
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Years Attended">
-          <EditableInput
-            value={data.yearsAttended}
-            onChange={(value) => updateField("credential", "yearsAttended", value)}
-            readOnly={readOnly}
-          />
-        </DetailRow>
-        <DetailRow label="Year of Graduation">
-          <EditableInput
-            value={data.yearOfGraduation}
-            onChange={(value) => updateField("credential", "yearOfGraduation", value)}
-            readOnly={readOnly}
-          />
-        </DetailRow>
-      </tbody>
-    </table>
+  documentsListRef,
+  documentItemRef,
+}: CredentialDetailsProps) => {
+  const canShowCredentialTable = Boolean(showCredentialTable && credential && credentialIndex !== undefined)
+  const handleCredentialFieldChange = (field: CredentialField, value: string) => {
+    if (credentialIndex === undefined) return
+    updateCredentialField(credentialIndex, field, value)
+  }
 
-    <div className="border-t border-gray-300 pt-2">
-      <div className="text-[10px] font-semibold text-gray-700 mb-1">
-        This evaluation is based on the following documents electronically submitted by the applicant:
-      </div>
-      <ul className="list-disc pl-4 space-y-2">
-        {data.documents.map((document, index) => (
-          <li key={`${document.title}-${index}`} className={`relative ${readOnly ? "" : "pr-5"}`}>
+  return (
+    <div className="text-xs">
+      {canShowCredentialTable && (
+      <table className="w-full text-xs border-collapse mb-3 table-fixed">
+        <tbody>
+          <DetailRow label="Name of Awarding Institution">
             <EditableInput
-              value={document.title}
-              onChange={(value) => updateDocument(index, "title", value)}
+              value={credential!.awardingInstitution}
+              onChange={(value) => handleCredentialFieldChange("awardingInstitution", value)}
               className="font-semibold"
               readOnly={readOnly}
             />
-            <div className="mt-0.5 space-y-0.5">
-              <DocumentFieldRow label="Issued By">
-                <EditableTextarea
-                  value={document.issuedBy}
-                  onChange={(value) => updateDocument(index, "issuedBy", value)}
-                  rows={1}
-                  className="leading-snug"
-                  readOnly={readOnly}
-                />
-              </DocumentFieldRow>
-              <DocumentFieldRow label="Date of Issue">
-                <EditableInput
-                  value={document.dateIssued}
-                  onChange={(value) => updateDocument(index, "dateIssued", value)}
-                  readOnly={readOnly}
-                />
-              </DocumentFieldRow>
-              <DocumentFieldRow label="Certificate No.">
-                <EditableInput
-                  value={document.certificateNo}
-                  onChange={(value) => updateDocument(index, "certificateNo", value)}
-                  readOnly={readOnly}
-                />
-              </DocumentFieldRow>
-            </div>
-            {!readOnly && (
-              <button
-                type="button"
-                onClick={() => deleteDocument(index)}
-                className="no-print absolute right-0 top-0 text-gray-300 hover:text-red-500 transition-colors"
-                title="Remove Document"
-              >
-                <Trash2 size={12} />
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-      {!readOnly && (
-        <button
-          type="button"
-          onClick={addDocument}
-          className="no-print mt-2 flex items-center gap-1 text-[10px] text-blue-700 hover:text-blue-900 transition-colors"
-        >
-          <Plus size={12} /> Add Document
-        </button>
+          </DetailRow>
+          <DetailRow label="Name of Awarding Institution in Native Language (Chinese Simplified)">
+            <EditableInput
+              value={credential!.awardingInstitutionNative}
+              onChange={(value) => handleCredentialFieldChange("awardingInstitutionNative", value)}
+              className="text-gray-600"
+              readOnly={readOnly}
+            />
+          </DetailRow>
+          <DetailRow label="Country">
+            <EditableInput
+              value={credential!.country}
+              onChange={(value) => handleCredentialFieldChange("country", value)}
+              readOnly={readOnly}
+            />
+          </DetailRow>
+          <DetailRow label="Admission Requirements">
+            <EditableTextarea
+              value={credential!.admissionRequirements}
+              onChange={(value) => handleCredentialFieldChange("admissionRequirements", value)}
+              rows={1}
+              className="leading-snug"
+              readOnly={readOnly}
+            />
+          </DetailRow>
+          <DetailRow label="Program">
+            <EditableTextarea
+              value={credential!.program}
+              onChange={(value) => handleCredentialFieldChange("program", value)}
+              rows={1}
+              className="leading-snug"
+              readOnly={readOnly}
+            />
+          </DetailRow>
+          <DetailRow label="Grants Access to">
+            <EditableInput
+              value={credential!.grantsAccessTo}
+              onChange={(value) => handleCredentialFieldChange("grantsAccessTo", value)}
+              readOnly={readOnly}
+            />
+          </DetailRow>
+          <DetailRow label="Standard Program Length">
+            <EditableInput
+              value={credential!.standardProgramLength}
+              onChange={(value) => handleCredentialFieldChange("standardProgramLength", value)}
+              readOnly={readOnly}
+            />
+          </DetailRow>
+          <DetailRow label="Years Attended">
+            <EditableInput
+              value={credential!.yearsAttended}
+              onChange={(value) => handleCredentialFieldChange("yearsAttended", value)}
+              readOnly={readOnly}
+            />
+          </DetailRow>
+          <DetailRow label="Year of Graduation">
+            <EditableInput
+              value={credential!.yearOfGraduation}
+              onChange={(value) => handleCredentialFieldChange("yearOfGraduation", value)}
+              readOnly={readOnly}
+            />
+          </DetailRow>
+        </tbody>
+      </table>
       )}
+
+    {showDocumentsHeading && (
+      <div className="border-t border-gray-300 pt-2">
+        {documentsHeading && (
+          <div className="text-[10px] font-semibold text-gray-700 mb-1">{documentsHeading}</div>
+        )}
+        <ul className="list-disc pl-4 space-y-2" ref={documentsListRef}>
+          {documents.map((entry, index) => (
+            <li
+              key={`${entry.document.title}-${entry.index}`}
+              className={`relative ${readOnly ? "" : "pr-5"}`}
+              ref={index === 0 ? documentItemRef : undefined}
+            >
+              <EditableInput
+                value={entry.document.title}
+                onChange={(value) => updateDocument(entry.index, "title", value)}
+                className="font-semibold"
+                readOnly={readOnly}
+              />
+              <div className="mt-0.5 space-y-0.5">
+                <DocumentFieldRow label="Issued By">
+                  <EditableTextarea
+                    value={entry.document.issuedBy}
+                    onChange={(value) => updateDocument(entry.index, "issuedBy", value)}
+                    rows={1}
+                    className="leading-snug"
+                    readOnly={readOnly}
+                  />
+                </DocumentFieldRow>
+                <DocumentFieldRow label="Date of Issue">
+                  <EditableInput
+                    value={entry.document.dateIssued}
+                    onChange={(value) => updateDocument(entry.index, "dateIssued", value)}
+                    readOnly={readOnly}
+                  />
+                </DocumentFieldRow>
+                <DocumentFieldRow label="Certificate No.">
+                  <EditableInput
+                    value={entry.document.certificateNo}
+                    onChange={(value) => updateDocument(entry.index, "certificateNo", value)}
+                    readOnly={readOnly}
+                  />
+                </DocumentFieldRow>
+              </div>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => deleteDocument(entry.index)}
+                  className="no-print absolute right-0 top-0 text-gray-300 hover:text-red-500 transition-colors"
+                  title="Remove Document"
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+        {!readOnly && showDocumentsActions && (
+          <button
+            type="button"
+            onClick={addDocument}
+            className="no-print mt-2 flex items-center gap-1 text-[10px] text-blue-700 hover:text-blue-900 transition-colors"
+          >
+            <Plus size={12} /> Add Document
+          </button>
+        )}
+      </div>
+    )}
     </div>
-  </div>
-)
+  )
+}
 
 type CourseTableProps = {
   courses: Course[]
-  updateCourse: UpdateCourse
+  updateCourse: UpdateCourseRow
   deleteCourse: (id: number) => void
   readOnly?: boolean
   headerRef?: RefObject<HTMLTableSectionElement | null>
