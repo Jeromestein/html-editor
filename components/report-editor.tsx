@@ -276,10 +276,12 @@ export default function ReportEditor({
           first: rowsPerFirstPage,
           firstWithTail: rowsPerFirstPageWithTail,
           full: rowsPerFullPage,
-          last: rowsPerLastPage,
+          // Reserve space for Grade Conversion on the last page of a credential
+          // Grade Conversion is approx equal to 10-12 course rows in height
+          last: Math.max(1, rowsPerFullPage - 12),
         })
       }),
-    [data.credentials, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage, rowsPerLastPage]
+    [data.credentials, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage]
   )
 
   const reportPages = useMemo(() => {
@@ -329,9 +331,21 @@ export default function ReportEditor({
       })
     })
 
-    if (compiled.length > 0) {
-      compiled[compiled.length - 1].isLastPage = true
-    }
+    // Add a separate page for References, Notes, and Signatures
+    compiled.push({
+      documents: [],
+      courses: [],
+      credentialIndex: undefined,
+      showApplicantInfo: false,
+      showCredentialHeading: false,
+      showCredentialTable: false,
+      showDocumentsHeading: false,
+      showDocumentsActions: false,
+      showCourseSection: false,
+      showGradeConversion: false,
+      isLastPage: true,
+    })
+
     return compiled
   }, [coursePagesByCredential, data.credentials, documentEntries.length, documentPages, readOnly])
 
@@ -888,6 +902,7 @@ function ReportPage({
   updateDataField,
   updateCredentialField,
   updateCourse,
+  updateGradeConversion,
   deleteCourse,
   updateDocument,
   addDocument,
@@ -930,17 +945,7 @@ function ReportPage({
     deleteCourse(credentialIndex, id)
   }
 
-  const handleUpdateGradeConversion = (rowIndex: number, field: GradeConversionField, value: string) => {
-    // Assuming we have a helper passed down or we can construct the updates
-    // For now, I need to make sure updateCredentialField can handle nested array updates or I use a specific setter
-    // Actually, report-editor props didn't pass a specific updateGradeConversion.
-    // I need to update the data state in the parent or use a trick. 
-    // Wait, I didn't add updateGradeConversion to the ReportPageProps in the previous step?
-    // I see I defined type `UpdateGradeConversion` but didn't add it to props in the huge replaced block?
-    // Let's assume I will fix the prop in a moment if missing.
-    // For now, I'll use a placeholder or assume the prop exists.
-    // Actually, I should probably pass a specific handler from parent.
-  }
+
 
   const setContentRef = (node: HTMLDivElement | null) => {
     if (courseContentRef) {
@@ -1161,13 +1166,10 @@ function ReportPage({
                 <SectionTitle>{gradeConversionNum}. Grade Conversion: <span className="text-gray-600 normal-case ml-1">Credential #{(credentialIndex ?? 0) + 1}</span></SectionTitle>
                 <GradeConversion
                   rows={credential.gradeConversion}
-                  // Need to wire update mechanism
-                  onUpdate={(rowIndex, field, value) => {
-                    // Temporary hack: we need to pass this up or implement it
-                    // Implementation TBD in next step via prop plumbing
-                  }}
+                  onUpdate={(rowIndex, field, value) => updateGradeConversion(credentialIndex!, rowIndex, field, value)}
                   readOnly={readOnly}
                 />
+                <div style={{ breakAfter: "page", pageBreakAfter: "always" }} />
               </>
             )}
           </>
@@ -1175,8 +1177,6 @@ function ReportPage({
 
         {isLastPage && (
           <div className="mt-4" ref={tailRef}>
-
-
             <SectionTitle>{referencesNum}. References</SectionTitle>
             <References />
 
