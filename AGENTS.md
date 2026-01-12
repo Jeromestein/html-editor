@@ -44,6 +44,10 @@ For each degree/credential (starting from Index 1), the following three sections
 *   **5. GRADE CONVERSION:**
     *   Header format: **"Grade Conversion: Credential #X"**.
     *   A table showing the grade scale specific to that credential.
+    *   **Pagination Logic:**
+        *   Do **not** reserve fixed space for this section in the course table. Courses should fill the page as much as possible.
+        *   **Dynamic Placement:** If the Grade Conversion section (height = rows + overhead) fits in the remaining space of the last course page without overlapping the footer, place it there.
+        *   **Auto-Break:** If the remaining space is insufficient, automatically move the Grade Conversion section to a **new, separate page**.
 
 *(Note: The section numbering increments dynamically based on the number of credentials. E.g., for Credential #2, the sections would be 6, 7, and 8.)*
 

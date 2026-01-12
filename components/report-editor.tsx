@@ -276,9 +276,11 @@ export default function ReportEditor({
           first: rowsPerFirstPage,
           firstWithTail: rowsPerFirstPageWithTail,
           full: rowsPerFullPage,
-          // Reserve space for Grade Conversion on the last page of a credential
-          // Grade Conversion is approx equal to 10-12 course rows in height
-          last: Math.max(1, rowsPerFullPage - 12),
+          // Reserve space for Grade Conversion based on row count?
+          // NO: The user prefers Grade Conversion to be on a separate page if it doesn't fit, 
+          // rather than cutting the course list short. So we effectively don't reserve space here,
+          // and handle the overflow check in the page compilation step.
+          last: rowsPerFullPage,
         })
       }),
     [data.credentials, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage]
@@ -315,6 +317,27 @@ export default function ReportEditor({
 
       effectiveCoursePages.forEach((page, pageIndex) => {
         const isLastOfCredential = pageIndex === effectiveCoursePages.length - 1
+
+        // Determine capacity for this specific page type
+        // Note: Logic assumes first page (index 0) uses rowsPerFirstPage, others use rowsPerFullPage.
+        // This is an approximation as the actual "First Page" logic in layout effect depends on content.
+        // However, for course lists, this matches paginateCourses logic behavior.
+        const capacity = pageIndex === 0 ? (rowsPerFirstPage > 0 ? rowsPerFirstPage : DEFAULT_ROWS_PER_FIRST_PAGE) : (rowsPerFullPage > 0 ? rowsPerFullPage : DEFAULT_ROWS_PER_FULL_PAGE)
+
+        const rowsUsed = page.courses.length
+        const gradeConversionOverhead = credential.gradeConversion.length + 10 // Header, margins, table rows
+
+        let showGradeConversion = false
+        let needsExtraPage = false
+
+        if (isLastOfCredential) {
+          if (capacity - rowsUsed >= gradeConversionOverhead) {
+            showGradeConversion = true
+          } else {
+            needsExtraPage = true
+          }
+        }
+
         compiled.push({
           documents: [],
           courses: page.courses,
@@ -325,9 +348,25 @@ export default function ReportEditor({
           showDocumentsHeading: false,
           showDocumentsActions: false,
           showCourseSection: pageIndex === courseSectionIndex,
-          showGradeConversion: isLastOfCredential, // Show conversion on last page
+          showGradeConversion: showGradeConversion,
           isLastPage: false,
         })
+
+        if (needsExtraPage) {
+          compiled.push({
+            documents: [],
+            courses: [],
+            credentialIndex,
+            showApplicantInfo: false,
+            showCredentialHeading: false,
+            showCredentialTable: false,
+            showDocumentsHeading: false,
+            showDocumentsActions: false,
+            showCourseSection: false,
+            showGradeConversion: true, // Show on this new page
+            isLastPage: false,
+          })
+        }
       })
     })
 
