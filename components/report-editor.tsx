@@ -1563,7 +1563,7 @@ const CourseTable = ({
           <th className="border border-gray-300 p-1 w-20">Year</th>
           <th className="border border-gray-300 p-1 text-center">Course Title</th>
           <th className="border border-gray-300 p-1 w-8">Lvl</th>
-          <th className="border border-gray-300 p-1 w-12">Credits</th>
+          <th className="border border-gray-300 p-1 w-16">Credits</th>
           <th className="border border-gray-300 p-1 w-18">Grade</th>
           {showActions && <th className="border border-gray-300 p-1 w-6 no-print"></th>}
         </tr>
