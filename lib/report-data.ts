@@ -151,12 +151,12 @@ const HKU_GRADE_CONVERSION: GradeConversionRow[] = [
 ]
 
 export const buildSampleData = (): SampleData => ({
-  refNo: "2168235256",
-  name: "Guanlong Li",
-  dob: "January 14, 1992",
+  refNo: "LA-20260116-010",
+  name: "[first name] [last name]",
+  dob: "N/A",
   country: "Hong Kong, The People’s Republic of China",
-  date: "January 6, 2026",
-  purpose: "Education",
+  date: "January 16, 2026",
+  purpose: "N/A",
   evaluationNotes: "Credit Conversion Methodology\nAcademic credits earned at the Hong Kong University of Science and Technology are awarded under the higher education system of the Hong Kong Special Administrative Region (HKSAR), China. For the purpose of this evaluation, Hong Kong academic credits have been converted to U.S. semester credit hours based on a review of total instructional time, academic level, and the presence of laboratory or practical components. In general, one Hong Kong academic credit is considered comparable to one U.S. semester credit hour, in accordance with internationally accepted credential evaluation practices and AACRAO guidelines.\n\nUniversity of Hong Kong Credit Conversion\nAcademic credits earned at the University of Hong Kong are awarded under the higher education system of the Hong Kong Special Administrative Region (HKSAR), China. For the purpose of this evaluation, Hong Kong academic credits have been converted to U.S. semester credit hours based on a review of total instructional time, academic level, and the presence of laboratory or practical components. In general, accordingly, no U.S. semester credit hours are assigned to the PhD degree, which is recognized at the degree level only as equivalent to a Doctor of Philosophy degree awarded by a regionally accredited institution of higher education in the United States.",
   documents: [
     {
