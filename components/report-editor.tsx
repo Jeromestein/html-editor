@@ -1133,36 +1133,15 @@ function ReportPage({
                 headerRef={tableHeaderRef}
                 rowRef={rowRef}
                 showEmptyState={!credentialHasCourses}
+                showTotals={showGradeConversion}
+                totalCredits={credential?.totalCredits}
+                gpa={credential?.gpa}
+                onUpdateTotalCredits={(value) => updateEquivalenceField(credentialIndex!, "totalCredits", value)}
+                onUpdateGpa={(value) => updateEquivalenceField(credentialIndex!, "gpa", value)}
               />
             )}
-
             {showGradeConversion && (
               <>
-                <div className="border-t border-gray-300 pt-2 mb-4">
-                  <div className="flex justify-between font-bold text-sm items-center">
-                    <span>TOTALS</span>
-                    <div className="flex gap-8 items-center">
-                      <div className="flex items-center">
-                        <span>Credits:</span>
-                        <EditableInput
-                          value={credential.totalCredits}
-                          onChange={(value) => updateEquivalenceField(credentialIndex!, "totalCredits", value)}
-                          className="w-16 text-right font-bold"
-                          readOnly={readOnly}
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <span>GPA:</span>
-                        <EditableInput
-                          value={credential.gpa}
-                          onChange={(value) => updateEquivalenceField(credentialIndex!, "gpa", value)}
-                          className="w-12 text-right font-bold"
-                          readOnly={readOnly}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
                 <SectionTitle>{gradeConversionNum}. Grade Conversion: <span className="text-gray-600 normal-case ml-1">Credential #{(credentialIndex ?? 0) + 1}</span></SectionTitle>
                 <GradeConversion
                   rows={credential.gradeConversion}
@@ -1549,6 +1528,11 @@ type CourseTableProps = {
   headerRef?: RefObject<HTMLTableSectionElement | null>
   rowRef?: RefObject<HTMLTableRowElement | null>
   showEmptyState?: boolean
+  showTotals?: boolean
+  totalCredits?: string
+  gpa?: string
+  onUpdateTotalCredits?: (value: string) => void
+  onUpdateGpa?: (value: string) => void
 }
 
 const CourseTable = ({
@@ -1559,6 +1543,11 @@ const CourseTable = ({
   headerRef,
   rowRef,
   showEmptyState = true,
+  showTotals = false,
+  totalCredits = "",
+  gpa = "",
+  onUpdateTotalCredits,
+  onUpdateGpa,
 }: CourseTableProps) => {
   if (!courses || courses.length === 0) {
     if (!showEmptyState) return null
@@ -1636,6 +1625,34 @@ const CourseTable = ({
           </tr>
         ))}
       </tbody>
+      {showTotals && (
+        <tfoot className="font-bold bg-white">
+          <tr className="border-t-2 border-gray-300">
+            <td className="border border-gray-300 p-1 text-center pl-2">TOTALS</td>
+            <td className="border border-gray-300 p-1 text-right pr-2" colSpan={2}>
+            </td>
+            <td className="border border-gray-300 p-0 editable-cell">
+              <EditableInput
+                value={totalCredits}
+                onChange={onUpdateTotalCredits || (() => { })}
+                className="text-left px-2 h-full"
+                readOnly={readOnly}
+              />
+            </td>
+            <td className="border border-gray-300 p-0 editable-cell">
+              <div className="flex items-center justify-between px-1 h-full">
+                <EditableInput
+                  value={gpa}
+                  onChange={onUpdateGpa || (() => { })}
+                  className="text-left px-2 h-full"
+                  readOnly={readOnly}
+                />
+              </div>
+            </td>
+            {showActions && <td className="border border-gray-300 bg-gray-50 no-print"></td>}
+          </tr>
+        </tfoot>
+      )}
     </table>
   )
 }
