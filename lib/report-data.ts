@@ -142,6 +142,14 @@ const CAMBRIDGE_GRADE_CONVERSION: GradeConversionRow[] = [
   { grade: "0.00-49.99", usGrade: "F" },
 ]
 
+const HKU_COURSES: CourseSeed[] = [
+  { year: "2016-2017", name: "Advanced Statistical Methods I", level: "G", credits: "0.00", grade: "PASS" },
+]
+
+const HKU_GRADE_CONVERSION: GradeConversionRow[] = [
+  { grade: "PASS", usGrade: "P (Pass)" },
+]
+
 export const buildSampleData = (): SampleData => ({
   refNo: "2168235256",
   name: "Guanlong Li",
@@ -149,7 +157,7 @@ export const buildSampleData = (): SampleData => ({
   country: "Hong Kong, The People’s Republic of China",
   date: "January 6, 2026",
   purpose: "Education",
-  evaluationNotes: "Credit Conversion Methodology\nAcademic credits earned at the Hong Kong University of Science and Technology are awarded under the higher education system of the Hong Kong Special Administrative Region (HKSAR), China. For the purpose of this evaluation, Hong Kong academic credits have been converted to U.S. semester credit hours based on a review of total instructional time, academic level, and the presence of laboratory or practical components. In general, one Hong Kong academic credit is considered comparable to one U.S. semester credit hour, in accordance with internationally accepted credential evaluation practices and AACRAO guidelines.",
+  evaluationNotes: "Credit Conversion Methodology\nAcademic credits earned at the Hong Kong University of Science and Technology are awarded under the higher education system of the Hong Kong Special Administrative Region (HKSAR), China. For the purpose of this evaluation, Hong Kong academic credits have been converted to U.S. semester credit hours based on a review of total instructional time, academic level, and the presence of laboratory or practical components. In general, one Hong Kong academic credit is considered comparable to one U.S. semester credit hour, in accordance with internationally accepted credential evaluation practices and AACRAO guidelines.\n\nUniversity of Hong Kong Credit Conversion\nAcademic credits earned at the University of Hong Kong are awarded under the higher education system of the Hong Kong Special Administrative Region (HKSAR), China. For the purpose of this evaluation, Hong Kong academic credits have been converted to U.S. semester credit hours based on a review of total instructional time, academic level, and the presence of laboratory or practical components. In general, accordingly, no U.S. semester credit hours are assigned to the PhD degree, which is recognized at the degree level only as equivalent to a Doctor of Philosophy degree awarded by a regionally accredited institution of higher education in the United States.",
   documents: [
     {
       title: "Academic Transcript",
@@ -173,6 +181,18 @@ export const buildSampleData = (): SampleData => ({
       title: "Degree Certificate",
       issuedBy: "University of Cambridge",
       dateIssued: "October 20, 2018",
+      certificateNo: "N/A",
+    },
+    {
+      title: "Academic Transcript",
+      issuedBy: "University of Hong Kong",
+      dateIssued: "December 3, 2020",
+      certificateNo: "N/A",
+    },
+    {
+      title: "Degree Certificate",
+      issuedBy: "University of Hong Kong",
+      dateIssued: "December 3, 2020",
       certificateNo: "N/A",
     },
   ],
@@ -214,6 +234,26 @@ export const buildSampleData = (): SampleData => ({
       gradeConversion: CAMBRIDGE_GRADE_CONVERSION,
       courses: CAMBRIDGE_COURSES.map((course, index) => ({
         id: 2000 + index + 1,
+        ...course,
+      })),
+    },
+    {
+      id: 3,
+      awardingInstitution: "University of Hong Kong",
+      awardingInstitutionNative: "N/A",
+      country: "Hong Kong, The People’s Republic of China",
+      admissionRequirements: "Bachelor's degree with a proven record of outstanding performance from a recognized institution",
+      program: "Doctor of Philosophy (Major in Pathology)",
+      grantsAccessTo: "Postdoctoral Research / Academic Appointments",
+      standardProgramLength: "4 years",
+      yearsAttended: "2016 - 2020",
+      yearOfGraduation: "2020",
+      equivalenceStatement: "Doctor of Philosophy in Pathology",
+      gpa: "N/A",
+      totalCredits: "0.00",
+      gradeConversion: HKU_GRADE_CONVERSION,
+      courses: HKU_COURSES.map((course, index) => ({
+        id: 3000 + index + 1,
         ...course,
       })),
     }
