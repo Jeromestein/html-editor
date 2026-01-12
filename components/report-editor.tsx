@@ -1053,22 +1053,24 @@ function ReportPage({
                       readOnly={readOnly}
                     />
                   </SummaryRow>
-                  <SummaryRow label="U.S. Credits">
-                    <EditableInput
-                      value={cred.totalCredits}
-                      onChange={(value) => updateEquivalenceField(idx, "totalCredits", value)}
-                      className="font-semibold"
-                      readOnly={readOnly}
-                    />
-                  </SummaryRow>
-                  <SummaryRow label="U.S. GPA">
-                    <EditableInput
-                      value={cred.gpa}
-                      onChange={(value) => updateEquivalenceField(idx, "gpa", value)}
-                      className="font-semibold"
-                      readOnly={readOnly}
-                    />
-                  </SummaryRow>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                    <SummaryRow label="U.S. Credits">
+                      <EditableInput
+                        value={cred.totalCredits}
+                        onChange={(value) => updateEquivalenceField(idx, "totalCredits", value)}
+                        className="font-semibold"
+                        readOnly={readOnly}
+                      />
+                    </SummaryRow>
+                    <SummaryRow label="U.S. GPA">
+                      <EditableInput
+                        value={cred.gpa}
+                        onChange={(value) => updateEquivalenceField(idx, "gpa", value)}
+                        className="font-semibold"
+                        readOnly={readOnly}
+                      />
+                    </SummaryRow>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1111,20 +1113,22 @@ function ReportPage({
                         readOnly={readOnly}
                       />
                     </DocumentFieldRow>
-                    <DocumentFieldRow label="Date of Issue">
-                      <EditableInput
-                        value={entry.document.dateIssued}
-                        onChange={(value) => updateDocument(entry.index, "dateIssued", value)}
-                        readOnly={readOnly}
-                      />
-                    </DocumentFieldRow>
-                    <DocumentFieldRow label="Certificate No.">
-                      <EditableInput
-                        value={entry.document.certificateNo}
-                        onChange={(value) => updateDocument(entry.index, "certificateNo", value)}
-                        readOnly={readOnly}
-                      />
-                    </DocumentFieldRow>
+                    <div className="grid grid-cols-2 gap-x-6">
+                      <DocumentFieldRow label="Date of Issue">
+                        <EditableInput
+                          value={entry.document.dateIssued}
+                          onChange={(value) => updateDocument(entry.index, "dateIssued", value)}
+                          readOnly={readOnly}
+                        />
+                      </DocumentFieldRow>
+                      <DocumentFieldRow label="Certificate No.">
+                        <EditableInput
+                          value={entry.document.certificateNo}
+                          onChange={(value) => updateDocument(entry.index, "certificateNo", value)}
+                          readOnly={readOnly}
+                        />
+                      </DocumentFieldRow>
+                    </div>
                   </div>
                   {!readOnly && (
                     <button
@@ -1538,20 +1542,22 @@ const CredentialDetails = ({
                       readOnly={readOnly}
                     />
                   </DocumentFieldRow>
-                  <DocumentFieldRow label="Date of Issue">
-                    <EditableInput
-                      value={entry.document.dateIssued}
-                      onChange={(value) => updateDocument(entry.index, "dateIssued", value)}
-                      readOnly={readOnly}
-                    />
-                  </DocumentFieldRow>
-                  <DocumentFieldRow label="Certificate No.">
-                    <EditableInput
-                      value={entry.document.certificateNo}
-                      onChange={(value) => updateDocument(entry.index, "certificateNo", value)}
-                      readOnly={readOnly}
-                    />
-                  </DocumentFieldRow>
+                  <div className="grid grid-cols-2 gap-x-6">
+                    <DocumentFieldRow label="Date of Issue">
+                      <EditableInput
+                        value={entry.document.dateIssued}
+                        onChange={(value) => updateDocument(entry.index, "dateIssued", value)}
+                        readOnly={readOnly}
+                      />
+                    </DocumentFieldRow>
+                    <DocumentFieldRow label="Certificate No.">
+                      <EditableInput
+                        value={entry.document.certificateNo}
+                        onChange={(value) => updateDocument(entry.index, "certificateNo", value)}
+                        readOnly={readOnly}
+                      />
+                    </DocumentFieldRow>
+                  </div>
                 </div>
                 {!readOnly && (
                   <button
