@@ -259,15 +259,28 @@ export default function ReportEditor({
   const [documentsPerPage, setDocumentsPerPage] = useState(() =>
     Math.max(1, data.documents.length)
   )
+  const [documentsPerFullPage, setDocumentsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
 
   const documentEntries = useMemo(
     () => data.documents.map((document, index) => ({ document, index })),
     [data.documents]
   )
-  const documentPages = useMemo(
-    () => chunkArray(documentEntries, documentsPerPage),
-    [documentEntries, documentsPerPage]
-  )
+  const documentPages = useMemo(() => {
+    const pages: DocumentEntry[][] = []
+    const entries = [...documentEntries]
+
+    // First page
+    if (entries.length > 0) {
+      pages.push(entries.splice(0, documentsPerPage))
+    }
+
+    // Subsequent pages
+    while (entries.length > 0) {
+      pages.push(entries.splice(0, documentsPerFullPage))
+    }
+
+    return pages
+  }, [documentEntries, documentsPerPage, documentsPerFullPage])
   const coursePagesByCredential = useMemo(
     () =>
       data.credentials.map((credential, credentialIndex) => {
@@ -439,6 +452,7 @@ export default function ReportEditor({
       let nextFull = rowsPerFullPage
       let nextLast = rowsPerLastPage
       let nextDocumentsPerPage = documentsPerPage
+      let nextDocumentsPerFullPage = documentsPerFullPage
 
       if (courseContentEl && startEl && headerEl && rowEl) {
         const contentRect = courseContentEl.getBoundingClientRect()
@@ -488,8 +502,14 @@ export default function ReportEditor({
         const itemMarginTop = Number.parseFloat(itemStyle.marginTop) || 0
         const itemMarginBottom = Number.parseFloat(itemStyle.marginBottom) || 0
         const itemHeight = itemRect.height + itemMarginTop + itemMarginBottom
-        const availableDocuments = introRect.bottom - listRect.top - safetyPadding
-        nextDocumentsPerPage = Math.max(1, Math.floor(availableDocuments / itemHeight))
+        const availableDocumentsFirst = introRect.bottom - listRect.top - safetyPadding
+        nextDocumentsPerPage = Math.max(1, Math.floor(availableDocumentsFirst / itemHeight))
+
+        // Calculate full page document capacity
+        // Assuming ~60px overhead for Section Title ("Documents (continued)") and margins
+        const sectionTitleOverhead = 60
+        const availableDocumentsFull = introRect.height - sectionTitleOverhead - safetyPadding
+        nextDocumentsPerFullPage = Math.max(1, Math.floor(availableDocumentsFull / itemHeight))
       }
 
       const changed =
@@ -497,7 +517,8 @@ export default function ReportEditor({
         nextFirstWithTail !== rowsPerFirstPageWithTail ||
         nextFull !== rowsPerFullPage ||
         nextLast !== rowsPerLastPage ||
-        nextDocumentsPerPage !== documentsPerPage
+        nextDocumentsPerPage !== documentsPerPage ||
+        nextDocumentsPerFullPage !== documentsPerFullPage
 
       if (changed) {
         readySentRef.current = false
@@ -506,6 +527,7 @@ export default function ReportEditor({
         setRowsPerFullPage(nextFull)
         setRowsPerLastPage(nextLast)
         setDocumentsPerPage(nextDocumentsPerPage)
+        setDocumentsPerFullPage(nextDocumentsPerFullPage)
         return
       }
 
