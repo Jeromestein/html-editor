@@ -105,6 +105,21 @@ const HKUST_COURSES: CourseSeed[] = [
   { year: "2013-2014", name: "Biomedical Sciences Research Project II", level: "U", credits: "3.00", grade: "B" },
 ]
 
+const CAMBRIDGE_COURSES: CourseSeed[] = [
+  { year: "2017-2018", name: "CBE Computational Biology (ET BOE 2)", level: "G", credits: "3.00", grade: "B" },
+  { year: "2017-2018", name: "PP: Project Presentation (ET)", level: "G", credits: "3.00", grade: "A" },
+  { year: "2017-2018", name: "WR: Project (ET)", level: "G", credits: "3.00", grade: "A-" },
+  { year: "2017-2018", name: "1: Genome Informatics", level: "G", credits: "3.00", grade: "A" },
+  { year: "2017-2018", name: "2: Genome Sequence Analysis (Half Module) (ET)", level: "G", credits: "3.00", grade: "A" },
+  { year: "2017-2018", name: "3: Functional Genomics (ET)", level: "G", credits: "3.00", grade: "A" },
+  { year: "2017-2018", name: "6: Population Genetic Analysis of Genomic Data (ET)", level: "G", credits: "3.00", grade: "A" },
+  { year: "2017-2018", name: "7: Systems Biology", level: "G", credits: "3.00", grade: "A-" },
+  { year: "2017-2018", name: "11: Scientific Programming", level: "G", credits: "3.00", grade: "A" },
+  { year: "2017-2018", name: "12: Network Biology (Half Module) (ET)", level: "G", credits: "3.00", grade: "A" },
+  { year: "2017-2018", name: "14: Computational Neuroscience (Full Module) (Et)", level: "G", credits: "3.00", grade: "A" },
+  { year: "2017-2018", name: "17: Cancer Evolution", level: "G", credits: "3.00", grade: "A" },
+]
+
 const HKUST_GRADE_CONVERSION: GradeConversionRow[] = [
   { grade: "A+", usGrade: "A+" },
   { grade: "A", usGrade: "A" },
@@ -117,6 +132,14 @@ const HKUST_GRADE_CONVERSION: GradeConversionRow[] = [
   { grade: "D+", usGrade: "D+" },
   { grade: "D", usGrade: "D" },
   { grade: "F", usGrade: "F" },
+]
+
+const CAMBRIDGE_GRADE_CONVERSION: GradeConversionRow[] = [
+  { grade: "70.00-100.00", usGrade: "A" },
+  { grade: "65.00-69.99", usGrade: "A-" },
+  { grade: "60.00-64.99", usGrade: "B+" },
+  { grade: "50.00-59.99", usGrade: "B" },
+  { grade: "0.00-49.99", usGrade: "F" },
 ]
 
 export const buildSampleData = (): SampleData => ({
@@ -138,6 +161,18 @@ export const buildSampleData = (): SampleData => ({
       title: "Degree Certificate",
       issuedBy: "Hong Kong University of Science and Technology",
       dateIssued: "November 6, 2014",
+      certificateNo: "N/A",
+    },
+    {
+      title: "Academic Transcript",
+      issuedBy: "University of Cambridge",
+      dateIssued: "October 20, 2018",
+      certificateNo: "N/A",
+    },
+    {
+      title: "Degree Certificate",
+      issuedBy: "University of Cambridge",
+      dateIssued: "October 20, 2018",
       certificateNo: "N/A",
     },
   ],
@@ -162,6 +197,25 @@ export const buildSampleData = (): SampleData => ({
         ...course,
       })),
     },
+    {
+      id: 2,
+      awardingInstitution: "University of Cambridge",
+      awardingInstitutionNative: "N/A",
+      country: "United Kingdom",
+      admissionRequirements: "Lower second (2:2) bachelor's degree earned at a recognized (accredited) institution of higher education in the United Kingdom or its foreign equivalent.",
+      program: "Master of Philosophy (Major in Computational Biology)",
+      grantsAccessTo: "Doctoral Programs",
+      standardProgramLength: "One year",
+      yearsAttended: "2017 - 2018",
+      yearOfGraduation: "2018",
+      equivalenceStatement: "Master of Science in Computational Biology",
+      gpa: "3.83",
+      totalCredits: "36.00",
+      gradeConversion: CAMBRIDGE_GRADE_CONVERSION,
+      courses: CAMBRIDGE_COURSES.map((course, index) => ({
+        id: 2000 + index + 1,
+        ...course,
+      })),
+    }
   ],
 })
-
