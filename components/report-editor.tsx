@@ -1361,7 +1361,7 @@ type SummaryRowProps = {
 }
 
 const SummaryRow = ({ label, children }: SummaryRowProps) => (
-  <div className="grid grid-cols-[9.5rem_1fr] items-start gap-2">
+  <div className="grid grid-cols-[9.5rem_1fr] items-center gap-2">
     <span className="font-bold text-gray-600">{label}:</span>
     <div>{children}</div>
   </div>
@@ -1387,7 +1387,7 @@ type DocumentFieldRowProps = {
 }
 
 const DocumentFieldRow = ({ label, children }: DocumentFieldRowProps) => (
-  <div className="grid grid-cols-[6.5rem_1fr] items-start gap-2">
+  <div className="grid grid-cols-[6.5rem_1fr] items-center gap-2">
     <span className="font-semibold text-gray-600">{label}:</span>
     <div>{children}</div>
   </div>
