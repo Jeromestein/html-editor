@@ -1572,10 +1572,10 @@ const CourseTable = ({
       <thead className="bg-gray-100 print:bg-gray-50" ref={headerRef}>
         <tr>
           <th className="border border-gray-300 p-1 w-20">Year</th>
-          <th className="border border-gray-300 p-1 text-left">Course Title</th>
+          <th className="border border-gray-300 p-1 text-center">Course Title</th>
           <th className="border border-gray-300 p-1 w-8">Lvl</th>
-          <th className="border border-gray-300 p-1 w-10">Credits</th>
-          <th className="border border-gray-300 p-1 w-10">Grade</th>
+          <th className="border border-gray-300 p-1 w-20">Credits</th>
+          <th className="border border-gray-300 p-1 w-20">Grade</th>
           {showActions && <th className="border border-gray-300 p-1 w-6 no-print"></th>}
         </tr>
       </thead>
@@ -1602,7 +1602,7 @@ const CourseTable = ({
               <EditableInput
                 value={course.level}
                 onChange={(value) => updateCourse(course.id, "level", value)}
-                className="text-center h-full"
+                className="text-left px-2 h-full"
                 readOnly={readOnly}
               />
             </td>
@@ -1610,7 +1610,7 @@ const CourseTable = ({
               <EditableInput
                 value={course.credits}
                 onChange={(value) => updateCourse(course.id, "credits", value)}
-                className="text-center h-full"
+                className="text-left px-2 h-full"
                 readOnly={readOnly}
               />
             </td>
@@ -1618,7 +1618,7 @@ const CourseTable = ({
               <EditableInput
                 value={course.grade}
                 onChange={(value) => updateCourse(course.id, "grade", value)}
-                className="text-center h-full"
+                className="text-left px-2 h-full"
                 readOnly={readOnly}
               />
             </td>
