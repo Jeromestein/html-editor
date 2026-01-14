@@ -1305,13 +1305,15 @@ function ReportPage({
 
 const Header = () => (
   <header className="report-header flex justify-between items-end border-b-2 border-blue-900 pb-2 shrink-0">
-    <div>
-      <div className="text-3xl font-black text-blue-900 tracking-wider font-serif">AET</div>
-      <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">
-        American Evaluation & Translation Services
+    <div className="flex items-center gap-4">
+      <img src="/web-app-manifest-512x512.png" alt="AET Logo" className="h-16 w-auto mb-[-4px]" />
+      <div>
+        <div className="text-3xl font-black text-blue-900 tracking-wider font-serif leading-none">AET</div>
+        <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1 leading-none">
+          American Evaluation & Translation Services
+        </div>
       </div>
     </div>
-
   </header>
 )
 
