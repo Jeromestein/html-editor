@@ -73,7 +73,7 @@ const HKUST_COURSES: CourseSeed[] = [
   { year: "2011-2012", name: "Microbiology", level: "L", credits: "3.00", grade: "B" },
   { year: "2011-2012", name: "Microbiology Laboratory", level: "L", credits: "3.00", grade: "C+" },
   // 2011-2012 Summer
-  { year: "2011-2012", name: "Gastronomy", level: "L", credits: "3.00", grade: "A-" },
+  { year: "2011-2012", name: "Gastronomy", level: "L", credits: "3.00", grade: "A+" },
   // 2012-2013 Fall
   { year: "2012-2013", name: "Fundamentals of Analytical Chemistry", level: "U", credits: "3.00", grade: "B+" },
   { year: "2012-2013", name: "Molecular and Cellular Biochemistry I", level: "U", credits: "3.00", grade: "C+" },
@@ -92,7 +92,7 @@ const HKUST_COURSES: CourseSeed[] = [
   { year: "Transfer", name: "Developmental Biology", level: "L", credits: "3.00", grade: "Credit" },
   // 2013-2014 Fall
   { year: "2013-2014", name: "Principles of Microeconomics", level: "L", credits: "3.00", grade: "C+" },
-  { year: "2013-2014", name: "Advanced Molecular Genetics", level: "U", credits: "3.00", grade: "B-" },
+  { year: "2013-2014", name: "Advanced Molecular Genetics", level: "U", credits: "3.00", grade: "B+" },
   { year: "2013-2014", name: "Biochemistry of Diseases", level: "U", credits: "3.00", grade: "B" },
   { year: "2013-2014", name: "Biomedical Sciences Research Project I", level: "U", credits: "3.00", grade: "A-" },
   { year: "2013-2014", name: "General Physics I with Calculus", level: "L", credits: "3.00", grade: "A" },
