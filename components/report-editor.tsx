@@ -795,9 +795,9 @@ export default function ReportEditor({
         :root {
           --page-width: 8.5in;
           --page-height: 11in;
-          --page-padding: 0.45in;
-          --page-header-height: 0.6in;
-          --page-footer-height: 0.3in;
+          --page-padding: 0.45in 0.6in;
+          --page-header-height: 0.7in;
+          --page-footer-height: 0.5in;
           --page-gap: 0.4in;
         }
 
