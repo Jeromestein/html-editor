@@ -312,7 +312,7 @@ export default function ReportEditor({
         showCredentialHeading: false,
         showCredentialTable: false,
         showDocumentsHeading: showDocumentsSection,
-        showDocumentsActions: showDocumentsSection && !readOnly && index === 0,
+        showDocumentsActions: showDocumentsSection && !readOnly && index === introDocumentPages.length - 1,
         documentsHeading: index === 0 ? "2. Documents" : "Documents (continued)",
         showCourseSection: false,
         showGradeConversion: false, // Intro pages don't show grade conversion
@@ -498,12 +498,46 @@ export default function ReportEditor({
         const itemRect = itemEl.getBoundingClientRect()
         const itemStyle = window.getComputedStyle(itemEl)
 
-        const safetyPadding = 4
+        // Increased safety padding to account for browser variabilities and prevent border-line flickering
+        const safetyPadding = 12
         const itemMarginTop = Number.parseFloat(itemStyle.marginTop) || 0
         const itemMarginBottom = Number.parseFloat(itemStyle.marginBottom) || 0
         const itemHeight = itemRect.height + itemMarginTop + itemMarginBottom
+        const gap = 8 // space-y-2 is 0.5rem = 8px
         const availableDocumentsFirst = introRect.bottom - listRect.top - safetyPadding
-        nextDocumentsPerPage = Math.max(1, Math.floor(availableDocumentsFirst / itemHeight))
+
+        // Capacity formula: N * Height + (N-1) * Gap <= Available
+        // N * (Height + Gap) - Gap <= Available
+        // N * (Height + Gap) <= Available + Gap
+        // N <= (Available + Gap) / (Height + Gap)
+        nextDocumentsPerPage = Math.max(1, Math.floor((availableDocumentsFirst + gap) / (itemHeight + gap)))
+
+        // Check if button would fit on the first page
+        // We detect this edge case: if (all docs fit) AND (space remaining < button height), then force one less item to ensure stability.
+        const totalDocuments = data.documents.length
+        if (totalDocuments > 0 && totalDocuments <= nextDocumentsPerPage + 1) {
+          // +1 as a safety buffer for comparison logic
+          // Increased button height approx to be safe (32px button + margins/padding)
+          const buttonHeightApprox = 48
+
+          // Exact height needed for N documents: N * H + (N-1) * G
+          const heightForDocs = totalDocuments * itemHeight + Math.max(0, totalDocuments - 1) * gap
+          const heightWithButton = heightForDocs + gap + buttonHeightApprox
+
+          if (totalDocuments <= nextDocumentsPerPage && heightWithButton > availableDocumentsFirst) {
+            // Not enough space for the button, so push the last item to next page to carry the button with it
+            nextDocumentsPerPage = Math.max(1, nextDocumentsPerPage - 1)
+          }
+        }
+
+        // Reactive Overflow Check: Did we get it wrong?
+        // If the content is actually larger than the container, we MUST shrink.
+        // This handles cases where our simplistic height arithmetic misses something (like wrapping text).
+        const docOverflow = introContentEl.scrollHeight - introRect.height
+        if (docOverflow > 0) {
+          const overflowRows = Math.ceil(docOverflow / (itemHeight + gap))
+          nextDocumentsPerPage = Math.max(1, nextDocumentsPerPage - overflowRows)
+        }
 
         // Calculate full page document capacity
         // Assuming ~60px overhead for Section Title ("Documents (continued)") and margins
@@ -1629,7 +1663,6 @@ const CourseTable = ({
         <tr>
           <th className="border border-gray-300 p-1 w-20">Year</th>
           <th className="border border-gray-300 p-1 text-center">Course Title</th>
-          <th className="border border-gray-300 p-1 w-8">Lvl</th>
           <th className="border border-gray-300 p-1 w-16">Credits</th>
           <th className="border border-gray-300 p-1 w-18">Grade</th>
           {showActions && <th className="border border-gray-300 p-1 w-6 no-print"></th>}
@@ -1650,14 +1683,6 @@ const CourseTable = ({
               <EditableInput
                 value={course.name}
                 onChange={(value) => updateCourse(course.id, "name", value)}
-                className="text-left px-2 h-full"
-                readOnly={readOnly}
-              />
-            </td>
-            <td className="border border-gray-300 p-0 editable-cell">
-              <EditableInput
-                value={course.level}
-                onChange={(value) => updateCourse(course.id, "level", value)}
                 className="text-left px-2 h-full"
                 readOnly={readOnly}
               />
@@ -1696,7 +1721,7 @@ const CourseTable = ({
         <tfoot className="font-bold bg-white">
           <tr className="border-t-2 border-gray-300">
             <td className="border border-gray-300 p-1 text-center pl-2">TOTALS</td>
-            <td className="border border-gray-300 p-1 text-right pr-2" colSpan={2}>
+            <td className="border border-gray-300 p-1 text-right pr-2" colSpan={1}>
             </td>
             <td className="border border-gray-300 p-0 editable-cell">
               <EditableInput

@@ -38,6 +38,7 @@ For each degree/credential (starting from Index 1), the following three sections
     *   Header format: **"Course-by-Course Analysis: Credential #X"**.
     *   A table listing specific courses, grades, credits, and levels.
     *   The *Year* column width is set to `w-20` to fit "YYYY-YYYY" formats.
+    *   The *Lvl* column is hidden by default in normal output.
 *   **TOTALS (Per Credential):**
     *   Located immediately **after** the *Course-by-Course Analysis* table.
     *   Displays the **Total Credits** and **GPA** specific to that single credential.
