@@ -1,3 +1,5 @@
+import { calculateStats } from "./gpa"
+
 export type Course = {
   id: number
   year: string
@@ -209,13 +211,17 @@ export const buildSampleData = (): SampleData => ({
       yearsAttended: "2011 - 2014",
       yearOfGraduation: "2014",
       equivalenceStatement: "Bachelor of Science in Biomedical Sciences",
-      gpa: "3.03",
-      totalCredits: "111.00",
-      gradeConversion: HKUST_GRADE_CONVERSION,
       courses: HKUST_COURSES.map((course, index) => ({
         id: 1000 + index + 1,
         ...course,
       })),
+      gradeConversion: HKUST_GRADE_CONVERSION,
+      get gpa() {
+        return calculateStats(this.courses).gpa
+      },
+      get totalCredits() {
+        return calculateStats(this.courses).totalCredits
+      },
     },
     {
       id: 2,
@@ -229,13 +235,17 @@ export const buildSampleData = (): SampleData => ({
       yearsAttended: "2017 - 2018",
       yearOfGraduation: "2018",
       equivalenceStatement: "Master of Science in Computational Biology",
-      gpa: "3.83",
-      totalCredits: "36.00",
-      gradeConversion: CAMBRIDGE_GRADE_CONVERSION,
       courses: CAMBRIDGE_COURSES.map((course, index) => ({
         id: 2000 + index + 1,
         ...course,
       })),
+      gradeConversion: CAMBRIDGE_GRADE_CONVERSION,
+      get gpa() {
+        return calculateStats(this.courses).gpa
+      },
+      get totalCredits() {
+        return calculateStats(this.courses).totalCredits
+      },
     },
     {
       id: 3,
@@ -249,13 +259,17 @@ export const buildSampleData = (): SampleData => ({
       yearsAttended: "2016 - 2020",
       yearOfGraduation: "2020",
       equivalenceStatement: "Doctor of Philosophy in Pathology",
-      gpa: "N/A",
-      totalCredits: "0.00",
-      gradeConversion: HKU_GRADE_CONVERSION,
       courses: HKU_COURSES.map((course, index) => ({
         id: 3000 + index + 1,
         ...course,
       })),
+      gradeConversion: HKU_GRADE_CONVERSION,
+      get gpa() {
+        return calculateStats(this.courses).gpa
+      },
+      get totalCredits() {
+        return calculateStats(this.courses).totalCredits
+      },
     }
   ],
 })
