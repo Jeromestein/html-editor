@@ -287,15 +287,18 @@ export default function ReportEditor({
     () =>
       data.credentials.map((credential, credentialIndex) => {
         const isLastCredential = credentialIndex === data.credentials.length - 1
+        const gradeConversionOverhead = credential.gradeConversion.length + 6 // Header (2) + Table Header (2) + Margins/Gap (2)
+        // Reserve space for Grade Conversion AND the Totals row (1 row)
+        const lastPageCapacity = Math.max(1, rowsPerFullPage - gradeConversionOverhead - 1)
+
+        // YES: We now reserve space to try and keep Grade Conversion on the same page.
+        // We pass a reduced 'last' page capacity. If courses fit within this reduced capacity,
+        // paginateCourses will put them there, leaving space for GC.
         return paginateCourses(credential.courses, {
           first: rowsPerFirstPage,
           firstWithTail: rowsPerFirstPageWithTail,
           full: rowsPerFullPage,
-          // Reserve space for Grade Conversion based on row count?
-          // NO: The user prefers Grade Conversion to be on a separate page if it doesn't fit, 
-          // rather than cutting the course list short. So we effectively don't reserve space here,
-          // and handle the overflow check in the page compilation step.
-          last: rowsPerFullPage,
+          last: lastPageCapacity,
         })
       }),
     [data.credentials, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage]
@@ -341,13 +344,14 @@ export default function ReportEditor({
         const capacity = pageIndex === 0 ? (rowsPerFirstPage > 0 ? rowsPerFirstPage : DEFAULT_ROWS_PER_FIRST_PAGE) : (rowsPerFullPage > 0 ? rowsPerFullPage : DEFAULT_ROWS_PER_FULL_PAGE)
 
         const rowsUsed = page.courses.length
-        const gradeConversionOverhead = credential.gradeConversion.length + 10 // Header, margins, table rows
+        const gradeConversionOverhead = credential.gradeConversion.length + 6 // Header, margins, table rows
 
         let showGradeConversion = false
         let needsExtraPage = false
 
         if (isLastOfCredential) {
-          if (capacity - rowsUsed >= gradeConversionOverhead) {
+          // Check if we have space for Grade Conversion overhead plus Totals row (1)
+          if (capacity - rowsUsed - 1 >= gradeConversionOverhead) {
             showGradeConversion = true
           } else {
             needsExtraPage = true
@@ -792,8 +796,8 @@ export default function ReportEditor({
           --page-width: 8.5in;
           --page-height: 11in;
           --page-padding: 0.45in;
-          --page-header-height: 0.8in;
-          --page-footer-height: 0.7in;
+          --page-header-height: 0.6in;
+          --page-footer-height: 0.3in;
           --page-gap: 0.4in;
         }
 
