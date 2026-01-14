@@ -34,6 +34,7 @@ For each degree/credential (starting from Index 1), the following three sections
 *   **3. CREDENTIAL DETAILS:**
     *   Header format: **"Credential Details: Credential #X"** (e.g., Credential #1).
     *   Contains specific details like Institution, Country, Year, Major, etc.
+    *   **Institution Name Rule**: Use the English name. If a native language name is needed, append it in parentheses: `English Name (Native Name/Abbreviation)`. Do not use a separate line.
 *   **4. COURSE-BY-COURSE ANALYSIS:**
     *   Header format: **"Course-by-Course Analysis: Credential #X"**.
     *   A table listing specific courses, grades, credits, and levels.

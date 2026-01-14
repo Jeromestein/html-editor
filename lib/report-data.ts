@@ -22,7 +22,7 @@ export type GradeConversionRow = {
 export type Credential = {
   id: number
   awardingInstitution: string
-  awardingInstitutionNative: string
+
   country: string
   admissionRequirements: string
   program: string
@@ -200,7 +200,7 @@ export const buildSampleData = (): SampleData => ({
     {
       id: 1,
       awardingInstitution: "Hong Kong University of Science and Technology",
-      awardingInstitutionNative: "N/A",
+
       country: "Hong Kong, The People’s Republic of China",
       admissionRequirements: "Completion of secondary education (HKALE or equivalent)",
       program: "Bachelor of Science in Molecular Biomedical Sciences",
@@ -220,7 +220,7 @@ export const buildSampleData = (): SampleData => ({
     {
       id: 2,
       awardingInstitution: "University of Cambridge",
-      awardingInstitutionNative: "N/A",
+
       country: "United Kingdom",
       admissionRequirements: "Lower second (2:2) bachelor's degree earned at a recognized (accredited) institution of higher education in the United Kingdom or its foreign equivalent.",
       program: "Master of Philosophy (Major in Computational Biology)",
@@ -240,7 +240,7 @@ export const buildSampleData = (): SampleData => ({
     {
       id: 3,
       awardingInstitution: "University of Hong Kong",
-      awardingInstitutionNative: "N/A",
+
       country: "Hong Kong, The People’s Republic of China",
       admissionRequirements: "Bachelor's degree with a proven record of outstanding performance from a recognized institution",
       program: "Doctor of Philosophy (Major in Pathology)",

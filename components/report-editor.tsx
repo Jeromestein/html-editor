@@ -1483,14 +1483,7 @@ const CredentialDetails = ({
                 readOnly={readOnly}
               />
             </DetailRow>
-            <DetailRow label="Name of Awarding Institution in Native Language (Chinese Simplified)">
-              <EditableInput
-                value={credential!.awardingInstitutionNative}
-                onChange={(value) => handleCredentialFieldChange("awardingInstitutionNative", value)}
-                className="text-gray-600"
-                readOnly={readOnly}
-              />
-            </DetailRow>
+
             <DetailRow label="Country">
               <EditableInput
                 value={credential!.country}
