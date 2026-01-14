@@ -209,8 +209,8 @@ export const buildSampleData = (): SampleData => ({
       yearsAttended: "2011 - 2014",
       yearOfGraduation: "2014",
       equivalenceStatement: "Bachelor of Science in Biomedical Sciences",
-      gpa: "3.00",
-      totalCredits: "100.00",
+      gpa: "3.03",
+      totalCredits: "111.00",
       gradeConversion: HKUST_GRADE_CONVERSION,
       courses: HKUST_COURSES.map((course, index) => ({
         id: 1000 + index + 1,
