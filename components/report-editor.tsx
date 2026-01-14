@@ -9,7 +9,7 @@ import { calculateStats } from "@/lib/gpa"
 // 1. Type definitions and sample data
 // -----------------------------------------------------------------------------
 
-type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes"
+type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes" | "evaluatorName" | "seniorEvaluatorName"
 
 type CourseField = "year" | "name" | "level" | "credits" | "grade"
 
@@ -1298,7 +1298,7 @@ function ReportPage({
             />
 
             <Remarks />
-            <Signatures />
+            <Signatures data={data} updateDataField={updateDataField} readOnly={readOnly} />
           </div>
         )}
       </div>
@@ -1793,13 +1793,28 @@ const Remarks = () => (
   </div>
 )
 
-const Signatures = () => (
+const Signatures = ({
+  data,
+  updateDataField,
+  readOnly,
+}: {
+  data: SampleData
+  updateDataField: UpdateDataField
+  readOnly: boolean
+}) => (
   <div className="flex justify-between items-end mt-12 px-8">
     <div className="flex items-end gap-16">
       {/* Evaluator Block */}
       <div className="text-center w-40">
         <div className="w-full border-b border-black mb-1"></div>
-        <div className="font-bold text-[10px]">Hongjian Chen</div>
+        <div className="font-bold text-[10px]">
+          <EditableInput
+            value={data.evaluatorName}
+            onChange={(val) => updateDataField("evaluatorName", val)}
+            readOnly={readOnly}
+            className="text-center w-full bg-transparent"
+          />
+        </div>
         <div className="text-[9px] text-gray-600">Evaluator</div>
       </div>
 
@@ -1811,7 +1826,14 @@ const Signatures = () => (
           className="w-32 absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none"
         />
         <div className="w-full border-b border-black mb-1"></div>
-        <div className="font-bold text-[10px]">Jeremy Yan</div>
+        <div className="font-bold text-[10px]">
+          <EditableInput
+            value={data.seniorEvaluatorName}
+            onChange={(val) => updateDataField("seniorEvaluatorName", val)}
+            readOnly={readOnly}
+            className="text-center w-full bg-transparent"
+          />
+        </div>
         <div className="text-[9px] text-gray-600">Senior Evaluator</div>
       </div>
     </div>
