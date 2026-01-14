@@ -64,3 +64,14 @@ These sections appear after **all** credentials have been listed:
 *   **REMARKS / SIGNATURES:**
     *   Standard disclaimer and signature lines for the Senior Evaluator.
 *   **No Global Totals:** The global "Total Credits" line has been removed from the last page's footer to avoid confusion with the specific credential totals.
+
+# Layout Stability & Flickering Prevention
+
+- **Gap Awareness**: Pagination calculations MUST explicitly account for CSS gaps (e.g., `space-y-2` = 8px). Ignoring gaps leads to capacity overestimation and layout instability.
+- **Conservative Prediction**: When pre-calculating page capacity in `useLayoutEffect`, use "pessimistic" values:
+    - **Safety Padding**: Increase buffer (e.g., 12px) to handle browser rendering variations.
+    - **Element Estimates**: Overestimate dynamic element heights (e.g., assume 48px for a 32px button) to prevent "fits on page -> renders -> overflows -> moves to next page" infinite loops.
+- **Reactive Overflow Check**: Always include a fail-safe check after the predictive calculation:
+    - Measure `container.scrollHeight > container.clientHeight`.
+    - If true (actual overflow detected), forcefully reduce the item count per page to break the flicker cycle.
+- **Dynamic Button Placement**: The "Add Documents" button is pinned to the **last** page of the document list to avoid conflict with pagination logic.
