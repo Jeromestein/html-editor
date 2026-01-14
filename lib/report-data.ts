@@ -102,7 +102,7 @@ const HKUST_COURSES: CourseSeed[] = [
   { year: "2013-2014", name: "Chronicle of Internet Commerce", level: "L", credits: "3.00", grade: "B+" },
   { year: "2013-2014", name: "English for Science I", level: "L", credits: "3.00", grade: "B" },
   { year: "2013-2014", name: "Structure and Function of Proteins", level: "U", credits: "3.00", grade: "B" },
-  { year: "2013-2014", name: "Biomedical Sciences Research Project II", level: "U", credits: "3.00", grade: "B" },
+  { year: "2013-2014", name: "Biomedical Sciences Research Project II", level: "U", credits: "3.00", grade: "A+" },
 ]
 
 const CAMBRIDGE_COURSES: CourseSeed[] = [

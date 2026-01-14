@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react"
 import { FileDown, Printer, RotateCcw, Plus, Trash2 } from "lucide-react"
 import { buildSampleData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
+import { calculateStats } from "@/lib/gpa"
 
 // -----------------------------------------------------------------------------
 // 1. Type definitions and sample data
@@ -147,6 +148,7 @@ type ReportPageData = {
   documentsHeading?: string
   showCourseSection: boolean
   showGradeConversion: boolean
+  showTotals: boolean
   isLastPage: boolean
 }
 
@@ -316,6 +318,7 @@ export default function ReportEditor({
         documentsHeading: index === 0 ? "2. Documents" : "Documents (continued)",
         showCourseSection: false,
         showGradeConversion: false, // Intro pages don't show grade conversion
+        showTotals: false,
         isLastPage: false,
       })
     })
@@ -362,6 +365,7 @@ export default function ReportEditor({
           showDocumentsActions: false,
           showCourseSection: pageIndex === courseSectionIndex,
           showGradeConversion: showGradeConversion,
+          showTotals: isLastOfCredential,
           isLastPage: false,
         })
 
@@ -377,6 +381,7 @@ export default function ReportEditor({
             showDocumentsActions: false,
             showCourseSection: false,
             showGradeConversion: true, // Show on this new page
+            showTotals: false,
             isLastPage: false,
           })
         }
@@ -395,6 +400,7 @@ export default function ReportEditor({
       showDocumentsActions: false,
       showCourseSection: false,
       showGradeConversion: false,
+      showTotals: false,
       isLastPage: true,
     })
 
@@ -684,16 +690,19 @@ export default function ReportEditor({
     if (readOnly) return
     setData((prev) => ({
       ...prev,
-      credentials: prev.credentials.map((credential, index) =>
-        index === credentialIndex
-          ? {
-            ...credential,
-            courses: credential.courses.map((course) =>
-              course.id === id ? { ...course, [field]: value } : course
-            ),
-          }
-          : credential
-      ),
+      credentials: prev.credentials.map((credential, index) => {
+        if (index !== credentialIndex) return credential
+        const courses = credential.courses.map((course) =>
+          course.id === id ? { ...course, [field]: value } : course
+        )
+        const { totalCredits, gpa } = calculateStats(courses)
+        return {
+          ...credential,
+          courses,
+          totalCredits,
+          gpa,
+        }
+      }),
     }))
   }
 
@@ -719,14 +728,17 @@ export default function ReportEditor({
     if (readOnly) return
     setData((prev) => ({
       ...prev,
-      credentials: prev.credentials.map((credential, index) =>
-        index === credentialIndex
-          ? {
-            ...credential,
-            courses: credential.courses.filter((course) => course.id !== id),
-          }
-          : credential
-      ),
+      credentials: prev.credentials.map((credential, index) => {
+        if (index !== credentialIndex) return credential
+        const courses = credential.courses.filter((course) => course.id !== id)
+        const { totalCredits, gpa } = calculateStats(courses)
+        return {
+          ...credential,
+          courses,
+          totalCredits,
+          gpa,
+        }
+      }),
     }))
   }
 
@@ -743,14 +755,17 @@ export default function ReportEditor({
 
     setData((prev) => ({
       ...prev,
-      credentials: prev.credentials.map((credential, index) =>
-        index === credentialIndex
-          ? {
-            ...credential,
-            courses: [...credential.courses, newCourse],
-          }
-          : credential
-      ),
+      credentials: prev.credentials.map((credential, index) => {
+        if (index !== credentialIndex) return credential
+        const courses = [...credential.courses, newCourse]
+        const { totalCredits, gpa } = calculateStats(courses)
+        return {
+          ...credential,
+          courses,
+          totalCredits,
+          gpa,
+        }
+      }),
     }))
   }
 
@@ -909,6 +924,7 @@ export default function ReportEditor({
               showCredentialTable={pageData.showCredentialTable}
               showCourseSection={pageData.showCourseSection}
               showGradeConversion={pageData.showGradeConversion}
+              showTotals={pageData.showTotals}
               pageCourses={pageData.courses}
               isLastPage={pageData.isLastPage}
               updateEquivalenceField={updateEquivalenceField}
@@ -955,6 +971,7 @@ type ReportPageProps = {
   showCredentialTable: boolean
   showCourseSection: boolean
   showGradeConversion: boolean
+  showTotals: boolean
   pageCourses: Course[]
   isLastPage: boolean
   updateEquivalenceField: UpdateEquivalenceField
@@ -991,6 +1008,7 @@ function ReportPage({
   showCredentialTable,
   showCourseSection,
   showGradeConversion,
+  showTotals,
   pageCourses,
   isLastPage,
   updateEquivalenceField,
@@ -1232,7 +1250,7 @@ function ReportPage({
                 headerRef={tableHeaderRef}
                 rowRef={rowRef}
                 showEmptyState={!credentialHasCourses}
-                showTotals={showGradeConversion}
+                showTotals={showTotals}
                 totalCredits={credential?.totalCredits}
                 gpa={credential?.gpa}
                 onUpdateTotalCredits={(value) => updateEquivalenceField(credentialIndex!, "totalCredits", value)}
