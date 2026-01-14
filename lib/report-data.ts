@@ -145,11 +145,20 @@ const CAMBRIDGE_GRADE_CONVERSION: GradeConversionRow[] = [
 ]
 
 const HKU_COURSES: CourseSeed[] = [
-  { year: "2016-2017", name: "Advanced Statistical Methods I", level: "G", credits: "0.00", grade: "PASS" },
+  // 2014-2015
+  { year: "2014-2015", name: "Transferable Skills", level: "G", credits: "0.00", grade: "PASS" },
+  { year: "2014-2015", name: "Introduction to Thesis Writing (The Sciences & Related Disciplines)", level: "G", credits: "0.00", grade: "PASS" },
+  { year: "2014-2015", name: "Research Ethics for Graduate Students (Li Ka Shing Faculty of Medicine and Faculty of Dentistry)", level: "G", credits: "0.00", grade: "PASS" },
+  { year: "2014-2015", name: "Introduction to Quantitative Research Methods (The Sciences & Related Disciplines)", level: "G", credits: "0.00", grade: "PASS" },
+  { year: "2014-2015", name: "Genes and Gene Functions", level: "G", credits: "1.00", grade: "PASS" },
+  { year: "2014-2015", name: "Techniques and Applications of Molecular Pathology", level: "G", credits: "1.00", grade: "PASS" },
+  { year: "2014-2015", name: "Cell Metabolism", level: "G", credits: "1.00", grade: "PASS" },
+  // 2016-2017
+  { year: "2016-2017", name: "Advanced Statistical Methods I", level: "G", credits: "1.00", grade: "PASS" },
 ]
 
 const HKU_GRADE_CONVERSION: GradeConversionRow[] = [
-  { grade: "PASS", usGrade: "P (Pass)" },
+  { grade: "P", usGrade: "PASS" },
 ]
 
 export const buildSampleData = (): SampleData => ({
@@ -256,7 +265,7 @@ export const buildSampleData = (): SampleData => ({
       program: "Doctor of Philosophy (Major in Pathology)",
       grantsAccessTo: "Postdoctoral Research / Academic Appointments",
       standardProgramLength: "4 years",
-      yearsAttended: "2016 - 2020",
+      yearsAttended: "2014 - 2020",
       yearOfGraduation: "2020",
       equivalenceStatement: "Doctor of Philosophy in Pathology",
       courses: HKU_COURSES.map((course, index) => ({
