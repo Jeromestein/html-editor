@@ -1794,17 +1794,29 @@ const Remarks = () => (
 )
 
 const Signatures = () => (
-  <div className="flex justify-between items-end mt-4">
-    <div className="text-center relative">
-      <img
-        src="/jeremy-yan-signature.png"
-        alt="Signature"
-        className="w-32 absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none"
-      />
-      {/* <div className="w-32 border-b border-black mb-1"></div> */}
-      <div className="font-bold text-[10px]">Jeremy Yan</div>
-      <div className="font-bold text-[10px]">Senior Evaluator</div>
+  <div className="flex justify-between items-end mt-12 px-8">
+    <div className="flex items-end gap-16">
+      {/* Evaluator Block */}
+      <div className="text-center w-40">
+        <div className="w-full border-b border-black mb-1"></div>
+        <div className="font-bold text-[10px]">Hongjian Chen</div>
+        <div className="text-[9px] text-gray-600">Evaluator</div>
+      </div>
+
+      {/* Senior Evaluator Block */}
+      <div className="text-center relative w-40">
+        <img
+          src="/jeremy-yan-signature.png"
+          alt="Signature"
+          className="w-32 absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none"
+        />
+        <div className="w-full border-b border-black mb-1"></div>
+        <div className="font-bold text-[10px]">Jeremy Yan</div>
+        <div className="text-[9px] text-gray-600">Senior Evaluator</div>
+      </div>
     </div>
-    <img src="/AET-seal.jpg" alt="Official Seal" className="w-48 h-48 object-contain" />
+
+    {/* Seal */}
+    <img src="/AET-seal.jpg" alt="Official Seal" className="w-48 h-48 object-contain -mb-4" />
   </div>
 )
