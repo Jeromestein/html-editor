@@ -1084,6 +1084,15 @@ function ReportPage({
     >
       <Header />
 
+      {/* Watermark in page center */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
+        <img
+          src="/web-app-manifest-512x512.png"
+          alt=""
+          className="w-2/3 opacity-[0.03]"
+        />
+      </div>
+
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col" ref={setContentRef}>
         {showApplicantInfo && (
           <>
