@@ -1795,12 +1795,16 @@ const Remarks = () => (
 
 const Signatures = () => (
   <div className="flex justify-between items-end mt-4">
-    <div className="text-center">
-      <div className="w-32 border-b border-black mb-1"></div>
+    <div className="text-center relative">
+      <img
+        src="/jeremy-yan-signature.png"
+        alt="Signature"
+        className="w-32 absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none"
+      />
+      {/* <div className="w-32 border-b border-black mb-1"></div> */}
+      <div className="font-bold text-[10px]">Jeremy Yan</div>
       <div className="font-bold text-[10px]">Senior Evaluator</div>
     </div>
-    <div className="w-16 h-16 border-2 border-gray-300 rounded-full flex items-center justify-center text-[9px] text-gray-300 font-bold uppercase select-none">
-      Official Seal
-    </div>
+    <img src="/AET-seal.jpg" alt="Official Seal" className="w-48 h-48 object-contain" />
   </div>
 )
