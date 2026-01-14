@@ -76,3 +76,7 @@ These sections appear after **all** credentials have been listed:
     - Measure `container.scrollHeight > container.clientHeight`.
     - If true (actual overflow detected), forcefully reduce the item count per page to break the flicker cycle.
 - **Dynamic Button Placement**: The "Add Documents" button is pinned to the **last** page of the document list to avoid conflict with pagination logic.
+
+# Data Calculation Rules
+
+- **GPA Calculation**: Must strictly follow the logic defined in `GPA_RULES.md`.

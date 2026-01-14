@@ -1,12 +1,33 @@
 import { Course } from "./report-data"
 
+// 1. Grade Points Definition
 const GRADE_POINTS: Record<string, number> = {
-    "A+": 4.00, "A": 4.00, "A-": 3.67,
-    "B+": 3.33, "B": 3.00, "B-": 2.67,
-    "C+": 2.33, "C": 2.00, "C-": 1.67,
-    "D+": 1.33, "D": 1.00, "D-": 0.67,
-    "F": 0.00
+    "A+": 4.35,
+    "A": 4.00,
+    "A-": 3.65,
+    "B+": 3.35,
+    "B": 3.00,
+    "B-": 2.65,
+    "C+": 2.35,
+    "C": 2.00,
+    "C-": 1.65,
+    "D+": 1.35,
+    "D": 1.00,
+    "D-": 0.65,
+    "F": 0.00,
+    "WF": 0.00,
+    // P/PASS/CR/CREDIT/T are 0.00 but handled specially (excluded from GPA)
 }
+
+// 2. Normalization Rules
+const ALIASES: Record<string, string> = {
+    "FAIL": "F",
+    "PASS": "P",
+    "CREDIT": "CR",
+}
+
+// Grades that count towards Total Credits but NOT GPA Credits
+const NON_GPA_CREDITS = new Set(["P", "CR", "T"])
 
 export function calculateStats(courses: Course[]) {
     let totalCredits = 0
@@ -14,26 +35,45 @@ export function calculateStats(courses: Course[]) {
     let gpaCredits = 0
 
     for (const course of courses) {
-        const credits = parseFloat(course.credits || "0")
+        const creditsStr = (course.credits || "0").trim()
+        const credits = parseFloat(creditsStr)
+
+        // Skip invalid credits
         if (isNaN(credits)) continue
 
-        // Add to total credits
+        let grade = (course.grade || "").trim().toUpperCase()
+
+        // Normalize grade
+        if (ALIASES.hasOwnProperty(grade)) {
+            grade = ALIASES[grade]
+        }
+
+        // Always add to total credits if it's a valid grade entry
+        // (Assuming any listed course with credits counts towards total unless explicitly excluded, 
+        // but the rules say "totalCredits counts all valid grades including P/F")
         totalCredits += credits
 
-        const grade = (course.grade || "").trim().toUpperCase()
-
-        // Check if grade maps to points
+        // Check if it counts towards GPA
         if (GRADE_POINTS.hasOwnProperty(grade)) {
+            // It's a graded course (including F/WF which are 0.00)
             const points = GRADE_POINTS[grade]
             totalPoints += credits * points
             gpaCredits += credits
+        } else if (NON_GPA_CREDITS.has(grade)) {
+            // It's P/CR/T - counts for total credits (already added) but NOT GPA
+            continue
+        } else {
+            // Unknown grade - arguably should not count for anything or user needs to fix
+            // For now, we assume if it has credits, it counts for total.
+            // But strictly speaking, if we don't recognize the grade, we might not want to count it.
+            // However, current logic just adds to totalCredits above.
         }
     }
 
-    const gpa = gpaCredits > 0 ? (totalPoints / gpaCredits).toFixed(2) : "N/A"
+    const gpa = gpaCredits > 0 ? (totalPoints / gpaCredits).toFixed(2) : "0.00"
 
     return {
         totalCredits: totalCredits.toFixed(2),
-        gpa
+        gpa: gpaCredits > 0 ? gpa : "N/A"
     }
 }
