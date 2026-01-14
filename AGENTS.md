@@ -2,7 +2,7 @@
 
 - Page size: US Letter (8.5in × 11in)
 - Units: inch-based layout for pagination/print
-- Page padding: 0.75in (x/y)
+- Page padding: 0.4in (x/y)
 - Header height: 0.8in
 - Footer height: 0.7in
 - Page gap (screen only): 0.4in
