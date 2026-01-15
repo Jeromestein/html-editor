@@ -165,7 +165,7 @@ const HKU_GRADE_CONVERSION: GradeConversionRow[] = [
 ]
 
 export const buildSampleData = (): SampleData => ({
-  refNo: "LA-20260116-010",
+  refNo: "LA-20260116-110",
   name: "[first name] [last name]",
   dob: "N/A",
   country: "Hong Kong, The People’s Republic of China",
