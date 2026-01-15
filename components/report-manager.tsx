@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2, Save, FolderOpen } from "lucide-react"
-import { saveReport, fetchReports, fetchReportContent, type ReportMetadata } from "@/lib/api"
+import { saveReport, updateReport, fetchReports, fetchReportContent, type ReportMetadata } from "@/lib/api"
 import type { SampleData } from "@/lib/report-data"
 
 type SaveReportDialogProps = {
@@ -25,19 +25,59 @@ export function SaveReportDialog({ data, onSaved }: SaveReportDialogProps) {
     const [open, setOpen] = useState(false)
     const [name, setName] = useState("")
     const [loading, setLoading] = useState(false)
+    const [reports, setReports] = useState<ReportMetadata[]>([])
+    const [isOverwrite, setIsOverwrite] = useState(false)
+
+    useEffect(() => {
+        if (open) {
+            setLoading(true)
+            fetchReports()
+                .then(setReports)
+                .catch((error) => console.error(error))
+                .finally(() => setLoading(false))
+        }
+    }, [open])
+
+    useEffect(() => {
+        // Check if the current name matches any existing report
+        const exists = reports.some(r => r.name.trim() === name.trim())
+        setIsOverwrite(exists)
+    }, [name, reports])
 
     const handleSave = async () => {
         if (!name.trim()) return
+
+        if (isOverwrite) {
+            if (!confirm(`Are you sure you want to overwrite "${name}"?`)) {
+                return
+            }
+        }
+
         setLoading(true)
         try {
-            await saveReport(data, name)
+            if (isOverwrite) {
+                const reportId = reports.find(r => r.name.trim() === name.trim())?.id
+                if (reportId) {
+                    // Update existing
+                    await updateReport(reportId, data, name)
+                } else {
+                    // Fallback if ID not found (shouldn't happen due to check)
+                    await saveReport(data, name)
+                }
+            } else {
+                // Create new
+                await saveReport(data, name)
+            }
+
             setOpen(false)
             setName("")
             if (onSaved) onSaved()
             alert("Report saved successfully!")
-        } catch (error) {
+            // Refresh list to show new timestamp/item
+            fetchReports().then(setReports).catch(console.error)
+        } catch (error: any) {
             console.error(error)
-            alert("Failed to save report.")
+            alert(`Failed to save report: ${error?.message || "Unknown error"}`)
         } finally {
             setLoading(false)
         }
@@ -55,7 +95,7 @@ export function SaveReportDialog({ data, onSaved }: SaveReportDialogProps) {
                 <DialogHeader>
                     <DialogTitle>Save Report</DialogTitle>
                     <DialogDescription>
-                        Enter a name for this report to save it to the database.
+                        Enter a name for this report. If the name exists, it will be overwritten.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -71,11 +111,33 @@ export function SaveReportDialog({ data, onSaved }: SaveReportDialogProps) {
                             placeholder="e.g., John Doe - Fall 2023"
                         />
                     </div>
+
+                    <div className="text-xs font-semibold text-gray-500 mt-2">Existing Reports (Click to overwrite):</div>
+                    <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+                        {reports.length === 0 ? (
+                            <div className="text-center text-sm text-gray-500">No reports found.</div>
+                        ) : (
+                            <div className="space-y-1">
+                                {reports.map((report) => (
+                                    <div
+                                        key={report.id}
+                                        className="text-sm p-2 hover:bg-slate-100 rounded cursor-pointer truncate"
+                                        onClick={() => setName(report.name || "")}
+                                    >
+                                        {report.name || "Untitled"}
+                                        <span className="text-xs text-gray-400 ml-2">
+                                            ({new Date(report.created_at).toLocaleDateString()})
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </ScrollArea>
                 </div>
                 <DialogFooter>
-                    <Button type="submit" onClick={handleSave} disabled={loading || !name.trim()}>
+                    <Button type="submit" onClick={handleSave} disabled={loading || !name.trim()} variant={isOverwrite ? "destructive" : "default"}>
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save
+                        {isOverwrite ? "Overwrite" : "Save"}
                     </Button>
                 </DialogFooter>
             </DialogContent>

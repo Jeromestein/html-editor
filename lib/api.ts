@@ -48,7 +48,12 @@ export async function updateReport(id: string, data: SampleData, name: string) {
         throw error
     }
 
-    return result?.[0]
+
+    if (!result || result.length === 0) {
+        throw new Error("Update failed: No rows affected. Check RLS or ID.")
+    }
+
+    return result[0]
 }
 
 export async function fetchReports(): Promise<ReportMetadata[]> {
