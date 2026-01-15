@@ -8,9 +8,9 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "文档编辑器 - 在线HTML编辑与PDF导出",
-  description: "专业的在线文档编辑器，支持HTML编辑和PDF导出功能",
-  generator: "v0.app",
+  title: "FCE Report Editor - Online HTML Editor and PDF Export",
+  description: "Professional online document editor that supports HTML editing and PDF export",
+  generator: "Jiayi",
   icons: {
     icon: [
       {
