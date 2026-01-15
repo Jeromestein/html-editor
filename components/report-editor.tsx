@@ -1385,7 +1385,6 @@ function ReportPage({
                   onUpdate={(rowIndex, field, value) => updateGradeConversion(credentialIndex!, rowIndex, field, value)}
                   readOnly={readOnly}
                 />
-                <div style={{ breakAfter: "page", pageBreakAfter: "always" }} />
               </>
             )}
           </>
