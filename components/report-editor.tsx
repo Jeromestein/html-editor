@@ -608,7 +608,8 @@ export default function ReportEditor({
         const itemStyle = window.getComputedStyle(itemEl)
 
         // Increased safety padding to account for browser variabilities and prevent border-line flickering
-        const safetyPadding = 12
+        // Increased from 12 -> 24 due to font size increase
+        const safetyPadding = 24
         const itemMarginTop = Number.parseFloat(itemStyle.marginTop) || 0
         const itemMarginBottom = Number.parseFloat(itemStyle.marginBottom) || 0
         const itemHeight = itemRect.height + itemMarginTop + itemMarginBottom
@@ -626,8 +627,8 @@ export default function ReportEditor({
         const totalDocuments = data.documents.length
         if (totalDocuments > 0 && totalDocuments <= nextDocumentsPerPage + 1) {
           // +1 as a safety buffer for comparison logic
-          // Increased button height approx to be safe (32px button + margins/padding)
-          const buttonHeightApprox = 48
+          // Increased button height approx to be safe (32px button + margins/padding) -> bumped to 60px for safety
+          const buttonHeightApprox = 60
 
           // Exact height needed for N documents: N * H + (N-1) * G
           const heightForDocs = totalDocuments * itemHeight + Math.max(0, totalDocuments - 1) * gap
