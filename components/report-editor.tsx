@@ -1957,9 +1957,9 @@ const CourseTable = ({
 const References = () => (
   <div className="text-[9px] mb-4 mt-2">
     <ul className="list-disc pl-4 space-y-1 text-gray-600">
-      <li>International Association of Universities (IAU) / Palgrave Macmillan. (2009). <em>International Handbook of Universities</em> (21st).</li>
-      <li>Routledge. (2011). <em>The Europa World of Learning</em> (62nd).</li>
-      <li>AACRAO. (2015). <em>AACRAO Academic Record and Transcript Guide</em> (1st (2016)).</li>
+      <li>International Association of Universities (IAU). (2009). <em>International Handbook of Universities</em> (21st). Palgrave Macmillan.</li>
+      <li>Europa Publications. (2011). <em>The Europa World of Learning</em> (62nd). Routledge.</li>
+      <li>AACRAO. (2011). <em>AACRAO Academic Record and Transcript Guide</em> (1st (2011)).</li>
       <li>Peterson's. (2020). <em>Peterson's Graduate Programs Series</em> (55th).</li>
     </ul>
   </div>
