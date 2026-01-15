@@ -1203,9 +1203,9 @@ function ReportPage({
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col" ref={setContentRef}>
         {showApplicantInfo && (
           <>
-            <h1 className="text-center text-xl font-bold uppercase underline decoration-double decoration-1 underline-offset-4 text-blue-900 mb-6 mt-3 font-serif">
+            <ReportTitle>
               Credential Evaluation Report
-            </h1>
+            </ReportTitle>
 
             <ApplicantInfo data={data} updateDataField={updateDataField} readOnly={readOnly} />
 
@@ -1464,9 +1464,15 @@ type SectionTitleProps = {
 }
 
 const SectionTitle = ({ children }: SectionTitleProps) => (
-  <h2 className="font-sans font-bold text-blue-900 uppercase text-xs border-b border-gray-200 mb-2 pb-1 mt-4">
+  <h2 className="font-sans font-bold text-blue-900 uppercase text-[15px] border-b border-gray-200 mb-2 pb-1 mt-4">
     {children}
   </h2>
+)
+
+const ReportTitle = ({ children }: { children: ReactNode }) => (
+  <h1 className="text-center text-xl font-bold uppercase underline decoration-double decoration-1 underline-offset-4 text-blue-900 mb-6 mt-3 font-serif">
+    {children}
+  </h1>
 )
 
 type ApplicantInfoProps = {
@@ -1768,9 +1774,10 @@ const CredentialDetails = ({
 
 const AboutAetPage = () => (
   <div className="mt-8 text-xs leading-relaxed font-sans">
-    <h2 className="font-bold text-blue-900 uppercase text-xs border-b border-gray-200 mb-6 pb-1 mt-4">
-      About American Education & Translation Services (AET)
-    </h2>
+    <ReportTitle>
+      About AET
+    </ReportTitle>
+
     <div className="grid grid-cols-2 gap-8 mb-8">
       <div>
         <h3 className="font-bold text-blue-900 mb-2 underline decoration-blue-900/30">Company Profile</h3>
@@ -1816,9 +1823,9 @@ const AboutAetPage = () => (
       </div>
     </div>
 
-    <h2 className="font-bold text-blue-900 uppercase text-xs border-b border-gray-200 mb-4 pb-1 mt-4">
+    <ReportTitle>
       Senior Evaluator Profile
-    </h2>
+    </ReportTitle>
     <div className="flex gap-6 mt-4">
       <div className="flex-1">
         <h3 className="font-bold text-lg text-blue-900 mb-2">Luguan Yan, Director of Evaluation</h3>

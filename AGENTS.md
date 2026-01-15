@@ -80,3 +80,46 @@ These sections appear after **all** credentials have been listed:
 # Data Calculation Rules
 
 - **GPA Calculation**: Must strictly follow the logic defined in `GPA_RULES.md`.
+
+# Typography Rules (Agent Reference)
+
+To ensure a professional and hierarchical visual structure, strictly adhere to these typography rules:
+
+1.  **Report Title** (Top of Page 1 & About Page Headers)
+    *   **Component**: `<ReportTitle>`
+    *   **Style**: Serif (Font: `Geist Mono` / `font-serif`).
+    *   **Size**: `text-xl` (20px).
+    *   **Weight**: `font-bold`.
+    *   **Decoration**: Underline double (`decoration-double`).
+    *   **Color**: Brand Blue (`text-blue-900`).
+
+2.  **Section Headers** (e.g., "1. U.S. EQUIVALENCE SUMMARY")
+    *   The highest level of document segmentation.
+    *   **Style**: Sans-Serif.
+    *   **Size**: **MUST be larger than body text**. Use `text-[15px]` (15px) or `text-base` (16px).
+    *   **Weight**: `font-bold`.
+    *   **Case**: Uppercase.
+    *   **Color**: Brand Blue (`text-blue-900`).
+    *   **Decoration**: Bottom border (`border-b`).
+
+3.  **Subsection Headers** (e.g., "Credential #1: ...")
+    *   **Style**: Sans-Serif.
+    *   **Size**: `text-sm` (14px) or `text-base` (16px).
+    *   **Weight**: `font-bold`.
+    *   **Color**: Dark Gray (`text-gray-700`) or Black.
+
+4.  **Body Text / Input Fields** (General Content)
+    *   **Style**: Sans-Serif.
+    *   **Size**: `text-sm` (14px). **DO NOT USE** `text-xs` for main content.
+    *   **Weight**: Normal or Semibold (for inputs).
+
+5.  **Tables (Course Lists, Grades)**
+    *   **Style**: Sans-Serif.
+    *   **Size**: `text-xs` (12px). slightly condensed for data density.
+    *   **Headings**: `font-bold`, background shaded (`bg-gray-100`).
+
+6.  **Metadata / Footers / References**
+    *   **Style**: Sans-Serif.
+    *   **Size**: `text-[10px]` (10px).
+    *   **Color**: Gray (`text-gray-500` / `text-gray-400`).
+
