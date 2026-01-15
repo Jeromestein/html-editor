@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react"
-import { FileDown, Printer, RotateCcw, Plus, Trash2 } from "lucide-react"
+import { FileDown, Printer, RotateCcw, Plus, Trash2, Globe } from "lucide-react"
 import { buildSampleData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
 import { calculateStats } from "@/lib/gpa"
 import Image from "next/image"
@@ -1430,6 +1430,17 @@ const Header = () => (
           American Evaluation & Translation Services
         </div>
       </div>
+    </div>
+    <div className="text-[10px] font-bold text-gray-500 mb-0.5">
+      <a
+        href="https://www.americantranslationservice.com"
+        target="_blank"
+        rel="noreferrer"
+        className="hover:text-blue-900 transition-colors flex items-center gap-1"
+      >
+        <Globe size={12} className="text-blue-900" />
+        www.americantranslationservice.com
+      </a>
     </div>
   </header>
 )
