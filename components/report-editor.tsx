@@ -951,15 +951,7 @@ export default function ReportEditor({
             <LoadReportDialog onLoad={(newData) => setData(rehydrateData(newData))} />
             <SaveReportDialog data={data} />
             <div className="w-px h-8 bg-gray-300 mx-2 self-center"></div>
-            <button
-              onClick={() => {
-                if (data.credentials.length === 0) return
-                addCourse(0)
-              }}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded text-sm font-medium transition-colors"
-            >
-              <Plus size={16} /> Add Course
-            </button>
+
             <button
               onClick={handleReset}
               className="p-2 text-gray-600 hover:bg-gray-100 rounded"
@@ -1010,6 +1002,7 @@ export default function ReportEditor({
               deleteCourse={deleteCourse}
               updateDocument={updateDocument}
               addDocument={addDocument}
+              addCourse={addCourse}
               deleteDocument={deleteDocument}
               readOnly={readOnly}
               introContentRef={index === 0 ? introContentRef : undefined}
@@ -1059,6 +1052,7 @@ type ReportPageProps = {
   deleteCourse: (credentialIndex: number, id: number) => void
   updateDocument: UpdateDocument
   addDocument: () => void
+  addCourse: (credentialIndex: number) => void
   deleteDocument: DeleteDocument
   readOnly: boolean
   introContentRef?: RefObject<HTMLDivElement | null>
@@ -1098,6 +1092,7 @@ function ReportPage({
   deleteCourse,
   updateDocument,
   addDocument,
+  addCourse,
   deleteDocument,
   readOnly,
   introContentRef,
@@ -1345,6 +1340,7 @@ function ReportPage({
                 gpa={credential?.gpa}
                 onUpdateTotalCredits={(value) => updateEquivalenceField(credentialIndex!, "totalCredits", value)}
                 onUpdateGpa={(value) => updateEquivalenceField(credentialIndex!, "gpa", value)}
+                onAddCourse={() => addCourse(credentialIndex!)}
               />
             )}
             {showGradeConversion && (
@@ -1827,6 +1823,7 @@ type CourseTableProps = {
   gpa?: string
   onUpdateTotalCredits?: (value: string) => void
   onUpdateGpa?: (value: string) => void
+  onAddCourse?: () => void
 }
 
 const CourseTable = ({
@@ -1842,6 +1839,7 @@ const CourseTable = ({
   gpa = "",
   onUpdateTotalCredits,
   onUpdateGpa,
+  onAddCourse,
 }: CourseTableProps) => {
   if (!courses || courses.length === 0) {
     if (!showEmptyState) return null
@@ -1851,94 +1849,106 @@ const CourseTable = ({
   const showActions = !readOnly
 
   return (
-    <table className="course-table w-full text-xs text-center border-collapse border border-gray-300 table-fixed">
-      <thead className="bg-gray-100 print:bg-gray-50" ref={headerRef}>
-        <tr>
-          <th className="border border-gray-300 p-1 w-20">Year</th>
-          <th className="border border-gray-300 p-1 text-center">Course Title</th>
-          <th className="border border-gray-300 p-1 w-16">Credits</th>
-          <th className="border border-gray-300 p-1 w-20">Grade</th>
-          {showActions && <th className="border border-gray-300 p-1 w-6 no-print"></th>}
-        </tr>
-      </thead>
-      <tbody>
-        {courses.map((course, index) => (
-          <tr key={course.id} className="group hover:bg-blue-50" ref={index === 0 ? rowRef : undefined}>
-            <td className="border border-gray-300 p-0 editable-cell">
-              <EditableInput
-                value={course.year}
-                onChange={(value) => updateCourse(course.id, "year", value)}
-                className="text-center h-full"
-                readOnly={readOnly}
-              />
-            </td>
-            <td className="border border-gray-300 p-0 editable-cell">
-              <EditableInput
-                value={course.name}
-                onChange={(value) => updateCourse(course.id, "name", value)}
-                className="text-left px-2 h-full"
-                readOnly={readOnly}
-              />
-            </td>
-            <td className="border border-gray-300 p-0 editable-cell">
-              <EditableInput
-                value={course.credits}
-                onChange={(value) => updateCourse(course.id, "credits", value)}
-                className="text-left px-2 h-full"
-                readOnly={readOnly}
-              />
-            </td>
-            <td className="border border-gray-300 p-0 editable-cell">
-              <EditableInput
-                value={course.grade}
-                onChange={(value) => updateCourse(course.id, "grade", value)}
-                className="text-left px-2 h-full"
-                readOnly={readOnly}
-              />
-            </td>
-            {showActions && (
-              <td className="border border-gray-300 p-0 no-print">
-                <button
-                  onClick={() => deleteCourse(course.id)}
-                  className="w-full h-full flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  title="Delete Row"
-                >
-                  <Trash2 size={10} />
-                </button>
-              </td>
-            )}
+    <>
+      <table className="course-table w-full text-xs text-center border-collapse border border-gray-300 table-fixed">
+        <thead className="bg-gray-100 print:bg-gray-50" ref={headerRef}>
+          <tr>
+            <th className="border border-gray-300 p-1 w-20">Year</th>
+            <th className="border border-gray-300 p-1 text-center">Course Title</th>
+            <th className="border border-gray-300 p-1 w-16">Credits</th>
+            <th className="border border-gray-300 p-1 w-20">Grade</th>
+            {showActions && <th className="border border-gray-300 p-1 w-6 no-print"></th>}
           </tr>
-        ))}
-      </tbody>
-      {showTotals && (
-        <tfoot className="font-bold bg-white">
-          <tr className="border-t-2 border-gray-300">
-            <td className="border border-gray-300 p-1 text-center pl-2">TOTALS</td>
-            <td className="border border-gray-300 p-1 text-right pr-2" colSpan={1}>
-            </td>
-            <td className="border border-gray-300 p-0 editable-cell">
-              <EditableInput
-                value={totalCredits}
-                onChange={onUpdateTotalCredits || (() => { })}
-                className="text-left px-2 h-full"
-                readOnly={readOnly}
-              />
-            </td>
-            <td className="border border-gray-300 p-0 editable-cell">
-              <div className="flex items-center justify-between px-1 h-full">
+        </thead>
+        <tbody>
+          {courses.map((course, index) => (
+            <tr key={course.id} className="group hover:bg-blue-50" ref={index === 0 ? rowRef : undefined}>
+              <td className="border border-gray-300 p-0 editable-cell">
                 <EditableInput
-                  value={gpa}
-                  onChange={onUpdateGpa || (() => { })}
+                  value={course.year}
+                  onChange={(value) => updateCourse(course.id, "year", value)}
+                  className="text-center h-full"
+                  readOnly={readOnly}
+                />
+              </td>
+              <td className="border border-gray-300 p-0 editable-cell">
+                <EditableInput
+                  value={course.name}
+                  onChange={(value) => updateCourse(course.id, "name", value)}
                   className="text-left px-2 h-full"
                   readOnly={readOnly}
                 />
-              </div>
-            </td>
-            {showActions && <td className="border border-gray-300 bg-gray-50 no-print"></td>}
-          </tr>
-        </tfoot>
-      )}
-    </table>
+              </td>
+              <td className="border border-gray-300 p-0 editable-cell">
+                <EditableInput
+                  value={course.credits}
+                  onChange={(value) => updateCourse(course.id, "credits", value)}
+                  className="text-left px-2 h-full"
+                  readOnly={readOnly}
+                />
+              </td>
+              <td className="border border-gray-300 p-0 editable-cell">
+                <EditableInput
+                  value={course.grade}
+                  onChange={(value) => updateCourse(course.id, "grade", value)}
+                  className="text-left px-2 h-full"
+                  readOnly={readOnly}
+                />
+              </td>
+              {showActions && (
+                <td className="border border-gray-300 p-0 no-print">
+                  <button
+                    onClick={() => deleteCourse(course.id)}
+                    className="w-full h-full flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    title="Delete Row"
+                  >
+                    <Trash2 size={10} />
+                  </button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+        {showTotals && (
+          <tfoot className="font-bold bg-white">
+            <tr className="border-t-2 border-gray-300">
+              <td className="border border-gray-300 p-1 text-center pl-2">TOTALS</td>
+              <td className="border border-gray-300 p-1 text-right pr-2" colSpan={1}>
+              </td>
+              <td className="border border-gray-300 p-0 editable-cell">
+                <EditableInput
+                  value={totalCredits}
+                  onChange={onUpdateTotalCredits || (() => { })}
+                  className="text-left px-2 h-full"
+                  readOnly={readOnly}
+                />
+              </td>
+              <td className="border border-gray-300 p-0 editable-cell">
+                <div className="flex items-center justify-between px-1 h-full">
+                  <EditableInput
+                    value={gpa}
+                    onChange={onUpdateGpa || (() => { })}
+                    className="text-left px-2 h-full"
+                    readOnly={readOnly}
+                  />
+                </div>
+              </td>
+              {showActions && <td className="border border-gray-300 bg-gray-50 no-print"></td>}
+            </tr>
+          </tfoot>
+        )}
+      </table>
+      {
+        showActions && onAddCourse && (
+          <button
+            onClick={onAddCourse}
+            className="no-print mt-2 flex items-center gap-1 text-[10px] text-blue-700 hover:text-blue-900 transition-colors"
+          >
+            <Plus size={12} /> Add Course
+          </button>
+        )
+      }
+    </>
   )
 }
 

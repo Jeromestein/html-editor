@@ -37,6 +37,7 @@ For each degree/credential (starting from Index 1), the following three sections
     *   A table listing specific courses, grades, credits, and levels.
     *   The *Year* column width is set to `w-20` to fit "YYYY-YYYY" formats.
     *   The *Lvl* column is hidden by default in normal output.
+    *   **Add Course Button**: A small "+ Add Course" button appears at the bottom of the table (footer area) for adding new rows to that specific credential.
 *   **TOTALS (Per Credential):**
     *   Located immediately **after** the *Course-by-Course Analysis* table.
     *   Displays the **Total Credits** and **GPA** specific to that single credential.
@@ -72,7 +73,9 @@ These sections appear after **all** credentials have been listed:
 - **Reactive Overflow Check**: Always include a fail-safe check after the predictive calculation:
     - Measure `container.scrollHeight > container.clientHeight`.
     - If true (actual overflow detected), forcefully reduce the item count per page to break the flicker cycle.
-- **Dynamic Button Placement**: The "Add Documents" button is pinned to the **last** page of the document list to avoid conflict with pagination logic.
+- **Dynamic Button Placement**:
+    - The "Add Documents" button is pinned to the **last** page of the document list.
+    - The "Add Course" button is located in the **footer** of the Course Table to appear contextually with the data.
 
 # Data Calculation Rules
 
