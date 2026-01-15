@@ -102,14 +102,30 @@ def format_apa_citation(reference, edition_data):
         
     return citation
 
+def format_website_citation(institution, url):
+    """
+    Format: Institution. (n.d.). Home Page. Retrieved from <URL>
+    """
+    citation = f"{institution}. (n.d.). *Home Page*. Retrieved from {url}"
+    return citation
+
 def main():
     parser = argparse.ArgumentParser(description="Lookup AICE FCE References")
-    parser.add_argument("--context", required=True, help="Context string (e.g., 'China Bachelor Transcript')")
+    parser.add_argument("--context", help="Context string (e.g., 'China Bachelor Transcript')")
     parser.add_argument("--year", type=int, help="Year of the credential (e.g., 2005) to match reference edition")
     parser.add_argument("--limit", type=int, default=3, help="Number of results to return")
+    parser.add_argument("--make-citation", nargs=2, metavar=('INSTITUTION', 'URL'), help="Generate a website citation (e.g., 'HKUST' 'http://...')")
     
     args = parser.parse_args()
     
+    if args.make_citation:
+        inst, url = args.make_citation
+        print(format_website_citation(inst, url))
+        sys.exit(0)
+
+    if not args.context:
+        parser.error("the following arguments are required: --context (unless --make-citation is used)")
+
     # Locate json relative to script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     json_path = os.path.join(script_dir, "../resources/references.json")

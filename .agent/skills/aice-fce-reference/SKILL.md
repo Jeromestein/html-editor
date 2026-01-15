@@ -30,8 +30,16 @@ To provide the correct references, the Agent must follow these steps:
     python scripts/lookup_refs.py --context "<Insert extracted context keywords here>" --year <Optional: Year>
     ```
 
-3.  **Generate Response**:
+3.  **Search for Institution Website** (Optional):
+    *   Use `search_web` to find the official website of the awarding institution.
+    *   Generate a citation using the `--make-citation` flag:
+        ```bash
+        python scripts/lookup_refs.py --make-citation "<Institution Name>" "<URL>"
+        ```
+
+4.  **Generate Response**:
     *   The script will output citations in **APA Format**.
+    *   **Append** the institution website citation to the list of standard references.
     *   Copy the output directly into the evaluation report.
 
 ## Examples
