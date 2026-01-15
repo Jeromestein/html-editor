@@ -118,8 +118,13 @@ To ensure a professional and hierarchical visual structure, strictly adhere to t
     *   **Size**: `text-xs` (12px). slightly condensed for data density.
     *   **Headings**: `font-bold`, background shaded (`bg-gray-100`).
 
-6.  **Metadata / Footers / References**
+6.  **Metadata / Footers**
     *   **Style**: Sans-Serif.
-    *   **Size**: `text-[10px]` (10px).
+    *   **General**: `text-[10px]` (10px).
+    *   **Remarks/Disclaimer**: `text-[11px]` (11px).
     *   **Color**: Gray (`text-gray-500` / `text-gray-400`).
+
+7.  **References**
+    *   **Size**: `text-xs` (12px).
+    *   **Color**: Gray (`text-gray-600`).
 

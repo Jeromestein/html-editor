@@ -43,38 +43,36 @@ type GradeConversionProps = {
 }
 
 const GradeConversion = ({ rows, onUpdate, readOnly = false }: GradeConversionProps) => (
-  <div className="mt-4 mb-6">
-    <table className="w-1/2 text-xs text-center border-collapse border border-gray-300">
-      <thead>
-        <tr>
-          <th className="border border-gray-300 bg-gray-50 p-1">Grade Scale</th>
-          <th className="border border-gray-300 bg-gray-50 p-1">U.S. Grade</th>
+  <table className="w-1/2 text-xs text-center border-collapse border border-gray-300">
+    <thead>
+      <tr>
+        <th className="border border-gray-300 bg-gray-50 p-1">Grade Scale</th>
+        <th className="border border-gray-300 bg-gray-50 p-1">U.S. Grade</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((row, index) => (
+        <tr key={index}>
+          <td className="border border-gray-300 p-0 editable-cell">
+            <EditableInput
+              value={row.grade}
+              onChange={(value) => onUpdate(index, "grade", value)}
+              className="text-center"
+              readOnly={readOnly}
+            />
+          </td>
+          <td className="border border-gray-300 p-0 editable-cell">
+            <EditableInput
+              value={row.usGrade}
+              onChange={(value) => onUpdate(index, "usGrade", value)}
+              className="text-center"
+              readOnly={readOnly}
+            />
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, index) => (
-          <tr key={index}>
-            <td className="border border-gray-300 p-0 editable-cell">
-              <EditableInput
-                value={row.grade}
-                onChange={(value) => onUpdate(index, "grade", value)}
-                className="text-center"
-                readOnly={readOnly}
-              />
-            </td>
-            <td className="border border-gray-300 p-0 editable-cell">
-              <EditableInput
-                value={row.usGrade}
-                onChange={(value) => onUpdate(index, "usGrade", value)}
-                className="text-center"
-                readOnly={readOnly}
-              />
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+      ))}
+    </tbody>
+  </table>
 )
 
 // -----------------------------------------------------------------------------
@@ -1974,7 +1972,7 @@ const CourseTable = ({
 }
 
 const References = () => (
-  <div className="text-[10px] mb-4 mt-2">
+  <div className="text-xs mb-4 mt-2">
     <ul className="list-disc pl-4 space-y-1 text-gray-600">
       <li>International Association of Universities (IAU). (2009). <em>International Handbook of Universities</em> (21st). Palgrave Macmillan.</li>
       <li>Europa Publications. (2011). <em>The Europa World of Learning</em> (62nd). Routledge.</li>
@@ -1988,7 +1986,7 @@ const References = () => (
 )
 
 const Remarks = () => (
-  <div className="text-[10px] text-gray-500 text-justify mb-4 leading-tight">
+  <div className="text-[11px] text-gray-500 text-justify mb-4 leading-tight">
     <strong>Remarks:</strong> This report is advisory in nature and is not binding upon any institution or agency. It is
     based on the analysis of documents submitted by the applicant. AET is an Endorsed Member of the Association of
     International Credential Evaluators (AICE).
