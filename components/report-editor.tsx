@@ -57,7 +57,7 @@ const GradeConversion = ({ rows, onUpdate, readOnly = false }: GradeConversionPr
             <EditableInput
               value={row.grade}
               onChange={(value) => onUpdate(index, "grade", value)}
-              className="text-center"
+              className="text-left px-2 h-full"
               readOnly={readOnly}
             />
           </td>
@@ -65,7 +65,7 @@ const GradeConversion = ({ rows, onUpdate, readOnly = false }: GradeConversionPr
             <EditableInput
               value={row.usGrade}
               onChange={(value) => onUpdate(index, "usGrade", value)}
-              className="text-center"
+              className="text-left px-2 h-full"
               readOnly={readOnly}
             />
           </td>
