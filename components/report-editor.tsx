@@ -10,7 +10,7 @@ import Image from "next/image"
 // 1. Type definitions and sample data
 // -----------------------------------------------------------------------------
 
-type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes" | "evaluatorName" | "seniorEvaluatorName"
+type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes" | "evaluatorName" | "evaluatorSignature" | "seniorEvaluatorName" | "seniorEvaluatorSignature"
 
 type CourseField = "year" | "name" | "level" | "credits" | "grade"
 
@@ -223,6 +223,76 @@ const EditableTextarea = ({
       readOnly={readOnly}
       className={`bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none focus:bg-blue-50 transition-colors w-full p-1 resize-none ${className}`}
     />
+  )
+}
+
+// -----------------------------------------------------------------------------
+// 3.5. Editable Image
+// -----------------------------------------------------------------------------
+
+type EditableImageProps = {
+  src: string
+  alt: string
+  width: number
+  height: number
+  onChange: (value: string) => void
+  readOnly?: boolean
+  className?: string
+}
+
+const EditableImage = ({ src, alt, width, height, onChange, readOnly = false, className = "" }: EditableImageProps) => {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImageClick = () => {
+    if (readOnly) return
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const result = e.target?.result
+        if (typeof result === "string") {
+          onChange(result)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  if (!src && readOnly) return null
+
+  return (
+    <>
+      <div
+        onClick={handleImageClick}
+        className={`${className} ${!readOnly ? "cursor-pointer" : ""}`}
+        title={!readOnly ? "Click to upload signature" : undefined}
+      >
+        {src ? (
+          <Image
+            src={src}
+            alt={alt}
+            width={width}
+            height={height}
+            className="w-full h-auto"
+          />
+        ) : (
+          <div className="w-full h-12 border border-dashed border-gray-300 flex items-center justify-center text-[9px] text-gray-400 bg-gray-50/50 hover:bg-gray-100/50 transition-colors rounded">
+            Upload Signature
+          </div>
+        )}
+      </div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        accept="image/png,image/jpeg,image/jpg,image/webp"
+      />
+    </>
   )
 }
 
@@ -1808,7 +1878,16 @@ const Signatures = ({
   <div className="flex justify-between items-end mt-12 px-8">
     <div className="flex items-end gap-16">
       {/* Evaluator Block */}
-      <div className="text-center w-40">
+      <div className="text-center w-40 relative">
+        <EditableImage
+          src={data.evaluatorSignature || ""}
+          alt="Evaluator Signature"
+          width={391}
+          height={97}
+          onChange={(val) => updateDataField("evaluatorSignature", val)}
+          readOnly={readOnly}
+          className="w-32 absolute bottom-8 left-1/2 -translate-x-1/2"
+        />
         <div className="w-full border-b border-black mb-1"></div>
         <div className="font-bold text-[10px]">
           <EditableInput
@@ -1823,12 +1902,14 @@ const Signatures = ({
 
       {/* Senior Evaluator Block */}
       <div className="text-center relative w-40">
-        <Image
-          src="/luguan-yan-signature.png"
-          alt="Signature"
+        <EditableImage
+          src={data.seniorEvaluatorSignature}
+          alt="Senior Evaluator Signature"
           width={391}
           height={97}
-          className="w-32 h-auto absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none"
+          onChange={(val) => updateDataField("seniorEvaluatorSignature", val)}
+          readOnly={readOnly}
+          className="w-32 absolute bottom-8 left-1/2 -translate-x-1/2"
         />
         <div className="w-full border-b border-black mb-1"></div>
         <div className="font-bold text-[10px]">
