@@ -1821,7 +1821,7 @@ const AboutAetPage = () => (
     </h2>
     <div className="flex gap-6 mt-4">
       <div className="flex-1">
-        <h3 className="font-bold text-lg text-blue-900 mb-2">Jeremy Yan, Director of Evaluation</h3>
+        <h3 className="font-bold text-lg text-blue-900 mb-2">Luguan Yan, Director of Evaluation</h3>
         <p className="text-justify mb-2">
           Mr. Yan obtained his degree of Bachelor of Arts in Philosophy from Nanjing University, the People’s Republic of China in 1991 and the degree of Master of Arts in Philosophy from the University of Miami in 1998.
         </p>
