@@ -4,6 +4,7 @@ import { SampleData } from './report-data'
 export type ReportMetadata = {
     id: string
     created_at: string
+    updated_at: string
     name: string
 }
 
@@ -48,7 +49,6 @@ export async function updateReport(id: string, data: SampleData, name: string) {
         throw error
     }
 
-
     if (!result || result.length === 0) {
         throw new Error("Update failed: No rows affected. Check RLS or ID.")
     }
@@ -59,8 +59,8 @@ export async function updateReport(id: string, data: SampleData, name: string) {
 export async function fetchReports(): Promise<ReportMetadata[]> {
     const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select('id, created_at, name')
-        .order('created_at', { ascending: false })
+        .select('id, created_at, updated_at, name')
+        .order('updated_at', { ascending: false })
 
     if (error) {
         throw error

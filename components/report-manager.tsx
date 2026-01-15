@@ -126,7 +126,7 @@ export function SaveReportDialog({ data, onSaved }: SaveReportDialogProps) {
                                     >
                                         {report.name || "Untitled"}
                                         <span className="text-xs text-gray-400 ml-2">
-                                            ({new Date(report.created_at).toLocaleDateString()})
+                                            ({new Date(report.updated_at || report.created_at).toLocaleString()})
                                         </span>
                                     </div>
                                 ))}
@@ -217,7 +217,7 @@ export function LoadReportDialog({ onLoad }: LoadReportDialogProps) {
                                     <div className="overflow-hidden">
                                         <div className="font-medium truncate">{report.name || "Untitled Report"}</div>
                                         <div className="text-xs text-gray-500">
-                                            {new Date(report.created_at).toLocaleString()}
+                                            Last modified: {new Date(report.updated_at || report.created_at).toLocaleString()}
                                         </div>
                                     </div>
                                     {loadingId === report.id && (
