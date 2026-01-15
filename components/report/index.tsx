@@ -15,7 +15,7 @@ import { CredentialDetails } from "./sections/credential-details"
 import { CourseTable } from "./sections/course-table"
 import { GradeConversion } from "./sections/grade-conversion"
 import { References } from "./sections/references"
-import { Remarks } from "./sections/remarks"
+import { Notes } from "./sections/notes"
 import { Signatures } from "./sections/signatures"
 import { AboutAetPage } from "./sections/about-aet-page"
 import { EditableInput, EditableTextarea, EditableImage } from "./ui/editable-elements"
@@ -1198,15 +1198,12 @@ function ReportPage({
             <SectionTitle>{referencesNum}. References</SectionTitle>
             <References />
 
-            <SectionTitle>{notesNum}. Evaluation Notes</SectionTitle>
-            <EditableTextarea
-              value={data.evaluationNotes || ""}
-              onChange={(value) => updateDataField("evaluationNotes", value)}
-              className="text-xs text-gray-500 text-justify mb-4 leading-tight min-h-[3rem]"
+            <Notes
+              evaluationNotes={data.evaluationNotes}
+              updateDataField={updateDataField}
               readOnly={readOnly}
+              sectionNum={notesNum}
             />
-
-            <Remarks />
             <Signatures data={data} updateDataField={updateDataField} readOnly={readOnly} />
           </div>
         )}

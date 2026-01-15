@@ -20,15 +20,16 @@ components/
     │   ├── use-pagination.ts          # Encapsulates page splitting & definition logic
     │   └── use-dynamic-measure.ts    # Encapsulates the measuring/resize logic
     ├── sections/                      # UI Sections (Pure Components)
-    │   ├── header.tsx
-    │   ├── footer.tsx
+    │   ├── about-aet-page.tsx
     │   ├── applicant-info.tsx
-    │   ├── documents-list.tsx
-    │   ├── credential-details.tsx
     │   ├── course-table.tsx
+    │   ├── credential-details.tsx
+    │   ├── documents-list.tsx
+    │   ├── footer.tsx
     │   ├── grade-conversion.tsx
+    │   ├── header.tsx
+    │   ├── notes.tsx                  # Notes and Remarks consolidated
     │   ├── references.tsx
-    │   ├── notes.tsx
     │   └── signatures.tsx
     ├── ui/                           # Generic Report UI elements
     │   ├── report-page.tsx           # Layout for a single printable page
@@ -126,7 +127,8 @@ This table details exactly which parts of the current `report-editor.tsx`, `repo
 | `report-editor.tsx` | `CourseTable` component | `sections/course-table.tsx` | |
 | `report-editor.tsx` | `GradeConversion` component | `sections/grade-conversion.tsx` | |
 | `report-editor.tsx` | `SummaryRow`, `DetailRow` helpers | `sections/ui/tables.tsx` | Or keep local to sections |
-| `report-editor.tsx` | `Signatures`, `Remarks`, `References` | `sections/signatures.tsx`, etc. | Group if small |
+| `report-editor.tsx` | `Signatures`, `Remarks`, `References` | `sections/signatures.tsx`, `sections/notes.tsx`, `sections/references.tsx` | Group if small |
+| `report-editor.tsx` | `AboutAetPage` component | `sections/about-aet-page.tsx` | |
 | **Generic UI & Managers** | | | |
 | `report-editor.tsx` | `ReportPage` component | `ui/report-page.tsx` | The A4 wrapper & layout |
 | `report-editor.tsx` | `EditableInput`, `EditableTextarea` | `ui/editable-elements.tsx` | |
