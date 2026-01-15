@@ -25,26 +25,25 @@ To provide the correct references, the Agent must follow these steps:
     * **Document Type** (e.g., Transcript, Diploma).
     * **Specific Issue** (e.g., Privacy/FERPA, Grading System).
 
-2.  **Execute Lookup**: Run the provided Python script using the extracted context.
+2.  **Execute Lookup**: Run the provided Python script regarding the credential year.
     ```bash
-    python scripts/lookup_refs.py --context "<Insert extracted context keywords here>"
+    python scripts/lookup_refs.py --context "<Insert extracted context keywords here>" --year <Optional: Year>
     ```
 
 3.  **Generate Response**:
-    * Present the **top 3 references** returned by the script.
-    * For each reference, clearly state the **Title** and **Edition**.
-    * Explain *why* this specific reference is applicable to the user's case (using the "Rationale" provided by the script).
-    * (Optional) If the user provided a PDF/Image, mention that these references are used to cross-reference the data found in their file.
+    *   The script will output citations in **APA Format**.
+    *   Copy the output directly into the evaluation report.
 
 ## Examples
 
-**User:** "I have a transcript from Peking University for a Bachelor's degree. How do I verify the credits?"
+**User:** "I have a transcript from Peking University for a Bachelor's degree (Graduated 2005). How do I verify the credits?"
 
 **Agent Action:**
-`python scripts/lookup_refs.py --context "China Bachelor Transcript Credits"`
+`python scripts/lookup_refs.py --context "China Bachelor Transcript" --year 2005`
 
 **Agent Response:**
-"Based on the AICE bibliography, here are the required references:
-1. **Chinese Universities and Colleges**: To verify Peking University's official standing.
-2. **AACRAO Academic Record and Transcript Guide**: To interpret the credit hours and grading layout.
-3. **International Handbook of Universities**: For global accreditation cross-check."
+"Based on the AICE bibliography, here are the references for a 2005 credential:
+
+1. AACRAO. (2011). *AACRAO Academic Record and Transcript Guide* (1st (2011)).
+2. Higher Education Press. (2000). *Chinese Universities and Colleges* (3rd).
+3. International Association of Universities (IAU) / Palgrave Macmillan. (2005). *International Handbook of Universities* (18th)."
