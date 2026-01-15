@@ -34,7 +34,8 @@ components/
     │   ├── report-page.tsx           # Layout for a single printable page
     │   ├── report-toolbar.tsx        # Action bar (Save, Load, Print)
     │   └── editable-elements.tsx     # EditableInput, EditableTextarea
-    └── index.tsx                     # Main ReportEditor entry point
+    ├── index.tsx                     # Main ReportEditor entry point
+    └── types.ts                      # Centralized type definitions for shared use
 ```
 
 ## 3. Key Components Breakdown
@@ -104,7 +105,7 @@ This table details exactly which parts of the current `report-editor.tsx`, `repo
 | `report-editor.tsx` | `updateDocument`, `addDocument`, `deleteDocument` | `hooks/use-report-data.ts` | |
 | `report-editor.tsx` | `updateGradeConversion` | `hooks/use-report-data.ts` | |
 | **Logic & Data Types** | | | |
-| `lib/report-data.ts` | `SampleData`, `Course`, `Credential` types | `types/report.ts` | Centralize types |
+| `lib/report-data.ts` | `SampleData`, `Course`, `Credential` types | `components/report/types.ts` | Centralize types |
 | `lib/report-data.ts` | `buildSampleData`, `rehydrateData` | `lib/report-utils.ts` | Keep as pure utilities |
 | `lib/report-data.ts` | `HKUST_COURSES` and other constants | `lib/report-constants.ts` | Separate data from logic |
 | **Calculation & Logic** | | | |
@@ -137,7 +138,7 @@ This table details exactly which parts of the current `report-editor.tsx`, `repo
 
 ## 5. Migration Strategy
 
-1.  **Extract Types**: Move shared types to `types/report.ts`.
+1.  **Extract Types**: Move shared types to `components/report/types.ts`.
 2.  **Extract `useReportData`**: Move all `setData` logic here.
 3.  **Extract Sub-components**: Move `CourseTable`, `Header`, etc., to separate files.
 4.  **Isolate Pagination**: Move the `paginateCourses` and `useMemo` logic to a hook.
