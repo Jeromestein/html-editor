@@ -41,7 +41,7 @@ import {
   UpdateDocument,
   DeleteDocument,
   UpdateCourseRow
-} from "@/types/report"
+} from "./types"
 
 
 

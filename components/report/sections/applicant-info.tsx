@@ -1,5 +1,4 @@
-import { SampleData } from "@/lib/report-data"
-import { UpdateDataField } from "@/types/report"
+import { SampleData, UpdateDataField } from "../types"
 import { EditableInput } from "../ui/editable-elements"
 import { InfoRow } from "./shared"
 

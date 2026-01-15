@@ -1,5 +1,5 @@
 import { EditableInput } from "../ui/editable-elements"
-import { GradeConversionRow, GradeConversionField } from "@/types/report"
+import { GradeConversionRow, GradeConversionField } from "../types"
 
 type GradeConversionProps = {
     rows: GradeConversionRow[]

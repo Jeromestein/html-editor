@@ -1,5 +1,5 @@
 import { EditableInput, EditableImage } from "../ui/editable-elements"
-import { SampleData, UpdateDataField } from "@/types/report"
+import { SampleData, UpdateDataField } from "../types"
 
 type SignaturesProps = {
     data: SampleData

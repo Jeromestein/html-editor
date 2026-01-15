@@ -1,7 +1,7 @@
 import { RefObject } from "react"
 import { Trash2, Plus } from "lucide-react"
 import { EditableInput } from "../ui/editable-elements"
-import { Course, UpdateCourseRow } from "@/types/report"
+import { Course, UpdateCourseRow } from "../types"
 
 type CourseTableProps = {
     courses: Course[]
