@@ -81,23 +81,22 @@ def get_best_edition(reference, target_year=None):
 
 def format_apa_citation(reference, edition_data):
     """
-    Format: Publisher. (Year). Title (Edition).
-    If it's an online DB/Periodic, format slightly differently.
+    Format: Author. (Year). Title (Edition). Publisher.
     """
     publisher = reference.get('publisher', 'Unknown Publisher')
+    author = reference.get('author', publisher)  # Default author to publisher if missing
     year = edition_data.get('year', 'n.d.')
     title = reference.get('title', 'Unknown Title')
     edition_name = edition_data.get('edition', '')
     
-    # Clean up edition string for parens
     edition_str = f" ({edition_name})" if edition_name and "Online" not in edition_name else ""
     
-    # APA Style: Author (often Publisher in this case). (Year). Title (Edition). Publisher.
-    # Note: If Author = Publisher, APA says omit publisher at end.
+    # If Author is the same as Publisher (e.g. AACRAO), omit publisher at end.
+    if author == publisher:
+         citation = f"{author}. ({year}). *{title}*{edition_str}."
+    else:
+         citation = f"{author}. ({year}). *{title}*{edition_str}. {publisher}."
     
-    citation = f"{publisher}. ({year}). *{title}*{edition_str}."
-    
-    # Add URL for online resources if present
     if "url" in reference:
         citation += f" Retrieved from {reference['url']}"
         

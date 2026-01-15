@@ -2,7 +2,8 @@
     {
         "id": "iau_handbook",
         "title": "International Handbook of Universities",
-        "publisher": "International Association of Universities (IAU) / Palgrave Macmillan",
+        "author": "International Association of Universities (IAU)",
+        "publisher": "Palgrave Macmillan",
         "editions": [
             {
                 "edition": "18th",
@@ -36,6 +37,7 @@
     {
         "id": "europa_world",
         "title": "The Europa World of Learning",
+        "author": "Europa Publications",
         "publisher": "Routledge",
         "editions": [
             {
@@ -80,6 +82,7 @@
     {
         "id": "aacrao_transcript_guide",
         "title": "AACRAO Academic Record and Transcript Guide",
+        "author": "AACRAO",
         "publisher": "AACRAO",
         "editions": [
             {
@@ -110,6 +113,7 @@
     {
         "id": "aacrao_international",
         "title": "AACRAO International Guide",
+        "author": "AACRAO",
         "publisher": "AACRAO",
         "editions": [
             {
@@ -138,6 +142,7 @@
     {
         "id": "aacrao_ferpa",
         "title": "AACRAO FERPA Quick Guide",
+        "author": "AACRAO",
         "publisher": "AACRAO",
         "editions": [
             {
@@ -166,6 +171,7 @@
     {
         "id": "china_universities",
         "title": "Chinese Universities and Colleges",
+        "author": "Higher Education Press",
         "publisher": "Higher Education Press",
         "editions": [
             {
@@ -189,6 +195,7 @@
     {
         "id": "exam_schools",
         "title": "Exam Schools: Inside America's Most Selective Public High Schools",
+        "author": "Finn, C. E., & Hockett, J. A.",
         "publisher": "Princeton University Press",
         "editions": [
             {
@@ -210,6 +217,7 @@
     {
         "id": "best_387_colleges",
         "title": "The Best 387 Colleges",
+        "author": "The Princeton Review",
         "publisher": "The Princeton Review",
         "editions": [
             {
@@ -231,6 +239,7 @@
     {
         "id": "petersons_grad_series",
         "title": "Peterson's Graduate Programs Series",
+        "author": "Peterson's",
         "publisher": "Peterson's",
         "editions": [
             {
@@ -259,6 +268,7 @@
     {
         "id": "whed_online",
         "title": "World Higher Education Database (WHED)",
+        "author": "IAU / UNESCO",
         "publisher": "IAU / UNESCO",
         "editions": [
             {
@@ -281,7 +291,8 @@
     {
         "id": "ece_connection",
         "title": "ECE Connection & Publications",
-        "publisher": "Educational Credential Evaluators (ECE)",
+        "author": "Educational Credential Evaluators (ECE)",
+        "publisher": "ECE",
         "editions": [
             {
                 "edition": "Online / Periodicals",
@@ -303,6 +314,7 @@
     {
         "id": "china_databases",
         "title": "China Official Education Databases (CHSI / CDGDC)",
+        "author": "Ministry of Education of the PRC",
         "publisher": "Ministry of Education of the PRC",
         "editions": [
             {
