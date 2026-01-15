@@ -18,6 +18,13 @@
 - The print page signals readiness via `document.documentElement.dataset.reportReady` after fonts + pagination settle.
 - If Chromium is missing locally, run `pnpm exec playwright install chromium`.
 
+# Data Storage
+
+- **Supabase Integration**: Reports are stored in a hosted Supabase PostgreSQL database.
+- **Table**: `aet_fce_aice_report` stores the JSON blob of the report data.
+- **Security**: RLS is enabled but currently allows anonymous access (insert/select) for simplified usage.
+- **API**: Front-end communicates directly with Supabase via `lib/api.ts` and `@supabase/supabase-js`.
+
 # Report Layout Requirements
 
 ### 1. Global Sections (Start of Report)
@@ -127,4 +134,3 @@ To ensure a professional and hierarchical visual structure, strictly adhere to t
 7.  **References**
     *   **Size**: `text-xs` (12px).
     *   **Color**: Gray (`text-gray-600`).
-

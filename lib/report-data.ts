@@ -289,3 +289,18 @@ export const buildSampleData = (): SampleData => ({
     }
   ],
 })
+
+export const rehydrateData = (data: SampleData): SampleData => {
+  return {
+    ...data,
+    credentials: data.credentials.map((cred) => ({
+      ...cred,
+      get gpa() {
+        return calculateStats(this.courses).gpa
+      },
+      get totalCredits() {
+        return calculateStats(this.courses).totalCredits
+      },
+    })),
+  }
+}

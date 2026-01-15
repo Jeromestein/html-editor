@@ -2,7 +2,8 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react"
 import { FileDown, Printer, RotateCcw, Plus, Trash2, Globe } from "lucide-react"
-import { buildSampleData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
+import { buildSampleData, rehydrateData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
+import { SaveReportDialog, LoadReportDialog } from "./report-manager"
 import { calculateStats } from "@/lib/gpa"
 import Image from "next/image"
 
@@ -974,6 +975,9 @@ export default function ReportEditor({
             <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-normal">Editable</span>
           </h1>
           <div className="flex gap-2">
+            <LoadReportDialog onLoad={(newData) => setData(rehydrateData(newData))} />
+            <SaveReportDialog data={data} />
+            <div className="w-px h-8 bg-gray-300 mx-2 self-center"></div>
             <button
               onClick={() => {
                 if (data.credentials.length === 0) return
