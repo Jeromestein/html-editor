@@ -6,6 +6,7 @@ import { buildSampleData, rehydrateData, type Course, type SampleData, type Grad
 import { SaveReportDialog, LoadReportDialog } from "./report-manager"
 import { calculateStats } from "@/lib/gpa"
 import Image from "next/image"
+import Link from "next/link"
 
 // -----------------------------------------------------------------------------
 // 1. Type definitions and sample data
@@ -1388,8 +1389,8 @@ function ReportPage({
 
 const Header = () => (
   <header className="report-header flex justify-between items-end border-b-2 border-blue-900 pb-2 shrink-0">
-    <div className="flex items-center gap-4">
-      <Image src="/web-app-manifest-512x512.png" alt="AET Logo" width={64} height={64} className="h-16 w-auto mb-[-4px]" />
+    <div className="flex items-center">
+      <Image src="/web-app-manifest-512x512.png" alt="AET Logo" width={64} height={64} className="h-16 w-auto" />
       <div>
         <div className="text-3xl font-black text-blue-900 tracking-wider font-serif leading-none">AET</div>
         <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1 leading-none">
@@ -1398,15 +1399,15 @@ const Header = () => (
       </div>
     </div>
     <div className="text-xs font-bold text-gray-500 mb-0.5">
-      <a
+      <Link
         href="https://www.americantranslationservice.com"
         target="_blank"
         rel="noreferrer"
-        className="hover:text-blue-900 transition-colors flex items-center gap-1"
+        className="hover:text-blue-900 transition-colors flex items-center gap-1 mb-1"
       >
         <Globe size={12} className="text-blue-900" />
         www.americantranslationservice.com
-      </a>
+      </Link>
     </div>
   </header>
 )
