@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, 
 import { FileDown, Printer, RotateCcw, Plus, Trash2 } from "lucide-react"
 import { buildSampleData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
 import { calculateStats } from "@/lib/gpa"
+import Image from "next/image"
 
 // -----------------------------------------------------------------------------
 // 1. Type definitions and sample data
@@ -1086,10 +1087,12 @@ function ReportPage({
 
       {/* Watermark in page center */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
-        <img
+        <Image
           src="/web-app-manifest-512x512.png"
           alt=""
-          className="w-2/3 opacity-[0.03]"
+          width={512}
+          height={512}
+          className="w-2/3 opacity-[0.03] h-auto"
         />
       </div>
 
@@ -1315,7 +1318,7 @@ function ReportPage({
 const Header = () => (
   <header className="report-header flex justify-between items-end border-b-2 border-blue-900 pb-2 shrink-0">
     <div className="flex items-center gap-4">
-      <img src="/web-app-manifest-512x512.png" alt="AET Logo" className="h-16 w-auto mb-[-4px]" />
+      <Image src="/web-app-manifest-512x512.png" alt="AET Logo" width={64} height={64} className="h-16 w-auto mb-[-4px]" />
       <div>
         <div className="text-3xl font-black text-blue-900 tracking-wider font-serif leading-none">AET</div>
         <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1 leading-none">
@@ -1820,10 +1823,12 @@ const Signatures = ({
 
       {/* Senior Evaluator Block */}
       <div className="text-center relative w-40">
-        <img
+        <Image
           src="/luguan-yan-signature.png"
           alt="Signature"
-          className="w-32 absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none"
+          width={391}
+          height={97}
+          className="w-32 h-auto absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none"
         />
         <div className="w-full border-b border-black mb-1"></div>
         <div className="font-bold text-[10px]">
@@ -1839,6 +1844,6 @@ const Signatures = ({
     </div>
 
     {/* Seal */}
-    <img src="/AET-seal.jpg" alt="Official Seal" className="w-48 h-48 object-contain -mb-4" />
+    <Image src="/AET-seal.jpg" alt="Official Seal" width={192} height={192} className="w-48 h-48 object-contain -mb-4" />
   </div>
 )
