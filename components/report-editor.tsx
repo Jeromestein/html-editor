@@ -1821,7 +1821,7 @@ const Signatures = ({
       {/* Senior Evaluator Block */}
       <div className="text-center relative w-40">
         <img
-          src="/jeremy-yan-signature.png"
+          src="/luguan-yan-signature.png"
           alt="Signature"
           className="w-32 absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none"
         />
