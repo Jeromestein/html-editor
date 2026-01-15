@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react"
-import { FileDown, Printer, RotateCcw, Plus, Trash2, Globe } from "lucide-react"
+import { Printer, RotateCcw, Plus, Trash2, Globe } from "lucide-react"
 import { buildSampleData, rehydrateData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
 import { SaveReportDialog, LoadReportDialog } from "./report-manager"
 import { calculateStats } from "@/lib/gpa"
@@ -315,7 +315,7 @@ export default function ReportEditor({
   onReady,
 }: ReportEditorProps) {
   const [data, setData] = useState<SampleData>(() => initialData ?? buildSampleData())
-  const [isExporting, setIsExporting] = useState(false)
+
   const [rowsPerFirstPage, setRowsPerFirstPage] = useState(DEFAULT_ROWS_PER_FIRST_PAGE)
   const [rowsPerFirstPageWithTail, setRowsPerFirstPageWithTail] = useState(DEFAULT_ROWS_PER_FIRST_PAGE)
   const [rowsPerFullPage, setRowsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
@@ -703,34 +703,7 @@ export default function ReportEditor({
     }
   }
 
-  const handleExportPdf = async () => {
-    if (readOnly || isExporting) return
-    setIsExporting(true)
-    try {
-      const response = await fetch("/api/pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
 
-      if (!response.ok) {
-        throw new Error("PDF export failed")
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = `${data.refNo || "report"}.pdf`
-      link.click()
-      window.URL.revokeObjectURL(url)
-    } catch (error) {
-      console.error(error)
-      window.alert("PDF export failed. Please try again.")
-    } finally {
-      setIsExporting(false)
-    }
-  }
 
   const updateEquivalenceField: UpdateEquivalenceField = (credentialIndex, field, value) => {
     if (readOnly) return
@@ -994,13 +967,7 @@ export default function ReportEditor({
             >
               <RotateCcw size={18} />
             </button>
-            <button
-              onClick={handleExportPdf}
-              className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 font-bold shadow-sm transition-colors disabled:opacity-60"
-              disabled={isExporting}
-            >
-              <FileDown size={16} /> {isExporting ? "Generating..." : "Controlled PDF"}
-            </button>
+
             <button
               onClick={handlePrint}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold shadow-sm transition-colors"
