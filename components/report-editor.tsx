@@ -44,7 +44,7 @@ type GradeConversionProps = {
 
 const GradeConversion = ({ rows, onUpdate, readOnly = false }: GradeConversionProps) => (
   <div className="mt-4 mb-6">
-    <table className="w-1/2 text-[10px] text-center border-collapse border border-gray-300">
+    <table className="w-1/2 text-xs text-center border-collapse border border-gray-300">
       <thead>
         <tr>
           <th className="border border-gray-300 bg-gray-50 p-1">Grade Scale</th>
@@ -282,7 +282,7 @@ const EditableImage = ({ src, alt, width, height, onChange, readOnly = false, cl
             className="w-full h-auto"
           />
         ) : (
-          <div className="w-full h-12 border border-dashed border-gray-300 flex items-center justify-center text-[9px] text-gray-400 bg-gray-50/50 hover:bg-gray-100/50 transition-colors rounded">
+          <div className="w-full h-12 border border-dashed border-gray-300 flex items-center justify-center text-[10px] text-gray-400 bg-gray-50/50 hover:bg-gray-100/50 transition-colors rounded">
             Upload Signature
           </div>
         )}
@@ -1210,7 +1210,7 @@ function ReportPage({
             <ApplicantInfo data={data} updateDataField={updateDataField} readOnly={readOnly} />
 
             <SectionTitle>1. U.S. Equivalence Summary</SectionTitle>
-            <div className="mb-6 text-xs space-y-4">
+            <div className="mb-6 text-sm space-y-4">
               {data.credentials.map((cred, idx) => (
                 <div key={cred.id} className="border-b border-gray-100 pb-2 last:border-0">
                   <div className="font-bold text-gray-700 mb-1">
@@ -1257,12 +1257,12 @@ function ReportPage({
 
             {/* Documents Intro Text */}
             {documentsHeading === "2. Documents" && (
-              <div className="text-[10px] text-gray-700 mb-2 italic">
+              <div className="text-xs text-gray-700 mb-2 italic">
                 This evaluation is based on the following documents electronically submitted by the applicant:
               </div>
             )}
 
-            <ul className="list-disc pl-4 space-y-2 text-xs" ref={documentsListRef}>
+            <ul className="list-disc pl-4 space-y-2 text-sm" ref={documentsListRef}>
               {documents.map((entry, index) => (
                 <li
                   key={`${entry.document.title}-${entry.index}`}
@@ -1319,7 +1319,7 @@ function ReportPage({
               <button
                 type="button"
                 onClick={addDocument}
-                className="no-print mt-2 flex items-center gap-1 text-[10px] text-blue-700 hover:text-blue-900 transition-colors"
+                className="no-print mt-2 flex items-center gap-1 text-xs text-blue-700 hover:text-blue-900 transition-colors"
               >
                 <Plus size={12} /> Add Document
               </button>
@@ -1399,7 +1399,7 @@ function ReportPage({
             <EditableTextarea
               value={data.evaluationNotes || ""}
               onChange={(value) => updateDataField("evaluationNotes", value)}
-              className="text-[10px] text-gray-500 text-justify mb-4 leading-tight min-h-[3rem]"
+              className="text-xs text-gray-500 text-justify mb-4 leading-tight min-h-[3rem]"
               readOnly={readOnly}
             />
 
@@ -1426,12 +1426,12 @@ const Header = () => (
       <Image src="/web-app-manifest-512x512.png" alt="AET Logo" width={64} height={64} className="h-16 w-auto mb-[-4px]" />
       <div>
         <div className="text-3xl font-black text-blue-900 tracking-wider font-serif leading-none">AET</div>
-        <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1 leading-none">
+        <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1 leading-none">
           American Evaluation & Translation Services
         </div>
       </div>
     </div>
-    <div className="text-[10px] font-bold text-gray-500 mb-0.5">
+    <div className="text-xs font-bold text-gray-500 mb-0.5">
       <a
         href="https://www.americantranslationservice.com"
         target="_blank"
@@ -1452,7 +1452,7 @@ type FooterProps = {
 }
 
 const Footer = ({ pageIndex, totalPages, refNo }: FooterProps) => (
-  <footer className="report-footer border-t border-gray-300 pt-2 flex justify-between text-[9px] text-gray-400 mt-auto shrink-0">
+  <footer className="report-footer border-t border-gray-300 pt-2 flex justify-between text-[10px] text-gray-400 mt-auto shrink-0">
     <span>
       Page {pageIndex + 1} of {totalPages}
     </span>
@@ -1623,9 +1623,9 @@ const CredentialDetails = ({
   }
 
   return (
-    <div className="text-xs">
+    <div className="text-sm">
       {canShowCredentialTable && (
-        <table className="w-full text-xs border-collapse mb-3 table-fixed">
+        <table className="w-full text-sm border-collapse mb-3 table-fixed">
           <tbody>
             <DetailRow label="Name of Awarding Institution">
               <EditableInput
@@ -1868,19 +1868,19 @@ const CourseTable = ({
 }: CourseTableProps) => {
   if (!courses || courses.length === 0) {
     if (!showEmptyState) return null
-    return <div className="text-xs text-gray-400 italic p-2 text-center">No courses listed on this page.</div>
+    return <div className="text-sm text-gray-400 italic p-2 text-center">No courses listed on this page.</div>
   }
 
   const showActions = !readOnly
 
   return (
-    <table className="course-table w-full text-[10px] text-center border-collapse border border-gray-300 table-fixed">
+    <table className="course-table w-full text-xs text-center border-collapse border border-gray-300 table-fixed">
       <thead className="bg-gray-100 print:bg-gray-50" ref={headerRef}>
         <tr>
           <th className="border border-gray-300 p-1 w-20">Year</th>
           <th className="border border-gray-300 p-1 text-center">Course Title</th>
           <th className="border border-gray-300 p-1 w-16">Credits</th>
-          <th className="border border-gray-300 p-1 w-18">Grade</th>
+          <th className="border border-gray-300 p-1 w-20">Grade</th>
           {showActions && <th className="border border-gray-300 p-1 w-6 no-print"></th>}
         </tr>
       </thead>
@@ -1966,7 +1966,7 @@ const CourseTable = ({
 }
 
 const References = () => (
-  <div className="text-[9px] mb-4 mt-2">
+  <div className="text-[10px] mb-4 mt-2">
     <ul className="list-disc pl-4 space-y-1 text-gray-600">
       <li>International Association of Universities (IAU). (2009). <em>International Handbook of Universities</em> (21st). Palgrave Macmillan.</li>
       <li>Europa Publications. (2011). <em>The Europa World of Learning</em> (62nd). Routledge.</li>
@@ -1980,7 +1980,7 @@ const References = () => (
 )
 
 const Remarks = () => (
-  <div className="text-[9px] text-gray-500 text-justify mb-4 leading-tight">
+  <div className="text-[10px] text-gray-500 text-justify mb-4 leading-tight">
     <strong>Remarks:</strong> This report is advisory in nature and is not binding upon any institution or agency. It is
     based on the analysis of documents submitted by the applicant. AET is an Endorsed Member of the Association of
     International Credential Evaluators (AICE).
@@ -2018,7 +2018,7 @@ const Signatures = ({
             className="text-center w-full bg-transparent"
           />
         </div>
-        <div className="text-[9px] text-gray-600">Evaluator</div>
+        <div className="text-[10px] text-gray-600">Evaluator</div>
       </div>
 
       {/* Senior Evaluator Block */}
@@ -2041,7 +2041,7 @@ const Signatures = ({
             className="text-center w-full bg-transparent"
           />
         </div>
-        <div className="text-[9px] text-gray-600">Senior Evaluator</div>
+        <div className="text-[10px] text-gray-600">Senior Evaluator</div>
       </div>
     </div>
 
