@@ -1,0 +1,2 @@
+export const DEFAULT_ROWS_PER_FIRST_PAGE = 14
+export const DEFAULT_ROWS_PER_FULL_PAGE = 30
