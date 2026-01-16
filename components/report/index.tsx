@@ -567,6 +567,7 @@ function ReportPage({
             <EquivalenceSummary
               data={data}
               updateEquivalenceField={updateEquivalenceField}
+              updateCredentialField={updateCredentialField}
               readOnly={readOnly}
             />
 
