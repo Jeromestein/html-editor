@@ -25,6 +25,7 @@ components/
     │   ├── course-table.tsx
     │   ├── credential-details.tsx
     │   ├── documents-list.tsx
+    │   ├── equivalence-summary.tsx
     │   ├── footer.tsx
     │   ├── grade-conversion.tsx
     │   ├── header.tsx
@@ -124,6 +125,7 @@ This table details exactly which parts of the current `report-editor.tsx`, `repo
 | `report-editor.tsx` | `Footer` component | `sections/footer.tsx` | |
 | `report-editor.tsx` | `ApplicantInfo` component | `sections/applicant-info.tsx` | |
 | `report-editor.tsx` | `Document list rendering` (inline) | `sections/documents-list.tsx` | Extract inline JSX to component |
+| `report-editor.tsx` | `Equivalence Summary` (inline) | `sections/equivalence-summary.tsx` | Extract inline JSX to component |
 | `report-editor.tsx` | `CredentialDetails` component | `sections/credential-details.tsx` | |
 | `report-editor.tsx` | `CourseTable` component | `sections/course-table.tsx` | |
 | `report-editor.tsx` | `GradeConversion` component | `sections/grade-conversion.tsx` | |
