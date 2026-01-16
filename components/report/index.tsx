@@ -6,7 +6,6 @@ import { buildSampleData, rehydrateData, type Course, type SampleData, type Grad
 import { SaveReportDialog, LoadReportDialog } from "../report-manager"
 import { calculateStats } from "@/lib/gpa"
 import Image from "next/image"
-import Link from "next/link"
 
 import { Header } from "./sections/header"
 import { Footer } from "./sections/footer"
@@ -24,7 +23,7 @@ import {
   SectionTitle,
   ReportTitle,
   SummaryRow,
-} from "./sections/shared"
+} from "./ui/shared"
 import {
   TopLevelField,
   CourseField,

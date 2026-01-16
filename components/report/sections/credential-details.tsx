@@ -1,7 +1,7 @@
 import { RefObject } from "react"
 import { Trash2, Plus } from "lucide-react"
 import { EditableInput, EditableTextarea } from "../ui/editable-elements"
-import { DetailRow, DocumentFieldRow } from "./shared"
+import { DetailRow, DocumentFieldRow } from "../ui/shared"
 import { SampleData, DocumentEntry, CredentialField, UpdateCredentialField, UpdateDocument, DeleteDocument } from "../types"
 
 type CredentialDetailsProps = {

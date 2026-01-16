@@ -1,6 +1,6 @@
 import { SampleData, UpdateDataField } from "../types"
 import { EditableInput } from "../ui/editable-elements"
-import { InfoRow } from "./shared"
+import { InfoRow } from "../ui/shared"
 
 type ApplicantInfoProps = {
     data: SampleData

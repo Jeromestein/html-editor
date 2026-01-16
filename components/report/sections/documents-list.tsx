@@ -1,7 +1,7 @@
 import { Trash2, Plus } from "lucide-react"
 import { RefObject } from "react"
 import { EditableInput, EditableTextarea } from "../ui/editable-elements"
-import { SectionTitle, DocumentFieldRow } from "./shared"
+import { SectionTitle, DocumentFieldRow } from "../ui/shared"
 import { DocumentEntry, UpdateDocument, DeleteDocument } from "../types"
 
 type DocumentsListProps = {

@@ -1,5 +1,5 @@
 import { EditableTextarea } from "../ui/editable-elements"
-import { SectionTitle } from "./shared"
+import { SectionTitle } from "../ui/shared"
 import { UpdateDataField } from "../types"
 
 type NotesProps = {

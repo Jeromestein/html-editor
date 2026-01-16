@@ -1,4 +1,4 @@
-import { ReportTitle } from "./shared"
+import { ReportTitle } from "../ui/shared"
 
 export const AboutAetPage = () => (
     <div className="mt-8 text-xs leading-relaxed font-sans">
