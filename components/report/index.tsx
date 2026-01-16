@@ -5,6 +5,7 @@ import { Plus, Trash2, Globe } from "lucide-react"
 import { buildSampleData, rehydrateData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
 import { calculateStats } from "@/lib/gpa"
 import Image from "next/image"
+import { Watermark } from "./sections/watermark"
 
 import { Header } from "./sections/header"
 import { Footer } from "./sections/footer"
@@ -545,15 +546,7 @@ function ReportPage({
       <Header />
 
       {/* Watermark in page center */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
-        <Image
-          src="/web-app-manifest-512x512.png"
-          alt=""
-          width={512}
-          height={512}
-          className="w-2/3 opacity-[0.03] h-auto"
-        />
-      </div>
+      <Watermark />
 
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col" ref={setContentRef}>
         {showApplicantInfo && (
