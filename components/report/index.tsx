@@ -17,6 +17,7 @@ import { DocumentsList } from "./sections/documents-list"
 import { References } from "./sections/references"
 import { Notes } from "./sections/notes"
 import { Signatures } from "./sections/signatures"
+import { Seal } from "./sections/seal"
 import { AboutAetPage } from "./sections/about-aet-page"
 import { EditableInput, EditableTextarea, EditableImage } from "./ui/editable-elements"
 import { ReportToolbar } from "./ui/report-toolbar"
@@ -648,6 +649,7 @@ function ReportPage({
               sectionNum={notesNum}
             />
             <Signatures data={data} updateDataField={updateDataField} readOnly={readOnly} />
+            <Seal />
           </div>
         )}
 
