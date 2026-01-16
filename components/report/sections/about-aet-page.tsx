@@ -25,7 +25,7 @@ export const AboutAetPage = () => (
                     <div>
                         <div className="font-bold text-gray-800">Los Angeles Office (California HQ)</div>
                         <div>19800 Macarthur Blvd Ste 570, Irvine, CA 92612</div>
-                        <div>Phone: +1 949-954-7996</div>
+                        <div>Phone: +1 949-954-7996 / Email: ca2@aet21.com</div>
                     </div>
                     <div>
                         <div className="font-bold text-gray-800">Miami Office (HQ)</div>
@@ -35,17 +35,17 @@ export const AboutAetPage = () => (
                     <div>
                         <div className="font-bold text-gray-800">Boston Office</div>
                         <div>6 Pleasant Street, #418, Malden, MA 02148</div>
-                        <div>Phone: +1 781-605-1970</div>
+                        <div>Phone: +1 781-605-1970 / Email: boston@aet21.com</div>
                     </div>
                     <div>
                         <div className="font-bold text-gray-800">San Francisco Office</div>
                         <div>851 Burlway Rd Ste 421, Burlingame CA 94010</div>
-                        <div>Phone: +1 415-868-4892</div>
+                        <div>Phone: +1 415-868-4892 / Email: ca@aet21.com</div>
                     </div>
                     <div>
                         <div className="font-bold text-gray-800">New York Office</div>
                         <div>60-20 Woodside Ave, Suite 205, Queens NY 11377</div>
-                        <div>Phone: +1 718-521-6708</div>
+                        <div>Phone: +1 718-521-6708 / Email: nyc@aet21.com</div>
                     </div>
                 </div>
             </div>
