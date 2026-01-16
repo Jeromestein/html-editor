@@ -1,14 +1,8 @@
 import { SampleData } from "../types"
-import { SectionTitle } from "../ui/shared"
+import { SectionTitle, SummaryRow } from "../ui/shared"
 import { EditableInput, EditableTextarea } from "../ui/editable-elements"
 import React from "react"
 
-export const SummaryRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div className="flex items-baseline gap-2">
-        <span className="text-gray-600 font-medium w-32 shrink-0">{label}:</span>
-        <div className="flex-1">{children}</div>
-    </div>
-)
 
 type EquivalenceSummaryProps = {
     data: SampleData

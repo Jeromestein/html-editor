@@ -35,9 +35,9 @@ export type SummaryRowProps = {
 }
 
 export const SummaryRow = ({ label, children }: SummaryRowProps) => (
-    <div className="grid grid-cols-[9.5rem_1fr] items-center gap-2">
-        <span className="font-bold text-gray-600">{label}:</span>
-        <div>{children}</div>
+    <div className="flex items-baseline gap-2">
+        <span className="text-gray-600 font-medium w-32 shrink-0">{label}:</span>
+        <div className="flex-1">{children}</div>
     </div>
 )
 
