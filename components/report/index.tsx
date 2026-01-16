@@ -14,6 +14,7 @@ import { ApplicantInfo } from "./sections/applicant-info"
 import { CredentialDetails } from "./sections/credential-details"
 import { CourseTable } from "./sections/course-table"
 import { GradeConversion } from "./sections/grade-conversion"
+import { DocumentsList } from "./sections/documents-list"
 import { References } from "./sections/references"
 import { Notes } from "./sections/notes"
 import { Signatures } from "./sections/signatures"
@@ -22,10 +23,7 @@ import { EditableInput, EditableTextarea, EditableImage } from "./ui/editable-el
 import {
   SectionTitle,
   ReportTitle,
-  InfoRow, // Kept for now if used by others, but mostly used by ApplicantInfo which is extracted. Wait, ApplicantInfo uses it internally.
   SummaryRow,
-  DetailRow,
-  DocumentFieldRow
 } from "./sections/shared"
 import {
   TopLevelField,
@@ -1051,83 +1049,18 @@ function ReportPage({
           </>
         )}
 
-        {showDocumentsHeading && (
-          <>
-            {/* Documents section is now Section 2, but only show header on first doc page which usually matches showDocumentsHeading in my new logic */}
-            {/* Logic check: I passed showDocumentsHeading=true for all intro pages? No, I passed documentsHeading="2. Documents" for first. */}
-            {documentsHeading && <SectionTitle>{documentsHeading}</SectionTitle>}
-
-            {/* Documents Intro Text */}
-            {documentsHeading === "2. Documents" && (
-              <div className="text-xs text-gray-700 mb-2 italic">
-                This evaluation is based on the following documents electronically submitted by the applicant:
-              </div>
-            )}
-
-            <ul className="list-disc pl-4 space-y-2 text-sm" ref={documentsListRef}>
-              {documents.map((entry, index) => (
-                <li
-                  key={`${entry.document.title}-${entry.index}`}
-                  className={`relative ${readOnly ? "" : "pr-5"}`}
-                  ref={index === 0 ? documentItemRef : undefined}
-                >
-                  <EditableInput
-                    value={entry.document.title}
-                    onChange={(value) => updateDocument(entry.index, "title", value)}
-                    className="font-semibold"
-                    readOnly={readOnly}
-                  />
-                  <div className="mt-0.5 space-y-0.5">
-                    <DocumentFieldRow label="Issued By">
-                      <EditableTextarea
-                        value={entry.document.issuedBy}
-                        onChange={(value) => updateDocument(entry.index, "issuedBy", value)}
-                        rows={1}
-                        className="leading-snug"
-                        readOnly={readOnly}
-                      />
-                    </DocumentFieldRow>
-                    <div className="grid grid-cols-2 gap-x-6">
-                      <DocumentFieldRow label="Date of Issue">
-                        <EditableInput
-                          value={entry.document.dateIssued}
-                          onChange={(value) => updateDocument(entry.index, "dateIssued", value)}
-                          readOnly={readOnly}
-                        />
-                      </DocumentFieldRow>
-                      <DocumentFieldRow label="Certificate No.">
-                        <EditableInput
-                          value={entry.document.certificateNo}
-                          onChange={(value) => updateDocument(entry.index, "certificateNo", value)}
-                          readOnly={readOnly}
-                        />
-                      </DocumentFieldRow>
-                    </div>
-                  </div>
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      onClick={() => deleteDocument(entry.index)}
-                      className="no-print absolute right-0 top-0 text-gray-300 hover:text-red-500 transition-colors"
-                      title="Remove Document"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-            {!readOnly && showDocumentsActions && (
-              <button
-                type="button"
-                onClick={addDocument}
-                className="no-print mt-2 flex items-center gap-1 text-xs text-blue-700 hover:text-blue-900 transition-colors"
-              >
-                <Plus size={12} /> Add Document
-              </button>
-            )}
-          </>
-        )}
+        <DocumentsList
+          documents={documents}
+          documentsHeading={documentsHeading}
+          showDocumentsHeading={showDocumentsHeading}
+          showDocumentsActions={showDocumentsActions}
+          updateDocument={updateDocument}
+          deleteDocument={deleteDocument}
+          addDocument={addDocument}
+          readOnly={readOnly}
+          documentsListRef={documentsListRef}
+          documentItemRef={documentItemRef}
+        />
 
         {/* Credential Content */}
         {credential && (
