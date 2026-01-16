@@ -9,7 +9,7 @@ type ApplicantInfoProps = {
 }
 
 export const ApplicantInfo = ({ data, updateDataField, readOnly = false }: ApplicantInfoProps) => (
-    <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-6 text-sm border-b border-gray-200 pb-4">
+    <div className="grid grid-cols-2 gap-x-8 gap-y-1 mb-6 text-sm">
         <InfoRow label="Name of Applicant" labelClassName="uppercase tracking-wide">
             <EditableInput
                 value={data.name}

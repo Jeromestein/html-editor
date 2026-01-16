@@ -15,7 +15,7 @@ export const EquivalenceSummary = ({ data, updateEquivalenceField, updateCredent
     return (
         <>
             <SectionTitle>1. U.S. Equivalence Summary</SectionTitle>
-            <div className="mb-6 text-sm space-y-4">
+            <div className="mb-6 text-sm space-y-2">
                 {data.credentials.map((cred, idx) => (
                     <div key={cred.id} className="border-b border-gray-100 pb-2 last:border-0">
                         <SummaryRow label={`Credential #${idx + 1}`} labelClassName="font-bold">
