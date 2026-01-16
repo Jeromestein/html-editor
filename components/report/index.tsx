@@ -39,95 +39,15 @@ import {
   DeleteDocument,
   UpdateCourseRow
 } from "./types"
+import { ReportPageData, DocumentEntry } from "./hooks/use-pagination"
 
 
 
-// -----------------------------------------------------------------------------
-// 2. Pagination logic
-// -----------------------------------------------------------------------------
 
-const DEFAULT_ROWS_PER_FIRST_PAGE = 14
-const DEFAULT_ROWS_PER_FULL_PAGE = 30
+import { useDynamicMeasure } from "./hooks/use-dynamic-measure"
+import { usePagination } from "./hooks/use-pagination"
 
-type CoursePage = {
-  courses: Course[]
-}
 
-type PaginationCounts = {
-  first: number
-  firstWithTail: number
-  full: number
-  last: number
-}
-
-function paginateCourses(courses: Course[], counts: PaginationCounts): CoursePage[] {
-  const pages: CoursePage[] = []
-  const remainingCourses = [...courses]
-  const firstCount = Math.max(0, counts.first)
-  const firstWithTailCount = Math.max(0, counts.firstWithTail)
-  const fullCount = Math.max(1, counts.full)
-  const lastCount = Math.max(1, counts.last)
-
-  if (remainingCourses.length <= firstWithTailCount) {
-    pages.push({
-      courses: remainingCourses.splice(0),
-    })
-    return pages
-  }
-
-  const firstPageCourses = remainingCourses.splice(0, Math.min(firstCount, remainingCourses.length))
-  pages.push({
-    courses: firstPageCourses,
-  })
-
-  while (remainingCourses.length > lastCount) {
-    const take = Math.min(fullCount, remainingCourses.length - lastCount)
-    const pageCourses = remainingCourses.splice(0, take)
-    pages.push({
-      courses: pageCourses,
-    })
-  }
-
-  if (remainingCourses.length > 0) {
-    pages.push({
-      courses: remainingCourses.splice(0),
-    })
-  }
-
-  return pages
-}
-
-type DocumentEntry = {
-  document: SampleData["documents"][number]
-  index: number
-}
-
-type ReportPageData = {
-  documents: DocumentEntry[]
-  courses: Course[]
-  credentialIndex?: number
-  showCredentialHeading: boolean
-  showApplicantInfo: boolean
-  showCredentialTable: boolean
-  showDocumentsHeading: boolean
-  showDocumentsActions: boolean
-  documentsHeading?: string
-  showCourseSection: boolean
-  showGradeConversion: boolean
-  showTotals: boolean
-  showSignatures: boolean
-  showAboutPage: boolean
-  isLastPage: boolean
-}
-
-function chunkArray<T>(items: T[], size: number): T[][] {
-  if (size <= 0) return [items]
-  const result: T[][] = []
-  for (let i = 0; i < items.length; i += size) {
-    result.push(items.slice(i, i + size))
-  }
-  return result
-}
 
 
 
@@ -150,198 +70,31 @@ export default function ReportEditor({
 }: ReportEditorProps) {
   const [data, setData] = useState<SampleData>(() => initialData ?? buildSampleData())
 
-  const [rowsPerFirstPage, setRowsPerFirstPage] = useState(DEFAULT_ROWS_PER_FIRST_PAGE)
-  const [rowsPerFirstPageWithTail, setRowsPerFirstPageWithTail] = useState(DEFAULT_ROWS_PER_FIRST_PAGE)
-  const [rowsPerFullPage, setRowsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
-  const [rowsPerLastPage, setRowsPerLastPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
-  const courseContentRef = useRef<HTMLDivElement>(null)
-  const introContentRef = useRef<HTMLDivElement>(null)
-  const tableStartRef = useRef<HTMLDivElement>(null)
-  const tableHeaderRef = useRef<HTMLTableSectionElement>(null)
-  const rowRef = useRef<HTMLTableRowElement>(null)
-  const tailRef = useRef<HTMLDivElement>(null)
-  const documentsListRef = useRef<HTMLUListElement>(null)
-  const documentItemRef = useRef<HTMLLIElement>(null)
-  const readySentRef = useRef(false)
-  const [fontsReady, setFontsReady] = useState(false)
-  const [documentsPerPage, setDocumentsPerPage] = useState(() =>
-    Math.max(1, data.documents.length)
-  )
-  const [documentsPerFullPage, setDocumentsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
 
-  const documentEntries = useMemo(
-    () => data.documents.map((document, index) => ({ document, index })),
-    [data.documents]
-  )
-  const documentPages = useMemo(() => {
-    const pages: DocumentEntry[][] = []
-    const entries = [...documentEntries]
 
-    // First page
-    if (entries.length > 0) {
-      pages.push(entries.splice(0, documentsPerPage))
-    }
+  const { measurements, refs } = useDynamicMeasure({ data, onReady })
+  const reportPages = usePagination({ data, readOnly, measurements })
 
-    // Subsequent pages
-    while (entries.length > 0) {
-      pages.push(entries.splice(0, documentsPerFullPage))
-    }
+  const {
+    rowsPerFirstPage,
+    rowsPerFirstPageWithTail,
+    rowsPerFullPage,
+    rowsPerLastPage,
+    documentsPerPage,
+    documentsPerFullPage
+  } = measurements
 
-    return pages
-  }, [documentEntries, documentsPerPage, documentsPerFullPage])
-  const coursePagesByCredential = useMemo(
-    () =>
-      data.credentials.map((credential, credentialIndex) => {
-        const isLastCredential = credentialIndex === data.credentials.length - 1
-        const gradeConversionOverhead = credential.gradeConversion.length + 6 // Header (2) + Table Header (2) + Margins/Gap (2)
-        // Reserve space for Grade Conversion AND the Totals row (1 row)
-        const lastPageCapacity = Math.max(1, rowsPerFullPage - gradeConversionOverhead - 1)
+  const {
+    courseContentRef,
+    introContentRef,
+    tableStartRef,
+    tableHeaderRef,
+    rowRef,
+    tailRef,
+    documentsListRef,
+    documentItemRef,
+  } = refs
 
-        // YES: We now reserve space to try and keep Grade Conversion on the same page.
-        // We pass a reduced 'last' page capacity. If courses fit within this reduced capacity,
-        // paginateCourses will put them there, leaving space for GC.
-        return paginateCourses(credential.courses, {
-          first: rowsPerFirstPage,
-          firstWithTail: rowsPerFirstPageWithTail,
-          full: rowsPerFullPage,
-          last: lastPageCapacity,
-        })
-      }),
-    [data.credentials, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage]
-  )
-
-  const reportPages = useMemo(() => {
-    const compiled: ReportPageData[] = []
-    const hasDocumentPages = documentEntries.length > 0
-    const showDocumentsSection = hasDocumentPages || !readOnly
-    const introDocumentPages = hasDocumentPages ? documentPages : [[]]
-    introDocumentPages.forEach((documentPage, index) => {
-      compiled.push({
-        documents: documentPage,
-        courses: [],
-        showApplicantInfo: index === 0,
-        showCredentialHeading: false,
-        showCredentialTable: false,
-        showDocumentsHeading: showDocumentsSection,
-        showDocumentsActions: showDocumentsSection && !readOnly && index === introDocumentPages.length - 1,
-        documentsHeading: index === 0 ? "2. Documents" : "Documents (continued)",
-        showCourseSection: false,
-        showGradeConversion: false, // Intro pages don't show grade conversion
-        showTotals: false,
-        showSignatures: false,
-        showAboutPage: false,
-        isLastPage: false,
-      })
-    })
-
-    data.credentials.forEach((credential, credentialIndex) => {
-      const coursePages = coursePagesByCredential[credentialIndex] ?? []
-      // If no courses, we still need at least one page for details/conversion
-      const effectiveCoursePages = coursePages.length > 0 ? coursePages : [{ courses: [] }]
-
-      const firstCoursePageIndex = effectiveCoursePages.findIndex((page) => page.courses.length > 0)
-      const courseSectionIndex = firstCoursePageIndex === -1 ? 0 : firstCoursePageIndex
-
-      effectiveCoursePages.forEach((page, pageIndex) => {
-        const isLastOfCredential = pageIndex === effectiveCoursePages.length - 1
-
-        // Determine capacity for this specific page type
-        // Note: Logic assumes first page (index 0) uses rowsPerFirstPage, others use rowsPerFullPage.
-        // This is an approximation as the actual "First Page" logic in layout effect depends on content.
-        // However, for course lists, this matches paginateCourses logic behavior.
-        const capacity = pageIndex === 0 ? (rowsPerFirstPage > 0 ? rowsPerFirstPage : DEFAULT_ROWS_PER_FIRST_PAGE) : (rowsPerFullPage > 0 ? rowsPerFullPage : DEFAULT_ROWS_PER_FULL_PAGE)
-
-        const rowsUsed = page.courses.length
-        const gradeConversionOverhead = credential.gradeConversion.length + 6 // Header, margins, table rows
-
-        let showGradeConversion = false
-        let needsExtraPage = false
-
-        if (isLastOfCredential) {
-          // Check if we have space for Grade Conversion overhead plus Totals row (1)
-          if (capacity - rowsUsed - 1 >= gradeConversionOverhead) {
-            showGradeConversion = true
-          } else {
-            needsExtraPage = true
-          }
-        }
-
-        compiled.push({
-          documents: [],
-          courses: page.courses,
-          credentialIndex,
-          showApplicantInfo: false,
-          showCredentialHeading: pageIndex === 0, // Show details on first page
-          showCredentialTable: pageIndex === 0,
-          showDocumentsHeading: false,
-          showDocumentsActions: false,
-          showCourseSection: pageIndex === courseSectionIndex,
-          showGradeConversion: showGradeConversion,
-          showTotals: isLastOfCredential,
-          showSignatures: false,
-          showAboutPage: false,
-          isLastPage: false,
-        })
-
-        if (needsExtraPage) {
-          compiled.push({
-            documents: [],
-            courses: [],
-            credentialIndex,
-            showApplicantInfo: false,
-            showCredentialHeading: false,
-            showCredentialTable: false,
-            showDocumentsHeading: false,
-            showDocumentsActions: false,
-            showCourseSection: false,
-            showGradeConversion: true, // Show on this new page
-            showTotals: false,
-            showSignatures: false,
-            showAboutPage: false,
-            isLastPage: false,
-          })
-        }
-      })
-    })
-
-    // Add a separate page for References, Notes, and Signatures
-    compiled.push({
-      documents: [],
-      courses: [],
-      credentialIndex: undefined,
-      showApplicantInfo: false,
-      showCredentialHeading: false,
-      showCredentialTable: false,
-      showDocumentsHeading: false,
-      showDocumentsActions: false,
-      showCourseSection: false,
-      showGradeConversion: false,
-      showTotals: false,
-      showSignatures: true,
-      showAboutPage: false,
-      isLastPage: false,
-    })
-
-    // Add "About AET" Page
-    compiled.push({
-      documents: [],
-      courses: [],
-      credentialIndex: undefined,
-      showApplicantInfo: false,
-      showCredentialHeading: false,
-      showCredentialTable: false,
-      showDocumentsHeading: false,
-      showDocumentsActions: false,
-      showCourseSection: false,
-      showGradeConversion: false,
-      showTotals: false,
-      showSignatures: false,
-      showAboutPage: true,
-      isLastPage: true,
-    })
-
-    return compiled
-  }, [coursePagesByCredential, data.credentials, documentEntries.length, documentPages, readOnly])
 
   const firstCoursePageIndex = useMemo(() => {
     const pageWithCourses = reportPages.findIndex((page) => page.courses.length > 0)
@@ -349,184 +102,6 @@ export default function ReportEditor({
     return reportPages.findIndex((page) => page.showCourseSection)
   }, [reportPages])
   const measurementPageIndex = firstCoursePageIndex === -1 ? 0 : firstCoursePageIndex
-
-  useEffect(() => {
-    if (!onReady) return
-    let active = true
-    if (document.fonts?.ready) {
-      document.fonts.ready
-        .then(() => {
-          if (active) setFontsReady(true)
-        })
-        .catch(() => {
-          if (active) setFontsReady(true)
-        })
-    } else {
-      setFontsReady(true)
-    }
-    return () => {
-      active = false
-    }
-  }, [onReady])
-
-  useEffect(() => {
-    if (initialData) {
-      setData(initialData)
-    }
-  }, [initialData])
-
-  useEffect(() => {
-    if (!onReady) return
-    readySentRef.current = false
-  }, [data, onReady])
-
-  useLayoutEffect(() => {
-    const courseContentEl = courseContentRef.current
-    const introContentEl = introContentRef.current
-    const startEl = tableStartRef.current
-    const headerEl = tableHeaderRef.current
-    const rowEl = rowRef.current
-    const listEl = documentsListRef.current
-    const itemEl = documentItemRef.current
-    let rafId = requestAnimationFrame(() => {
-      let nextFirst = rowsPerFirstPage
-      let nextFirstWithTail = rowsPerFirstPageWithTail
-      let nextFull = rowsPerFullPage
-      let nextLast = rowsPerLastPage
-      let nextDocumentsPerPage = documentsPerPage
-      let nextDocumentsPerFullPage = documentsPerFullPage
-
-      if (courseContentEl && startEl && headerEl && rowEl) {
-        const contentRect = courseContentEl.getBoundingClientRect()
-        const startRect = startEl.getBoundingClientRect()
-        const headerRect = headerEl.getBoundingClientRect()
-        const rowRect = rowEl.getBoundingClientRect()
-
-        if (contentRect.height > 0 && rowRect.height > 0) {
-          const headerOffset = Math.max(0, startRect.top - contentRect.top)
-          const safetyPadding = 36
-          let tailHeight = 0
-
-          if (tailRef.current) {
-            const tailRect = tailRef.current.getBoundingClientRect()
-            const tailStyle = window.getComputedStyle(tailRef.current)
-            const marginTop = Number.parseFloat(tailStyle.marginTop) || 0
-            const marginBottom = Number.parseFloat(tailStyle.marginBottom) || 0
-            tailHeight = tailRect.height + marginTop + marginBottom
-          }
-
-          const availableFirst = contentRect.height - headerOffset - headerRect.height - safetyPadding
-          const availableFirstWithTail = availableFirst - tailHeight
-          const availableFull = contentRect.height - headerRect.height - safetyPadding
-          const availableLast = availableFull - tailHeight
-
-          nextFirst = Math.max(0, Math.floor(availableFirst / rowRect.height))
-          nextFirstWithTail = Math.max(0, Math.floor(availableFirstWithTail / rowRect.height))
-          nextFull = Math.max(1, Math.floor(availableFull / rowRect.height))
-          nextLast = Math.max(1, Math.floor(availableLast / rowRect.height))
-
-          const overflow = courseContentEl.scrollHeight - contentRect.height
-          if (overflow > 0) {
-            const overflowRows = Math.ceil(overflow / rowRect.height)
-            nextFirst = Math.max(0, nextFirst - overflowRows)
-            nextFirstWithTail = Math.max(0, nextFirstWithTail - overflowRows)
-          }
-        }
-      }
-
-      if (introContentEl && listEl && itemEl) {
-        const introRect = introContentEl.getBoundingClientRect()
-        const listRect = listEl.getBoundingClientRect()
-        const itemRect = itemEl.getBoundingClientRect()
-        const itemStyle = window.getComputedStyle(itemEl)
-
-        // Increased safety padding to account for browser variabilities and prevent border-line flickering
-        // Increased from 12 -> 24 due to font size increase
-        const safetyPadding = 24
-        const itemMarginTop = Number.parseFloat(itemStyle.marginTop) || 0
-        const itemMarginBottom = Number.parseFloat(itemStyle.marginBottom) || 0
-        const itemHeight = itemRect.height + itemMarginTop + itemMarginBottom
-        const gap = 8 // space-y-2 is 0.5rem = 8px
-        const availableDocumentsFirst = introRect.bottom - listRect.top - safetyPadding
-
-        // Capacity formula: N * Height + (N-1) * Gap <= Available
-        // N * (Height + Gap) - Gap <= Available
-        // N * (Height + Gap) <= Available + Gap
-        // N <= (Available + Gap) / (Height + Gap)
-        nextDocumentsPerPage = Math.max(1, Math.floor((availableDocumentsFirst + gap) / (itemHeight + gap)))
-
-        // Check if button would fit on the first page
-        // We detect this edge case: if (all docs fit) AND (space remaining < button height), then force one less item to ensure stability.
-        const totalDocuments = data.documents.length
-        if (totalDocuments > 0 && totalDocuments <= nextDocumentsPerPage + 1) {
-          // +1 as a safety buffer for comparison logic
-          // Increased button height approx to be safe (32px button + margins/padding) -> bumped to 60px for safety
-          const buttonHeightApprox = 60
-
-          // Exact height needed for N documents: N * H + (N-1) * G
-          const heightForDocs = totalDocuments * itemHeight + Math.max(0, totalDocuments - 1) * gap
-          const heightWithButton = heightForDocs + gap + buttonHeightApprox
-
-          if (totalDocuments <= nextDocumentsPerPage && heightWithButton > availableDocumentsFirst) {
-            // Not enough space for the button, so push the last item to next page to carry the button with it
-            nextDocumentsPerPage = Math.max(1, nextDocumentsPerPage - 1)
-          }
-        }
-
-        // Reactive Overflow Check: Did we get it wrong?
-        // If the content is actually larger than the container, we MUST shrink.
-        // This handles cases where our simplistic height arithmetic misses something (like wrapping text).
-        const docOverflow = introContentEl.scrollHeight - introRect.height
-        if (docOverflow > 0) {
-          const overflowRows = Math.ceil(docOverflow / (itemHeight + gap))
-          nextDocumentsPerPage = Math.max(1, nextDocumentsPerPage - overflowRows)
-        }
-
-        // Calculate full page document capacity
-        // Assuming ~60px overhead for Section Title ("Documents (continued)") and margins
-        const sectionTitleOverhead = 60
-        const availableDocumentsFull = introRect.height - sectionTitleOverhead - safetyPadding
-        nextDocumentsPerFullPage = Math.max(1, Math.floor(availableDocumentsFull / itemHeight))
-      }
-
-      const changed =
-        nextFirst !== rowsPerFirstPage ||
-        nextFirstWithTail !== rowsPerFirstPageWithTail ||
-        nextFull !== rowsPerFullPage ||
-        nextLast !== rowsPerLastPage ||
-        nextDocumentsPerPage !== documentsPerPage ||
-        nextDocumentsPerFullPage !== documentsPerFullPage
-
-      if (changed) {
-        readySentRef.current = false
-        setRowsPerFirstPage(nextFirst)
-        setRowsPerFirstPageWithTail(nextFirstWithTail)
-        setRowsPerFullPage(nextFull)
-        setRowsPerLastPage(nextLast)
-        setDocumentsPerPage(nextDocumentsPerPage)
-        setDocumentsPerFullPage(nextDocumentsPerFullPage)
-        return
-      }
-
-      if (onReady && fontsReady && !readySentRef.current) {
-        readySentRef.current = true
-        onReady()
-      }
-    })
-
-    return () => {
-      cancelAnimationFrame(rafId)
-    }
-  }, [
-    data,
-    documentsPerPage,
-    fontsReady,
-    onReady,
-    rowsPerFirstPage,
-    rowsPerFirstPageWithTail,
-    rowsPerFullPage,
-    rowsPerLastPage,
-  ])
 
   const handlePrint = () => window.print()
 
