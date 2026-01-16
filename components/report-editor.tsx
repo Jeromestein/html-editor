@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react"
 import { Printer, RotateCcw, Plus, Trash2, Globe } from "lucide-react"
 import { buildSampleData, rehydrateData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
-import { SaveReportDialog, LoadReportDialog } from "./report-manager"
+import { SaveReportDialog, LoadReportDialog } from "./report/report-manager"
 import { calculateStats } from "@/lib/gpa"
 import Image from "next/image"
 import Link from "next/link"

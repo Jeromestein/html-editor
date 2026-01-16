@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react"
-import { Printer, RotateCcw, Plus, Trash2, Globe } from "lucide-react"
+import { Plus, Trash2, Globe } from "lucide-react"
 import { buildSampleData, rehydrateData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
-import { SaveReportDialog, LoadReportDialog } from "../report-manager"
 import { calculateStats } from "@/lib/gpa"
 import Image from "next/image"
 
@@ -19,6 +18,7 @@ import { Notes } from "./sections/notes"
 import { Signatures } from "./sections/signatures"
 import { AboutAetPage } from "./sections/about-aet-page"
 import { EditableInput, EditableTextarea, EditableImage } from "./ui/editable-elements"
+import { ReportToolbar } from "./ui/report-toolbar"
 import {
   SectionTitle,
   ReportTitle,
@@ -351,32 +351,12 @@ export default function ReportEditor({
       `}</style>
 
       {showToolbar && (
-        <div className="sticky top-0 z-50 bg-white border-b border-gray-200 w-full px-6 py-3 flex items-center justify-between shadow-sm no-print">
-          <h1 className="font-bold text-blue-900 flex items-center gap-2">
-            AET Smart Editor
-            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-normal">Editable</span>
-          </h1>
-          <div className="flex gap-2">
-            <LoadReportDialog onLoad={(newData) => setData(rehydrateData(newData))} />
-            <SaveReportDialog data={data} />
-            <div className="w-px h-8 bg-gray-300 mx-2 self-center"></div>
-
-            <button
-              onClick={handleReset}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded"
-              title="Reset"
-            >
-              <RotateCcw size={18} />
-            </button>
-
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold shadow-sm transition-colors"
-            >
-              <Printer size={18} /> Print / PDF
-            </button>
-          </div>
-        </div>
+        <ReportToolbar
+          data={data}
+          onLoad={(newData) => setData(rehydrateData(newData))}
+          onReset={handleReset}
+          onPrint={handlePrint}
+        />
       )}
 
       <div className="page-stack mt-8 print:mt-0">
