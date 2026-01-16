@@ -15,7 +15,7 @@ export const Signatures = ({
     return (
         <div className="grid grid-cols-2 gap-8 mt-8">
             <div>
-                <div className="border-b border-gray-400 mb-1 pb-1">
+                <div className="mb-1 pb-1">
                     <EditableImage
                         src={data.evaluatorSignature}
                         alt="Evaluator Signature"
@@ -30,14 +30,14 @@ export const Signatures = ({
                     <EditableInput
                         value={data.evaluatorName}
                         onChange={(value) => updateDataField("evaluatorName", value)}
-                        className="font-bold"
+                        className="font-bold text-center"
                         readOnly={readOnly}
                     />
                 </div>
-                <div className="text-xs text-gray-500">Evaluator</div>
+                <div className="text-xs text-gray-500 text-center">Evaluator</div>
             </div>
             <div>
-                <div className="border-b border-gray-400 mb-1 pb-1">
+                <div className="mb-1 pb-1">
                     <EditableImage
                         src={data.seniorEvaluatorSignature}
                         alt="Senior Evaluator Signature"
@@ -52,11 +52,11 @@ export const Signatures = ({
                     <EditableInput
                         value={data.seniorEvaluatorName}
                         onChange={(value) => updateDataField("seniorEvaluatorName", value)}
-                        className="font-bold"
+                        className="font-bold text-center"
                         readOnly={readOnly}
                     />
                 </div>
-                <div className="text-xs text-gray-500">Senior Evaluator</div>
+                <div className="text-xs text-gray-500 text-center">Senior Evaluator</div>
             </div>
         </div>
     )
