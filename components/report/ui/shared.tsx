@@ -23,20 +23,21 @@ export type InfoRowProps = {
 }
 
 export const InfoRow = ({ label, children, labelClassName = "" }: InfoRowProps) => (
-    <div className="grid grid-cols-[9.5rem_1fr] items-center gap-2">
-        <span className={`font-bold text-gray-500 ${labelClassName}`}>{label}:</span>
-        <div>{children}</div>
+    <div className="flex items-start gap-2">
+        <span className={`text-gray-600 font-bold w-32 shrink-0 pt-1 ${labelClassName}`}>{label}:</span>
+        <div className="flex-1">{children}</div>
     </div>
 )
 
 export type SummaryRowProps = {
     label: string
     children: ReactNode
+    labelClassName?: string
 }
 
-export const SummaryRow = ({ label, children }: SummaryRowProps) => (
+export const SummaryRow = ({ label, children, labelClassName = "" }: SummaryRowProps) => (
     <div className="flex items-start gap-2">
-        <span className="text-gray-600 font-medium w-32 shrink-0 pt-1">{label}:</span>
+        <span className={`text-gray-600 font-medium w-32 shrink-0 pt-1 ${labelClassName}`}>{label}:</span>
         <div className="flex-1">{children}</div>
     </div>
 )

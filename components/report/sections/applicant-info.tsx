@@ -1,6 +1,6 @@
 import { SampleData, UpdateDataField } from "../types"
 import { EditableInput } from "../ui/editable-elements"
-import { SummaryRow } from "../ui/shared"
+import { InfoRow } from "../ui/shared"
 
 type ApplicantInfoProps = {
     data: SampleData
@@ -10,57 +10,57 @@ type ApplicantInfoProps = {
 
 export const ApplicantInfo = ({ data, updateDataField, readOnly = false }: ApplicantInfoProps) => (
     <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-6 text-sm border-b border-gray-200 pb-4">
-        <SummaryRow label="Name of Applicant">
+        <InfoRow label="Name of Applicant" labelClassName="uppercase tracking-wide">
             <EditableInput
                 value={data.name}
                 onChange={(value) => updateDataField("name", value)}
                 className="font-semibold"
                 readOnly={readOnly}
             />
-        </SummaryRow>
-        <SummaryRow label="Evaluation ID">
+        </InfoRow>
+        <InfoRow label="Evaluation ID" labelClassName="uppercase tracking-wide">
             <EditableInput
                 value={data.refNo}
                 onChange={(value) => updateDataField("refNo", value)}
                 className="font-semibold"
                 readOnly={readOnly}
             />
-        </SummaryRow>
-        <SummaryRow label="Date of Birth">
+        </InfoRow>
+        <InfoRow label="Date of Birth" labelClassName="uppercase tracking-wide">
             <EditableInput
                 value={data.dob}
                 onChange={(value) => updateDataField("dob", value)}
                 className="font-semibold"
                 readOnly={readOnly}
             />
-        </SummaryRow>
-        <SummaryRow label="Date of Evaluation">
+        </InfoRow>
+        <InfoRow label="Date of Evaluation" labelClassName="uppercase tracking-wide">
             <EditableInput
                 value={data.date}
                 onChange={(value) => updateDataField("date", value)}
                 className="font-semibold"
                 readOnly={readOnly}
             />
-        </SummaryRow>
+        </InfoRow>
         <div className="col-span-2">
-            <SummaryRow label="Purpose of evaluation">
+            <InfoRow label="Purpose of evaluation" labelClassName="uppercase tracking-wide">
                 <EditableInput
                     value={data.purpose}
                     onChange={(value) => updateDataField("purpose", value)}
                     className="font-semibold"
                     readOnly={readOnly}
                 />
-            </SummaryRow>
+            </InfoRow>
         </div>
         <div className="col-span-2">
-            <SummaryRow label="Country of Education">
+            <InfoRow label="Country of Education" labelClassName="uppercase tracking-wide">
                 <EditableInput
                     value={data.country}
                     onChange={(value) => updateDataField("country", value)}
                     className="font-semibold"
                     readOnly={readOnly}
                 />
-            </SummaryRow>
+            </InfoRow>
         </div>
     </div>
 )
