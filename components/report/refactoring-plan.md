@@ -34,6 +34,7 @@ components/
     ├── ui/                           # Generic Report UI elements
     │   ├── report-page.tsx           # Layout for a single printable page
     │   ├── report-toolbar.tsx        # Action bar (Save, Load, Print)
+    │   ├── report-dialogs.tsx        # Save/Load Dialog components
     │   └── editable-elements.tsx     # EditableInput, EditableTextarea
     ├── index.tsx                     # Main ReportEditor entry point
     └── types.ts                      # Centralized type definitions for shared use
@@ -133,8 +134,8 @@ This table details exactly which parts of the current `report-editor.tsx`, `repo
 | `report-editor.tsx` | `ReportPage` component | `ui/report-page.tsx` | The A4 wrapper & layout |
 | `report-editor.tsx` | `EditableInput`, `EditableTextarea` | `ui/editable-elements.tsx` | |
 | `report-editor.tsx` | `EditableImage` | `ui/editable-elements.tsx` | |
-| `report-manager.tsx` | `SaveReportDialog` | `ui/report-toolbar.tsx` | Integrate directly into toolbar |
-| `report-manager.tsx` | `LoadReportDialog` | `ui/report-toolbar.tsx` | Integrate directly into toolbar |
+| `report-manager.tsx` | `SaveReportDialog` | `ui/report-dialogs.tsx` | Moved from root components |
+| `report-manager.tsx` | `LoadReportDialog` | `ui/report-dialogs.tsx` | Moved from root components |
 | **Main Entry** | | | |
 | `report-editor.tsx` | `ReportEditor` (The root export) | `index.tsx` | Wires Hooks -> Context -> UI |
 
