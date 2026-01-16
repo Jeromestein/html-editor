@@ -60,7 +60,7 @@ export const CourseTable = ({
                                 <EditableInput
                                     value={course.year}
                                     onChange={(value) => updateCourse(course.id, "year", value)}
-                                    className="text-center h-full"
+                                    className="text-left px-2 h-full"
                                     readOnly={readOnly}
                                 />
                             </td>
