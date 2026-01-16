@@ -599,16 +599,8 @@ function ReportPage({
               <CredentialDetails
                 credential={credential}
                 credentialIndex={credentialIndex}
-                // Documents moved out, so pass empty/false for docs here
-                documents={[]}
-                showDocumentsHeading={false}
-                showDocumentsActions={false}
                 showCredentialTable={true}
                 updateCredentialField={updateCredentialField}
-                // These doc props won't be used since showDoc is false
-                updateDocument={updateDocument}
-                addDocument={addDocument}
-                deleteDocument={deleteDocument}
                 readOnly={readOnly}
               />
             )}
