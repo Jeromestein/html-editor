@@ -53,6 +53,7 @@ export type SampleData = {
   evaluatorSignature: string
   seniorEvaluatorName: string
   seniorEvaluatorSignature: string
+  references: string
 }
 
 type CourseSeed = Omit<Course, "id">
@@ -280,6 +281,13 @@ export const buildSampleData = (): SampleData => ({
       },
     }
   ],
+  references: `• International Association of Universities (IAU). (2009). International Handbook of Universities (21st). Palgrave Macmillan.
+• Europa Publications. (2011). The Europa World of Learning (62nd). Routledge.
+• AACRAO. (2011). AACRAO Academic Record and Transcript Guide (1st (2011)).
+• Peterson's. (2020). Peterson's Graduate Programs Series (55th).
+• The Hong Kong University of Science and Technology. (n.d.). Home Page. (https://hkust.edu.hk)
+• University of Cambridge. (n.d.). Home Page. (https://www.cam.ac.uk)
+• The University of Hong Kong. (n.d.). Home Page. (https://www.hku.hk)`,
 })
 
 export const rehydrateData = (data: SampleData): SampleData => {

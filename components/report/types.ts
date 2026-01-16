@@ -7,7 +7,7 @@ export type DocumentEntry = {
     index: number
 }
 
-export type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes" | "evaluatorName" | "evaluatorSignature" | "seniorEvaluatorName" | "seniorEvaluatorSignature"
+export type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes" | "evaluatorName" | "evaluatorSignature" | "seniorEvaluatorName" | "seniorEvaluatorSignature" | "references"
 
 export type CourseField = "year" | "name" | "level" | "credits" | "grade"
 

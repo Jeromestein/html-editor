@@ -640,7 +640,7 @@ function ReportPage({
         {showSignatures && (
           <div className="mt-4" ref={tailRef}>
             <SectionTitle>{referencesNum}. References</SectionTitle>
-            <References />
+            <References references={data.references} updateDataField={updateDataField} readOnly={readOnly} />
 
             <Notes
               evaluationNotes={data.evaluationNotes}
