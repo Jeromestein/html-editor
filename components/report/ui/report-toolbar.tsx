@@ -1,5 +1,5 @@
 import { Printer, RotateCcw } from "lucide-react"
-import { SaveReportDialog, LoadReportDialog } from "../report-manager"
+import { SaveReportDialog, LoadReportDialog } from "./report-dialogs"
 import { SampleData } from "../types"
 
 type ReportToolbarProps = {
