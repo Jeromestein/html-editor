@@ -18,7 +18,7 @@ export const EditableInput = ({ value, onChange, className = "", placeholder = "
             onChange(event.target.value)
         }}
         readOnly={readOnly}
-        className={`bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none focus:bg-blue-50 transition-colors w-full px-1 ${className}`}
+        className={`bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none focus:bg-blue-50 transition-colors w-full p-1 ${className}`}
         placeholder={placeholder}
     />
 )
