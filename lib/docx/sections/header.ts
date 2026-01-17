@@ -18,7 +18,7 @@ import {
     VerticalAlign,
     BorderStyle,
 } from 'docx'
-import { TEXT_STYLES, SPACING, PAGE_WIDTH_DXA, COLORS } from '../styles'
+import { TEXT_STYLES, SPACING, PAGE_WIDTH_DXA, COLORS, NO_BORDERS } from '../styles'
 
 export function createHeader(): (Paragraph | Table)[] {
     // Read logo image
@@ -43,6 +43,7 @@ export function createHeader(): (Paragraph | Table)[] {
                     new TableCell({
                         width: { size: 1200, type: WidthType.DXA },
                         verticalAlign: VerticalAlign.CENTER,
+                        borders: NO_BORDERS,
                         children: [
                             new Paragraph({
                                 children: logoBuffer
@@ -66,6 +67,7 @@ export function createHeader(): (Paragraph | Table)[] {
                     new TableCell({
                         width: { size: PAGE_WIDTH_DXA - 1200, type: WidthType.DXA },
                         verticalAlign: VerticalAlign.BOTTOM,
+                        borders: NO_BORDERS,
                         children: [
                             new Paragraph({
                                 alignment: AlignmentType.LEFT,

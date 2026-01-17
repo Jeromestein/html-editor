@@ -6,7 +6,7 @@
 
 import { Paragraph, TextRun, Table, TableRow, TableCell, WidthType, VerticalAlign } from 'docx'
 import { SampleData } from '../../report-data'
-import { TEXT_STYLES, SPACING, PAGE_WIDTH_DXA } from '../styles'
+import { TEXT_STYLES, SPACING, PAGE_WIDTH_DXA, NO_BORDERS } from '../styles'
 
 export function createApplicantInfo(data: SampleData): (Paragraph | Table)[] {
     const halfWidth = PAGE_WIDTH_DXA / 2 - 100
@@ -69,6 +69,7 @@ function createLabelCell(text: string, width: number): TableCell {
     return new TableCell({
         width: { size: width, type: WidthType.DXA },
         verticalAlign: VerticalAlign.CENTER,
+        borders: NO_BORDERS,
         children: [
             new Paragraph({
                 spacing: { before: 40, after: 40 },
@@ -82,6 +83,7 @@ function createValueCell(text: string, width: number, bold: boolean = false): Ta
     return new TableCell({
         width: { size: width, type: WidthType.DXA },
         verticalAlign: VerticalAlign.CENTER,
+        borders: NO_BORDERS,
         children: [
             new Paragraph({
                 spacing: { before: 40, after: 40 },

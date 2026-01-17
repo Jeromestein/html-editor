@@ -6,7 +6,7 @@
 
 import { Paragraph, TextRun, Table, TableRow, TableCell, WidthType, VerticalAlign, AlignmentType, BorderStyle } from 'docx'
 import { SampleData } from '../../report-data'
-import { TEXT_STYLES, SPACING, PAGE_WIDTH_DXA, COLORS } from '../styles'
+import { TEXT_STYLES, SPACING, PAGE_WIDTH_DXA, COLORS, NO_BORDERS } from '../styles'
 import { createSectionTitle } from '../utils'
 
 export function createEquivalenceSummary(data: SampleData): (Paragraph | Table)[] {
@@ -50,6 +50,7 @@ export function createEquivalenceSummary(data: SampleData): (Paragraph | Table)[
                         children: [
                             new TableCell({
                                 width: { size: halfWidth, type: WidthType.DXA },
+                                borders: NO_BORDERS,
                                 children: [
                                     new Paragraph({
                                         indent: { left: 360 },
@@ -63,6 +64,7 @@ export function createEquivalenceSummary(data: SampleData): (Paragraph | Table)[
                             }),
                             new TableCell({
                                 width: { size: halfWidth, type: WidthType.DXA },
+                                borders: NO_BORDERS,
                                 children: [
                                     new Paragraph({
                                         spacing: { before: 40, after: 40 },

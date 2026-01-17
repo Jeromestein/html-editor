@@ -52,6 +52,14 @@ export const CELL_BORDERS = {
     right: TABLE_BORDER,
 }
 
+// No borders for invisible layout tables
+export const NO_BORDERS = {
+    top: { style: BorderStyle.NONE, size: 0, color: 'ffffff' },
+    bottom: { style: BorderStyle.NONE, size: 0, color: 'ffffff' },
+    left: { style: BorderStyle.NONE, size: 0, color: 'ffffff' },
+    right: { style: BorderStyle.NONE, size: 0, color: 'ffffff' },
+}
+
 // Table column widths (Letter size: 8.5" - 2" margins = 6.5" = 9360 DXA)
 export const PAGE_WIDTH_DXA = 9360
 
