@@ -1,40 +1,15 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react"
-import { buildSampleData, rehydrateData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
-import { calculateStats } from "@/lib/gpa"
+import { useMemo, type RefObject } from "react"
+import { type Course, type SampleData } from "@/lib/report-data"
 
-
-import { EditableInput, EditableTextarea, EditableImage } from "./ui/editable-elements"
 import { ReportToolbar } from "./ui/report-toolbar"
-import { EquivalenceSummary } from "./sections/equivalence-summary"
 import { ReportPage } from "./ui/report-page"
 
-import {
-  TopLevelField,
-  CourseField,
-  CredentialField,
-  GradeConversionField,
-  DocumentField,
-  UpdateEquivalenceField,
-  UpdateCredentialField,
-  UpdateGradeConversion,
-  UpdateDataField,
-  UpdateCourse,
-  UpdateDocument,
-  DeleteDocument,
-  UpdateCourseRow
-} from "./types"
 import { ReportPageData, DocumentEntry } from "./hooks/use-pagination"
-
-
-
-
 import { useDynamicMeasure } from "./hooks/use-dynamic-measure"
 import { usePagination } from "./hooks/use-pagination"
-
-
-
+import { useReportData } from "./hooks/use-report-data"
 
 
 // -----------------------------------------------------------------------------
@@ -54,9 +29,23 @@ export default function ReportEditor({
   showToolbar = true,
   onReady,
 }: ReportEditorProps) {
-  const [data, setData] = useState<SampleData>(() => initialData ?? buildSampleData())
-
-
+  // Use the centralized data management hook
+  const {
+    data,
+    setData,
+    updateEquivalenceField,
+    updateGradeConversion,
+    updateDataField,
+    updateCredentialField,
+    updateCourse,
+    updateDocument,
+    deleteDocument,
+    deleteCourse,
+    addCourse,
+    addDocument,
+    handleReset,
+    rehydrate,
+  } = useReportData({ initialData, readOnly })
 
   const { measurements, refs } = useDynamicMeasure({ data, onReady })
   const reportPages = usePagination({ data, readOnly, measurements })
@@ -90,171 +79,6 @@ export default function ReportEditor({
   const measurementPageIndex = firstCoursePageIndex === -1 ? 0 : firstCoursePageIndex
 
   const handlePrint = () => window.print()
-
-  const handleReset = () => {
-    if (readOnly) return
-    if (window.confirm("Reset data to sample?")) {
-      setData(buildSampleData())
-    }
-  }
-
-
-
-  const updateEquivalenceField: UpdateEquivalenceField = (credentialIndex, field, value) => {
-    if (readOnly) return
-    setData((prev) => ({
-      ...prev,
-      credentials: prev.credentials.map((cred, index) =>
-        index === credentialIndex
-          ? {
-            ...cred,
-            [field]: value,
-          }
-          : cred
-      ),
-    }))
-  }
-
-
-
-  const updateGradeConversion: UpdateGradeConversion = (credentialIndex, rowIndex, field, value) => {
-    if (readOnly) return
-    setData((prev) => ({
-      ...prev,
-      credentials: prev.credentials.map((cred, index) =>
-        index === credentialIndex
-          ? {
-            ...cred,
-            gradeConversion: cred.gradeConversion.map((row, rIndex) =>
-              rIndex === rowIndex ? { ...row, [field]: value } : row
-            ),
-          }
-          : cred
-      ),
-    }))
-  }
-
-  const updateDataField: UpdateDataField = (field, value) => {
-    if (readOnly) return
-    setData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-  }
-
-  const updateCredentialField: UpdateCredentialField = (credentialIndex, field, value) => {
-    if (readOnly) return
-    setData((prev) => ({
-      ...prev,
-      credentials: prev.credentials.map((credential, index) =>
-        index === credentialIndex
-          ? {
-            ...credential,
-            [field]: value,
-          }
-          : credential
-      ),
-    }))
-  }
-
-  const updateCourse: UpdateCourse = (credentialIndex, id, field, value) => {
-    if (readOnly) return
-    setData((prev) => ({
-      ...prev,
-      credentials: prev.credentials.map((credential, index) => {
-        if (index !== credentialIndex) return credential
-        const courses = credential.courses.map((course) =>
-          course.id === id ? { ...course, [field]: value } : course
-        )
-        const { totalCredits, gpa } = calculateStats(courses)
-        return {
-          ...credential,
-          courses,
-          totalCredits,
-          gpa,
-        }
-      }),
-    }))
-  }
-
-  const updateDocument: UpdateDocument = (index, field, value) => {
-    if (readOnly) return
-    setData((prev) => ({
-      ...prev,
-      documents: prev.documents.map((document, docIndex) =>
-        docIndex === index ? { ...document, [field]: value } : document
-      ),
-    }))
-  }
-
-  const deleteDocument: DeleteDocument = (index) => {
-    if (readOnly) return
-    setData((prev) => ({
-      ...prev,
-      documents: prev.documents.filter((_, docIndex) => docIndex !== index),
-    }))
-  }
-
-  const deleteCourse = (credentialIndex: number, id: number) => {
-    if (readOnly) return
-    setData((prev) => ({
-      ...prev,
-      credentials: prev.credentials.map((credential, index) => {
-        if (index !== credentialIndex) return credential
-        const courses = credential.courses.filter((course) => course.id !== id)
-        const { totalCredits, gpa } = calculateStats(courses)
-        return {
-          ...credential,
-          courses,
-          totalCredits,
-          gpa,
-        }
-      }),
-    }))
-  }
-
-  const addCourse = (credentialIndex: number) => {
-    if (readOnly) return
-    const newCourse: Course = {
-      id: Date.now(),
-      year: "202X",
-      name: "New Course Name",
-      level: "L",
-      credits: "3.00",
-      grade: "A",
-    }
-
-    setData((prev) => ({
-      ...prev,
-      credentials: prev.credentials.map((credential, index) => {
-        if (index !== credentialIndex) return credential
-        const courses = [...credential.courses, newCourse]
-        const { totalCredits, gpa } = calculateStats(courses)
-        return {
-          ...credential,
-          courses,
-          totalCredits,
-          gpa,
-        }
-      }),
-    }))
-  }
-
-  const addDocument = () => {
-    if (readOnly) return
-    setData((prev) => ({
-      ...prev,
-      documents: [
-        ...prev.documents,
-        {
-          title: "Document Title",
-          issuedBy: "",
-          dateIssued: "",
-          certificateNo: "N/A",
-        },
-      ],
-    }))
-  }
 
   return (
     <div className="min-h-screen bg-slate-200 flex flex-col items-center font-sans text-gray-900 pb-10 print:bg-white print:pb-0">
@@ -339,7 +163,7 @@ export default function ReportEditor({
       {showToolbar && (
         <ReportToolbar
           data={data}
-          onLoad={(newData) => setData(rehydrateData(newData))}
+          onLoad={(newData) => rehydrate(newData)}
           onReset={handleReset}
           onPrint={handlePrint}
         />
