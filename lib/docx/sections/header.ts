@@ -16,6 +16,7 @@ import {
     WidthType,
     AlignmentType,
     VerticalAlign,
+    BorderStyle,
 } from 'docx'
 import { TEXT_STYLES, SPACING, PAGE_WIDTH_DXA, COLORS } from '../styles'
 
@@ -118,7 +119,7 @@ export function createHeader(): (Paragraph | Table)[] {
         new Paragraph({
             spacing: { before: 120, after: 200 },
             border: {
-                bottom: { style: 'single' as const, size: 12, color: COLORS.blue900 },
+                bottom: { style: BorderStyle.SINGLE, size: 12, color: COLORS.blue900 },
             },
             children: [],
         })

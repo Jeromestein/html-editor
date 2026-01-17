@@ -4,7 +4,7 @@
  * Creates section 1 with credential summaries
  */
 
-import { Paragraph, TextRun, Table, TableRow, TableCell, WidthType, VerticalAlign, AlignmentType } from 'docx'
+import { Paragraph, TextRun, Table, TableRow, TableCell, WidthType, VerticalAlign, AlignmentType, BorderStyle } from 'docx'
 import { SampleData } from '../../report-data'
 import { TEXT_STYLES, SPACING, PAGE_WIDTH_DXA, COLORS } from '../styles'
 import { createSectionTitle } from '../utils'
@@ -84,7 +84,7 @@ export function createEquivalenceSummary(data: SampleData): (Paragraph | Table)[
             children.push(
                 new Paragraph({
                     spacing: { before: 120, after: 0 },
-                    border: { bottom: { style: 'single' as const, size: 1, color: COLORS.gray100 } },
+                    border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: COLORS.gray100 } },
                     children: [],
                 })
             )
