@@ -22,6 +22,7 @@ import { createNotes } from './sections/notes'
 import { createReferences } from './sections/references'
 import { createSignatures } from './sections/signatures'
 import { createAboutAetPage } from './sections/about-aet'
+import { createPageFooter } from './sections/footer'
 
 export type GenerateDocxOptions = {
     includeNotes?: boolean
@@ -102,6 +103,9 @@ export async function generateDocx(
                 },
                 headers: {
                     default: pageHeader,
+                },
+                footers: {
+                    default: createPageFooter(),
                 },
                 children,
             },
