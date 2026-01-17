@@ -1,4 +1,5 @@
-import { Printer, RotateCcw, FileUp } from "lucide-react"
+import { Printer, RotateCcw, Sparkles } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { SaveReportDialog, LoadReportDialog } from "./report-dialogs"
 import { SampleData } from "../types"
 
@@ -17,34 +18,57 @@ export const ReportToolbar = ({ data, onLoad, onReset, onPrint, onImportPdf }: R
                 AET Smart Editor
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-normal">Editable</span>
             </h1>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
+                {/* AI Button with gradient glow effect */}
                 <button
                     onClick={onImportPdf}
-                    className="flex items-center gap-1 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded border border-gray-300 text-sm"
-                    title="Import from PDF"
+                    className="ai-glow-button relative group flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-800 bg-white hover:bg-gray-50 transition-all"
                 >
-                    <FileUp size={16} /> Import PDF
+                    <Sparkles size={16} className="text-purple-500" />
+                    <span>AI Parse PDF</span>
                 </button>
+
                 <LoadReportDialog onLoad={onLoad} />
                 <SaveReportDialog data={data} />
-                <div className="w-px h-8 bg-gray-300 mx-2 self-center"></div>
 
-                <button
-                    onClick={onReset}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded"
-                    title="Reset"
-                >
+                <div className="w-px h-6 bg-gray-300 mx-1" />
+
+                <Button variant="ghost" size="icon" onClick={onReset} title="Reset">
                     <RotateCcw size={18} />
-                </button>
+                </Button>
 
-                <button
-                    onClick={onPrint}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold shadow-sm transition-colors"
-                >
+                <Button onClick={onPrint} className="gap-2">
                     <Printer size={18} /> Print / PDF
-                </button>
+                </Button>
             </div>
+
+            {/* AI Glow Effect Styles */}
+            <style>{`
+                .ai-glow-button {
+                    position: relative;
+                    overflow: visible;
+                }
+                .ai-glow-button::before {
+                    content: '';
+                    position: absolute;
+                    inset: -2px;
+                    border-radius: 10px;
+                    background: linear-gradient(90deg, #f472b6, #a78bfa, #38bdf8, #34d399, #facc15, #f472b6);
+                    background-size: 300% 100%;
+                    animation: ai-glow-rotate 3s linear infinite;
+                    z-index: -1;
+                    opacity: 0.8;
+                    filter: blur(4px);
+                }
+                .ai-glow-button:hover::before {
+                    opacity: 1;
+                    filter: blur(6px);
+                }
+                @keyframes ai-glow-rotate {
+                    0% { background-position: 0% 50%; }
+                    100% { background-position: 300% 50%; }
+                }
+            `}</style>
         </div>
     )
 }
-
