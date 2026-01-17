@@ -21,6 +21,7 @@ import { createGradeConversion } from './sections/grade-conversion'
 import { createNotes } from './sections/notes'
 import { createReferences } from './sections/references'
 import { createSignatures } from './sections/signatures'
+import { createAboutAetPage } from './sections/about-aet'
 
 export type GenerateDocxOptions = {
     includeNotes?: boolean
@@ -70,6 +71,9 @@ export async function generateDocx(
 
     // 8. Signatures
     children.push(...createSignatures(data))
+
+    // 9. About AET page
+    children.push(...createAboutAetPage())
 
     // Create document
     const doc = new Document({
