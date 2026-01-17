@@ -4,10 +4,9 @@
  * Creates 2-column grid with applicant details
  */
 
-import { Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, VerticalAlign } from 'docx'
+import { Paragraph, TextRun, Table, TableRow, TableCell, WidthType, VerticalAlign } from 'docx'
 import { SampleData } from '../../report-data'
-import { COLUMN_WIDTHS, TEXT_STYLES, SPACING, PAGE_WIDTH_DXA } from '../styles'
-import { createLabelValueRow } from '../utils'
+import { TEXT_STYLES, SPACING, PAGE_WIDTH_DXA } from '../styles'
 
 export function createApplicantInfo(data: SampleData): (Paragraph | Table)[] {
     const halfWidth = PAGE_WIDTH_DXA / 2 - 100
@@ -73,13 +72,7 @@ function createLabelCell(text: string, width: number): TableCell {
         children: [
             new Paragraph({
                 spacing: { before: 40, after: 40 },
-                children: [
-                    {
-                        type: 'text',
-                        text,
-                        ...TEXT_STYLES.label,
-                    } as any,
-                ],
+                children: [new TextRun({ text, ...TEXT_STYLES.label })],
             }),
         ],
     })
@@ -92,13 +85,7 @@ function createValueCell(text: string, width: number, bold: boolean = false): Ta
         children: [
             new Paragraph({
                 spacing: { before: 40, after: 40 },
-                children: [
-                    {
-                        type: 'text',
-                        text,
-                        ...(bold ? TEXT_STYLES.bodyBold : TEXT_STYLES.body),
-                    } as any,
-                ],
+                children: [new TextRun({ text, ...(bold ? TEXT_STYLES.bodyBold : TEXT_STYLES.body) })],
             }),
         ],
     })
