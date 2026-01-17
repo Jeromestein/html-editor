@@ -20,8 +20,7 @@
  * - Shadow removal for print media
  */
 
-import { RefObject, type ReactNode } from "react"
-import { Plus, Trash2 } from "lucide-react"
+import { RefObject } from "react"
 import { type Course, type SampleData } from "@/lib/report-data"
 
 import { Header } from "../sections/header"

@@ -1,19 +1,19 @@
 "use client"
 
-import { useMemo, type RefObject } from "react"
-import { type Course, type SampleData } from "@/lib/report-data"
+import { useMemo } from "react"
+import { type SampleData } from "@/lib/report-data"
 
 import { ReportToolbar } from "./ui/report-toolbar"
 import { ReportPage } from "./ui/report-page"
 
-import { ReportPageData, DocumentEntry } from "./hooks/use-pagination"
+
 import { useDynamicMeasure } from "./hooks/use-dynamic-measure"
 import { usePagination } from "./hooks/use-pagination"
 import { useReportData } from "./hooks/use-report-data"
 
 
 // -----------------------------------------------------------------------------
-// 4. Main editor
+// Main editor
 // -----------------------------------------------------------------------------
 
 type ReportEditorProps = {
@@ -49,15 +49,6 @@ export default function ReportEditor({
 
   const { measurements, refs } = useDynamicMeasure({ data, onReady })
   const reportPages = usePagination({ data, readOnly, measurements })
-
-  const {
-    rowsPerFirstPage,
-    rowsPerFirstPageWithTail,
-    rowsPerFullPage,
-    rowsPerLastPage,
-    documentsPerPage,
-    documentsPerFullPage
-  } = measurements
 
   const {
     courseContentRef,
