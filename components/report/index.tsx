@@ -1,3 +1,16 @@
+/**
+ * Report Editor - Main Entry Point
+ * 
+ * A modular credential evaluation report editor with print support.
+ * 
+ * Architecture:
+ * - Hooks: `useReportData`, `usePagination`, `useDynamicMeasure`
+ * - Sections: Pure UI components for each report section
+ * - UI: Reusable components (ReportPage, EditableInput, etc.)
+ * 
+ * @see README.md for full documentation
+ */
+
 "use client"
 
 import { useMemo } from "react"
@@ -6,15 +19,9 @@ import { type SampleData } from "@/lib/report-data"
 import { ReportToolbar } from "./ui/report-toolbar"
 import { ReportPage } from "./ui/report-page"
 
-
 import { useDynamicMeasure } from "./hooks/use-dynamic-measure"
 import { usePagination } from "./hooks/use-pagination"
 import { useReportData } from "./hooks/use-report-data"
-
-
-// -----------------------------------------------------------------------------
-// Main editor
-// -----------------------------------------------------------------------------
 
 type ReportEditorProps = {
   initialData?: SampleData

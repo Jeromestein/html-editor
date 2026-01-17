@@ -1,3 +1,11 @@
+/**
+ * Report Type Definitions
+ * 
+ * Centralized type definitions for the report editor.
+ * Re-exports data types from lib/report-data.ts and defines
+ * update function signatures for type-safe data mutations.
+ */
+
 import { SampleData, Course, GradeConversionRow, CredentialDocument } from "@/lib/report-data"
 
 export type { SampleData, Course, GradeConversionRow, CredentialDocument }

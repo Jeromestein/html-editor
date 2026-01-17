@@ -1,3 +1,15 @@
+/**
+ * Typography & Layout Primitives
+ * 
+ * Reusable layout components for consistent styling across the report:
+ * - SectionTitle: Section headings (e.g., "2. Documents")
+ * - ReportTitle: Main report title with decorative underline
+ * - InfoRow: Label-value pairs for applicant info
+ * - SummaryRow: Label-value pairs for summary section
+ * - DetailRow: Table row for credential details
+ * - DocumentFieldRow: Grid layout for document fields
+ */
+
 import { ReactNode } from "react"
 
 export type SectionTitleProps = {
