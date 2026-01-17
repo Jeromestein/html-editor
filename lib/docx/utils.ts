@@ -16,6 +16,7 @@ import {
     AlignmentType,
     LevelFormat,
     INumberingOptions,
+    TableVerticalAlign,
 } from 'docx'
 import { CELL_BORDERS, TEXT_STYLES, SPACING, COLORS } from './styles'
 
@@ -48,7 +49,7 @@ export function createTextCell(
         bold?: boolean
         alignment?: typeof AlignmentType[keyof typeof AlignmentType]
         shading?: string
-        verticalAlign?: typeof VerticalAlign[keyof typeof VerticalAlign]
+        verticalAlign?: TableVerticalAlign
         fontSize?: number
     } = {}
 ): TableCell {
