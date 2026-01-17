@@ -11,7 +11,7 @@ import { PAGE_MARGINS } from './styles'
 import { BULLET_LIST_CONFIG } from './utils'
 
 // Import section generators
-import { createHeader } from './sections/header'
+import { createPageHeader } from './sections/header'
 import { createApplicantInfo } from './sections/applicant-info'
 import { createEquivalenceSummary } from './sections/equivalence-summary'
 import { createDocumentsList } from './sections/documents-list'
@@ -40,39 +40,39 @@ export async function generateDocx(
     // Collect all document children
     const children: (Paragraph | Table)[] = []
 
-    // 1. Header
-    children.push(...createHeader())
+    // Create page header (appears on every page)
+    const pageHeader = createPageHeader()
 
-    // 2. Applicant Info
+    // 1. Applicant Info
     children.push(...createApplicantInfo(data))
 
-    // 3. Equivalence Summary
+    // 2. Equivalence Summary
     children.push(...createEquivalenceSummary(data))
 
-    // 4. Documents List
+    // 3. Documents List
     children.push(...createDocumentsList(data))
 
-    // 5. For each credential: Details + Courses + Grade Conversion
+    // 4. For each credential: Details + Courses + Grade Conversion
     data.credentials.forEach((credential, idx) => {
         children.push(...createCredentialDetails(credential, idx))
         children.push(...createCourseTable(credential))
         children.push(...createGradeConversion(credential.gradeConversion))
     })
 
-    // 6. Notes (optional)
+    // 5. Notes (optional)
     if (includeNotes && data.evaluationNotes) {
         children.push(...createNotes(data.evaluationNotes))
     }
 
-    // 7. References (optional)
+    // 6. References (optional)
     if (includeReferences && data.references) {
         children.push(...createReferences(data.references))
     }
 
-    // 8. Signatures
+    // 7. Signatures
     children.push(...createSignatures(data))
 
-    // 9. About AET page
+    // 8. About AET page
     children.push(...createAboutAetPage())
 
     // Create document
@@ -99,6 +99,9 @@ export async function generateDocx(
                             height: 15840, // Letter height in DXA (11")
                         },
                     },
+                },
+                headers: {
+                    default: pageHeader,
                 },
                 children,
             },
