@@ -13,11 +13,12 @@
 
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState, useCallback } from "react"
 import { type SampleData } from "@/lib/report-data"
 
 import { ReportToolbar } from "./ui/report-toolbar"
 import { ReportPage } from "./ui/report-page"
+import { PdfUploadDialog } from "@/components/pdf-upload-dialog"
 
 import { useDynamicMeasure } from "./hooks/use-dynamic-measure"
 import { usePagination } from "./hooks/use-pagination"
@@ -68,6 +69,25 @@ export default function ReportEditor({
     documentItemRef,
   } = refs
 
+  // PDF import dialog state
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false)
+
+  const handleImportPdf = useCallback((importedData: Partial<SampleData>) => {
+    // Merge imported data with existing data
+    setData((prev) => ({
+      ...prev,
+      ...importedData,
+      // Merge credentials if both exist
+      credentials: importedData.credentials?.length
+        ? importedData.credentials
+        : prev.credentials,
+      // Merge documents if both exist
+      documents: importedData.documents?.length
+        ? importedData.documents
+        : prev.documents,
+    }))
+    setPdfDialogOpen(false)
+  }, [setData])
 
   const firstCoursePageIndex = useMemo(() => {
     const pageWithCourses = reportPages.findIndex((page) => page.courses.length > 0)
@@ -80,6 +100,13 @@ export default function ReportEditor({
 
   return (
     <div className="min-h-screen bg-slate-200 flex flex-col items-center font-sans text-gray-900 pb-10 print:bg-white print:pb-0">
+      {/* PDF Import Dialog */}
+      <PdfUploadDialog
+        open={pdfDialogOpen}
+        onOpenChange={setPdfDialogOpen}
+        onImport={handleImportPdf}
+      />
+
       {/* Table and editable element styles */}
       <style>{`
         .editable-cell:hover {
@@ -106,6 +133,7 @@ export default function ReportEditor({
           onLoad={(newData) => rehydrate(newData)}
           onReset={handleReset}
           onPrint={handlePrint}
+          onImportPdf={() => setPdfDialogOpen(true)}
         />
       )}
 
