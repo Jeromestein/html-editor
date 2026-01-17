@@ -168,127 +168,190 @@ export function ReportPage({
     }
 
     return (
-        <div
-            className="report-page shadow-xl print:shadow-none bg-white relative flex flex-col"
-            style={{
-                breakAfter: isLastPage ? "auto" : "page",
-                pageBreakAfter: isLastPage ? "auto" : "always",
-                overflow: "hidden",
-            }}
-        >
-            <Header />
+        <>
+            {/* US Letter (8.5" × 11") page layout and print styles */}
+            <style>{`
+                :root {
+                    --page-width: 8.5in;
+                    --page-height: 11in;
+                    --page-padding: 0.45in 0.6in;
+                    --page-header-height: 0.7in;
+                    --page-footer-height: 0.5in;
+                    --page-gap: 0.4in;
+                }
 
-            {/* Watermark in page center */}
-            <Watermark />
+                .report-page {
+                    width: var(--page-width);
+                    height: var(--page-height);
+                    padding: var(--page-padding);
+                    box-sizing: border-box;
+                }
 
-            <div className="flex-1 min-h-0 overflow-hidden flex flex-col" ref={setContentRef}>
-                {showApplicantInfo && (
-                    <>
-                        <ReportTitle>
-                            Credential Evaluation Report
-                        </ReportTitle>
+                .page-stack {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: var(--page-gap);
+                }
 
-                        <ApplicantInfo data={data} updateDataField={updateDataField} readOnly={readOnly} />
+                .report-header {
+                    height: var(--page-header-height);
+                }
 
-                        <EquivalenceSummary
-                            data={data}
-                            updateEquivalenceField={updateEquivalenceField}
-                            updateCredentialField={updateCredentialField}
-                            readOnly={readOnly}
-                        />
+                .report-footer {
+                    height: var(--page-footer-height);
+                }
 
-                    </>
-                )}
+                @media print {
+                    @page {
+                        size: 8.5in 11in;
+                        margin: 0;
+                    }
 
-                <DocumentsList
-                    documents={documents}
-                    documentsHeading={documentsHeading}
-                    showDocumentsHeading={showDocumentsHeading}
-                    showDocumentsActions={showDocumentsActions}
-                    updateDocument={updateDocument}
-                    deleteDocument={deleteDocument}
-                    addDocument={addDocument}
-                    readOnly={readOnly}
-                    documentsListRef={documentsListRef}
-                    documentItemRef={documentItemRef}
-                />
+                    body {
+                        margin: 0;
+                        print-color-adjust: exact;
+                        -webkit-print-color-adjust: exact;
+                        background-color: white !important;
+                    }
 
-                {/* Credential Content */}
-                {credential && (
-                    <>
-                        {showCredentialHeading && (
-                            <SectionTitle>
-                                {credentialDetailsNum}. Credential Details: <span className="text-gray-600 normal-case ml-1">Credential #{(credentialIndex ?? 0) + 1}</span>
-                            </SectionTitle>
-                        )}
+                    .no-print {
+                        display: none !important;
+                    }
 
-                        {showCredentialTable && (
-                            <CredentialDetails
-                                credential={credential}
-                                credentialIndex={credentialIndex}
-                                showCredentialTable={true}
+                    .page-stack {
+                        display: block;
+                        gap: 0 !important;
+                    }
+
+                    input::placeholder,
+                    textarea::placeholder {
+                        color: transparent;
+                    }
+                }
+            `}</style>
+            <div
+                className="report-page shadow-xl print:shadow-none bg-white relative flex flex-col"
+                style={{
+                    breakAfter: isLastPage ? "auto" : "page",
+                    pageBreakAfter: isLastPage ? "auto" : "always",
+                    overflow: "hidden",
+                }}
+            >
+                <Header />
+
+                {/* Watermark in page center */}
+                <Watermark />
+
+                <div className="flex-1 min-h-0 overflow-hidden flex flex-col" ref={setContentRef}>
+                    {showApplicantInfo && (
+                        <>
+                            <ReportTitle>
+                                Credential Evaluation Report
+                            </ReportTitle>
+
+                            <ApplicantInfo data={data} updateDataField={updateDataField} readOnly={readOnly} />
+
+                            <EquivalenceSummary
+                                data={data}
+                                updateEquivalenceField={updateEquivalenceField}
                                 updateCredentialField={updateCredentialField}
                                 readOnly={readOnly}
                             />
-                        )}
 
-                        {showCourseSection && (
-                            <>
-                                <SectionTitle>{courseAnalysisNum}. Course-by-Course Analysis: <span className="text-gray-600 normal-case ml-1">Credential #{(credentialIndex ?? 0) + 1}</span></SectionTitle>
-                                <div ref={tableStartRef} />
-                            </>
-                        )}
+                        </>
+                    )}
 
-                        {showCourseTable && (
-                            <CourseTable
-                                courses={pageCourses}
-                                updateCourse={handleUpdateCourse}
-                                deleteCourse={handleDeleteCourse}
-                                readOnly={readOnly}
-                                headerRef={tableHeaderRef}
-                                rowRef={rowRef}
-                                showEmptyState={!credentialHasCourses}
-                                showTotals={showTotals}
-                                totalCredits={credential?.totalCredits}
-                                gpa={credential?.gpa}
-                                onUpdateTotalCredits={(value) => updateEquivalenceField(credentialIndex!, "totalCredits", value)}
-                                onUpdateGpa={(value) => updateEquivalenceField(credentialIndex!, "gpa", value)}
-                                onAddCourse={() => addCourse(credentialIndex!)}
-                            />
-                        )}
-                        {showGradeConversion && (
-                            <>
-                                <SectionTitle>{gradeConversionNum}. Grade Conversion: <span className="text-gray-600 normal-case ml-1">Credential #{(credentialIndex ?? 0) + 1}</span></SectionTitle>
-                                <GradeConversion
-                                    rows={credential.gradeConversion}
-                                    onUpdate={(rowIndex, field, value) => updateGradeConversion(credentialIndex!, rowIndex, field, value)}
+                    <DocumentsList
+                        documents={documents}
+                        documentsHeading={documentsHeading}
+                        showDocumentsHeading={showDocumentsHeading}
+                        showDocumentsActions={showDocumentsActions}
+                        updateDocument={updateDocument}
+                        deleteDocument={deleteDocument}
+                        addDocument={addDocument}
+                        readOnly={readOnly}
+                        documentsListRef={documentsListRef}
+                        documentItemRef={documentItemRef}
+                    />
+
+                    {/* Credential Content */}
+                    {credential && (
+                        <>
+                            {showCredentialHeading && (
+                                <SectionTitle>
+                                    {credentialDetailsNum}. Credential Details: <span className="text-gray-600 normal-case ml-1">Credential #{(credentialIndex ?? 0) + 1}</span>
+                                </SectionTitle>
+                            )}
+
+                            {showCredentialTable && (
+                                <CredentialDetails
+                                    credential={credential}
+                                    credentialIndex={credentialIndex}
+                                    showCredentialTable={true}
+                                    updateCredentialField={updateCredentialField}
                                     readOnly={readOnly}
                                 />
-                            </>
-                        )}
-                    </>
-                )}
+                            )}
 
-                {showSignatures && (
-                    <div className="mt-4" ref={tailRef}>
-                        <SectionTitle>{referencesNum}. References</SectionTitle>
-                        <References references={data.references} updateDataField={updateDataField} readOnly={readOnly} />
+                            {showCourseSection && (
+                                <>
+                                    <SectionTitle>{courseAnalysisNum}. Course-by-Course Analysis: <span className="text-gray-600 normal-case ml-1">Credential #{(credentialIndex ?? 0) + 1}</span></SectionTitle>
+                                    <div ref={tableStartRef} />
+                                </>
+                            )}
 
-                        <Notes
-                            evaluationNotes={data.evaluationNotes}
-                            updateDataField={updateDataField}
-                            readOnly={readOnly}
-                            sectionNum={notesNum}
-                        />
-                        <Signatures data={data} updateDataField={updateDataField} readOnly={readOnly} />
-                        <Seal />
-                    </div>
-                )}
+                            {showCourseTable && (
+                                <CourseTable
+                                    courses={pageCourses}
+                                    updateCourse={handleUpdateCourse}
+                                    deleteCourse={handleDeleteCourse}
+                                    readOnly={readOnly}
+                                    headerRef={tableHeaderRef}
+                                    rowRef={rowRef}
+                                    showEmptyState={!credentialHasCourses}
+                                    showTotals={showTotals}
+                                    totalCredits={credential?.totalCredits}
+                                    gpa={credential?.gpa}
+                                    onUpdateTotalCredits={(value) => updateEquivalenceField(credentialIndex!, "totalCredits", value)}
+                                    onUpdateGpa={(value) => updateEquivalenceField(credentialIndex!, "gpa", value)}
+                                    onAddCourse={() => addCourse(credentialIndex!)}
+                                />
+                            )}
+                            {showGradeConversion && (
+                                <>
+                                    <SectionTitle>{gradeConversionNum}. Grade Conversion: <span className="text-gray-600 normal-case ml-1">Credential #{(credentialIndex ?? 0) + 1}</span></SectionTitle>
+                                    <GradeConversion
+                                        rows={credential.gradeConversion}
+                                        onUpdate={(rowIndex, field, value) => updateGradeConversion(credentialIndex!, rowIndex, field, value)}
+                                        readOnly={readOnly}
+                                    />
+                                </>
+                            )}
+                        </>
+                    )}
 
-                {showAboutPage && <AboutAetPage />}
+                    {showSignatures && (
+                        <div className="mt-4" ref={tailRef}>
+                            <SectionTitle>{referencesNum}. References</SectionTitle>
+                            <References references={data.references} updateDataField={updateDataField} readOnly={readOnly} />
+
+                            <Notes
+                                evaluationNotes={data.evaluationNotes}
+                                updateDataField={updateDataField}
+                                readOnly={readOnly}
+                                sectionNum={notesNum}
+                            />
+                            <Signatures data={data} updateDataField={updateDataField} readOnly={readOnly} />
+                            <Seal />
+                        </div>
+                    )}
+
+                    {showAboutPage && <AboutAetPage />}
+                </div>
+
+                <Footer pageIndex={pageIndex} totalPages={totalPages} refNo={data.refNo} />
             </div>
-
-            <Footer pageIndex={pageIndex} totalPages={totalPages} refNo={data.refNo} />
-        </div>
+        </>
     )
 }

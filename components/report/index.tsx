@@ -82,66 +82,8 @@ export default function ReportEditor({
 
   return (
     <div className="min-h-screen bg-slate-200 flex flex-col items-center font-sans text-gray-900 pb-10 print:bg-white print:pb-0">
+      {/* Table and editable element styles */}
       <style>{`
-        :root {
-          --page-width: 8.5in;
-          --page-height: 11in;
-          --page-padding: 0.45in 0.6in;
-          --page-header-height: 0.7in;
-          --page-footer-height: 0.5in;
-          --page-gap: 0.4in;
-        }
-
-        .report-page {
-          width: var(--page-width);
-          height: var(--page-height);
-          padding: var(--page-padding);
-          box-sizing: border-box;
-        }
-
-        .page-stack {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: var(--page-gap);
-        }
-
-        .report-header {
-          height: var(--page-header-height);
-        }
-
-        .report-footer {
-          height: var(--page-footer-height);
-        }
-
-        @media print {
-          @page {
-            size: 8.5in 11in;
-            margin: 0;
-          }
-
-          body {
-            margin: 0;
-            print-color-adjust: exact;
-            -webkit-print-color-adjust: exact;
-            background-color: white !important;
-          }
-
-          .no-print {
-            display: none !important;
-          }
-
-          .page-stack {
-            display: block;
-            gap: 0 !important;
-          }
-
-          input::placeholder,
-          textarea::placeholder {
-            color: transparent;
-          }
-        }
-
         .editable-cell:hover {
           background-color: #f3f4f6;
         }
