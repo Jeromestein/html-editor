@@ -8,25 +8,25 @@ let geminiClient: GoogleGenerativeAI | null = null
  * @throws Error if GEMINI_API_KEY is not set
  */
 export function getGeminiClient(): GoogleGenerativeAI {
-    if (!geminiClient) {
-        const apiKey = process.env.GEMINI_API_KEY
-        if (!apiKey) {
-            throw new Error("GEMINI_API_KEY environment variable is not set")
-        }
-        geminiClient = new GoogleGenerativeAI(apiKey)
+  if (!geminiClient) {
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY environment variable is not set")
     }
-    return geminiClient
+    geminiClient = new GoogleGenerativeAI(apiKey)
+  }
+  return geminiClient
 }
 
 /**
- * Prompt template for transcript analysis
+ * Prompt template for transcript/diploma PDF analysis
  */
-export const TRANSCRIPT_ANALYSIS_PROMPT = `You are an expert at analyzing academic transcripts, diplomas, and educational documents.
+const TRANSCRIPT_ANALYSIS_PROMPT = `You are an expert at analyzing academic transcripts, diplomas, and educational documents.
 
-Analyze the following document text and extract structured information for a Foreign Credential Evaluation (FCE) report.
+Analyze this PDF document and extract structured information for a Foreign Credential Evaluation (FCE) report.
 
 IMPORTANT RULES:
-1. Only process English documents. If the document is primarily in another language, indicate this.
+1. Only process English documents. If the document is primarily in another language, set isEnglish to false and indicate the detected language.
 2. Extract ALL courses with their year, name, credits, and grades
 3. Identify the grading scale used and provide US grade equivalents
 4. If information is not found, use "N/A"
@@ -73,50 +73,56 @@ Return a JSON object with this EXACT structure (no additional text, just valid J
       "certificateNo": "Certificate/diploma number or N/A"
     }
   ]
-}
-
-DOCUMENT TEXT:
----
-`
+}`
 
 /**
- * Analyze transcript text using Gemini API
- * @param text - Extracted text from PDF
+ * Analyze PDF directly using Gemini API (no text extraction needed)
+ * @param pdfBuffer - PDF file as ArrayBuffer
  * @returns Structured data for report
  */
-export async function analyzeTranscript(text: string): Promise<{
-    isEnglish: boolean
-    detectedLanguage: string
-    data: Record<string, unknown> | null
+export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<{
+  isEnglish: boolean
+  detectedLanguage: string
+  data: Record<string, unknown> | null
 }> {
-    const client = getGeminiClient()
-    const model = client.getGenerativeModel({ model: "gemini-2.0-flash" })
+  const client = getGeminiClient()
+  const model = client.getGenerativeModel({ model: "gemini-2.0-flash" })
 
-    const prompt = TRANSCRIPT_ANALYSIS_PROMPT + text + "\n---"
+  // Convert ArrayBuffer to base64 for Gemini
+  const base64Data = Buffer.from(pdfBuffer).toString("base64")
 
-    try {
-        const result = await model.generateContent(prompt)
-        const response = result.response
-        const responseText = response.text()
+  try {
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: "application/pdf",
+          data: base64Data,
+        },
+      },
+      { text: TRANSCRIPT_ANALYSIS_PROMPT },
+    ])
 
-        // Extract JSON from response (handle potential markdown code blocks)
-        let jsonStr = responseText
-        const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/)
-        if (jsonMatch) {
-            jsonStr = jsonMatch[1].trim()
-        }
+    const response = result.response
+    const responseText = response.text()
 
-        const parsed = JSON.parse(jsonStr)
-
-        return {
-            isEnglish: parsed.isEnglish !== false,
-            detectedLanguage: parsed.detectedLanguage || "Unknown",
-            data: parsed,
-        }
-    } catch (error) {
-        console.error("Gemini API error:", error)
-        throw new Error(
-            `AI analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`
-        )
+    // Extract JSON from response (handle potential markdown code blocks)
+    let jsonStr = responseText
+    const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/)
+    if (jsonMatch) {
+      jsonStr = jsonMatch[1].trim()
     }
+
+    const parsed = JSON.parse(jsonStr)
+
+    return {
+      isEnglish: parsed.isEnglish !== false,
+      detectedLanguage: parsed.detectedLanguage || "Unknown",
+      data: parsed,
+    }
+  } catch (error) {
+    console.error("Gemini API error:", error)
+    throw new Error(
+      `AI analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`
+    )
+  }
 }

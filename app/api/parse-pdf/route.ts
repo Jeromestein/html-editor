@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { extractTextFromPDF, detectLanguage, convertToSampleData } from "@/lib/pdf-parser"
-import { analyzeTranscript } from "@/lib/gemini"
+import { analyzePdfWithGemini } from "@/lib/gemini"
+import { convertToSampleData } from "@/lib/pdf-parser"
 
 // Maximum file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -26,7 +26,7 @@ type SuccessResponse = {
 
 /**
  * POST /api/parse-pdf
- * Parse a PDF file and extract structured data for FCE report
+ * Parse a PDF file using Gemini AI and extract structured data for FCE report
  */
 export async function POST(
     request: NextRequest
@@ -72,55 +72,13 @@ export async function POST(
             )
         }
 
-        // Extract text from PDF
+        // Get PDF buffer
         const buffer = await file.arrayBuffer()
-        let extractedText: string
 
-        try {
-            extractedText = await extractTextFromPDF(buffer)
-        } catch (error) {
-            console.error("PDF extraction error:", error)
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: "PARSE_ERROR",
-                    message: "Failed to read PDF. The file may be corrupted or password-protected.",
-                },
-                { status: 400 }
-            )
-        }
-
-        // Check if text was extracted
-        if (!extractedText || extractedText.trim().length < 50) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: "PARSE_ERROR",
-                    message: "Could not extract text from PDF. The file may be scanned or image-based.",
-                },
-                { status: 400 }
-            )
-        }
-
-        // Detect language
-        const languageResult = detectLanguage(extractedText)
-
-        if (!languageResult.isEnglish) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: "NON_ENGLISH_CONTENT",
-                    message: `The document appears to contain ${languageResult.detected} content. Currently only English documents are supported.`,
-                    detectedLanguage: languageResult.detected,
-                },
-                { status: 400 }
-            )
-        }
-
-        // Analyze with Gemini AI
+        // Analyze PDF directly with Gemini (no text extraction needed!)
         let aiResult
         try {
-            aiResult = await analyzeTranscript(extractedText)
+            aiResult = await analyzePdfWithGemini(buffer)
         } catch (error) {
             console.error("AI analysis error:", error)
             return NextResponse.json(
@@ -133,7 +91,7 @@ export async function POST(
             )
         }
 
-        // Check AI's language detection
+        // Check if document is in English
         if (!aiResult.isEnglish) {
             return NextResponse.json(
                 {
