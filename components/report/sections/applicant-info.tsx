@@ -18,10 +18,10 @@ export const ApplicantInfo = ({ data, updateDataField, readOnly = false }: Appli
                 readOnly={readOnly}
             />
         </InfoRow>
-        <InfoRow label="Evaluation ID" labelClassName="uppercase tracking-wide">
+        <InfoRow label="Date of Evaluation" labelClassName="uppercase tracking-wide">
             <EditableInput
-                value={data.refNo}
-                onChange={(value) => updateDataField("refNo", value)}
+                value={data.date}
+                onChange={(value) => updateDataField("date", value)}
                 className="font-semibold"
                 readOnly={readOnly}
             />
@@ -34,10 +34,10 @@ export const ApplicantInfo = ({ data, updateDataField, readOnly = false }: Appli
                 readOnly={readOnly}
             />
         </InfoRow>
-        <InfoRow label="Date of Evaluation" labelClassName="uppercase tracking-wide">
+        <InfoRow label="Evaluation ID" labelClassName="uppercase tracking-wide">
             <EditableInput
-                value={data.date}
-                onChange={(value) => updateDataField("date", value)}
+                value={data.refNo}
+                onChange={(value) => updateDataField("refNo", value)}
                 className="font-semibold"
                 readOnly={readOnly}
             />
