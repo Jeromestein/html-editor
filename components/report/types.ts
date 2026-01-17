@@ -1,3 +1,11 @@
+/**
+ * Report Type Definitions
+ * 
+ * Centralized type definitions for the report editor.
+ * Re-exports data types from lib/report-data.ts and defines
+ * update function signatures for type-safe data mutations.
+ */
+
 import { SampleData, Course, GradeConversionRow, CredentialDocument } from "@/lib/report-data"
 
 export type { SampleData, Course, GradeConversionRow, CredentialDocument }
@@ -7,7 +15,7 @@ export type DocumentEntry = {
     index: number
 }
 
-export type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes" | "evaluatorName" | "evaluatorSignature" | "seniorEvaluatorName" | "seniorEvaluatorSignature"
+export type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes" | "evaluatorName" | "evaluatorSignature" | "seniorEvaluatorName" | "seniorEvaluatorSignature" | "references"
 
 export type CourseField = "year" | "name" | "level" | "credits" | "grade"
 
