@@ -1,4 +1,4 @@
-import { Printer, RotateCcw } from "lucide-react"
+import { Printer, RotateCcw, FileUp } from "lucide-react"
 import { SaveReportDialog, LoadReportDialog } from "./report-dialogs"
 import { SampleData } from "../types"
 
@@ -7,9 +7,10 @@ type ReportToolbarProps = {
     onLoad: (data: SampleData) => void
     onReset: () => void
     onPrint: () => void
+    onImportPdf: () => void
 }
 
-export const ReportToolbar = ({ data, onLoad, onReset, onPrint }: ReportToolbarProps) => {
+export const ReportToolbar = ({ data, onLoad, onReset, onPrint, onImportPdf }: ReportToolbarProps) => {
     return (
         <div className="sticky top-0 z-50 bg-white border-b border-gray-200 w-full px-6 py-3 flex items-center justify-between shadow-sm no-print">
             <h1 className="font-bold text-blue-900 flex items-center gap-2">
@@ -17,6 +18,13 @@ export const ReportToolbar = ({ data, onLoad, onReset, onPrint }: ReportToolbarP
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-normal">Editable</span>
             </h1>
             <div className="flex gap-2">
+                <button
+                    onClick={onImportPdf}
+                    className="flex items-center gap-1 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded border border-gray-300 text-sm"
+                    title="Import from PDF"
+                >
+                    <FileUp size={16} /> Import PDF
+                </button>
                 <LoadReportDialog onLoad={onLoad} />
                 <SaveReportDialog data={data} />
                 <div className="w-px h-8 bg-gray-300 mx-2 self-center"></div>
@@ -39,3 +47,4 @@ export const ReportToolbar = ({ data, onLoad, onReset, onPrint }: ReportToolbarP
         </div>
     )
 }
+
