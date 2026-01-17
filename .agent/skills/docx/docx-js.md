@@ -348,3 +348,5 @@ new Paragraph({
 - **CRITICAL for TOC**: When using TableOfContents, headings must use HeadingLevel ONLY - do NOT add custom styles to heading paragraphs or TOC will break
 - **Tables**: Set `columnWidths` array + individual cell widths, apply borders to cells not table
 - **Set table margins at TABLE level** for consistent cell padding (avoids repetition per cell)
+- **CRITICAL: NEVER use object literal syntax for text runs** - do NOT use `{ type: 'text', text: '...' } as any`. This generates invalid XML that WPS can open but Microsoft Word cannot. ALWAYS use `new TextRun({ text: '...' })` constructor.
+- **CRITICAL: Use BorderStyle enum for borders** - do NOT use string `'single' as const`. Use `BorderStyle.SINGLE` from the docx import.
