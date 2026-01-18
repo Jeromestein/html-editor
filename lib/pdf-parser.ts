@@ -44,9 +44,14 @@ export function convertToSampleData(
                             id: (index + 1) * 1000 + courseIndex + 1,
                             year: String(course.year || ""),
                             name: String(course.name || ""),
-                            level: "L", // Default level
+                            level: String(course.level || "LD"),
                             credits: String(course.credits || "0"),
                             grade: String(course.grade || ""),
+                            usGrade: course.conversionSource === "AI_INFERRED"
+                                ? `${String(course.usGrade || "")} (AI_INFERRED)`
+                                : String(course.usGrade || ""),
+                            usCredits: String(course.usCredits || ""),
+                            conversionSource: String(course.conversionSource || "AI_INFERRED"),
                         })
                     )
                     : [],

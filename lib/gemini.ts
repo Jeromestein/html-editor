@@ -21,16 +21,23 @@ export function getGeminiClient(): GoogleGenerativeAI {
 /**
  * Prompt template for transcript/diploma PDF analysis
  */
-const TRANSCRIPT_ANALYSIS_PROMPT = `You are an expert at analyzing academic transcripts, diplomas, and educational documents.
+const TRANSCRIPT_ANALYSIS_PROMPT = `You are an expert at analyzing academic transcripts, diplomas, and educational documents for Foreign Credential Evaluation (FCE).
 
-Analyze this PDF document and extract structured information for a Foreign Credential Evaluation (FCE) report.
+Analyze this PDF document and extract structured information.
 
 IMPORTANT RULES:
-1. Only process English documents. If the document is primarily in another language, set isEnglish to false and indicate the detected language.
-2. Extract ALL courses with their year, name, credits, and grades
-3. Identify the grading scale used and provide US grade equivalents
-4. If information is not found, use "N/A"
-5. Be precise with dates, names, and numbers
+1. Only process English documents. If primarily in another language, set isEnglish to false.
+2. Extract ALL courses with their year, name, credits, and grades.
+3. Convert grades to US equivalents using AICE standards:
+   - China (0-100): 85-100=A, 75-84=B, 60-74=C, <60=F
+   - Russia (1-5): 5=A, 4=B, 3=C, 2=F
+   - India: 60-100=A, 50-59=B, 40-49=C, <40=F
+   - UK: First=A, 2:1=B+, 2:2=B, Third=C, Pass=D, Fail=F
+   - For unknown scales, use best judgment and mark as "AI_INFERRED"
+4. Convert credits: 1 Academic Year = 30 US Semester Credits
+5. Determine course level: Years 1-2 = "LD", Years 3-4 = "UD", Graduate = "GR"
+6. Be precise with dates, names, and numbers
+7. If information is not found, use "N/A"
 
 Return a JSON object with this EXACT structure (no additional text, just valid JSON):
 {
@@ -49,18 +56,23 @@ Return a JSON object with this EXACT structure (no additional text, just valid J
       "standardProgramLength": "Duration of the program (e.g., Four years)",
       "yearsAttended": "Start year - End year (e.g., 2015 - 2019)",
       "yearOfGraduation": "Graduation year",
+      "totalYearCredits": "Typical total credits per academic year at this institution",
       "courses": [
         {
           "year": "Academic year (e.g., 2015-2016)",
           "name": "Course name",
-          "credits": "Number of credits as string",
-          "grade": "Grade received"
+          "credits": "Original credits as string",
+          "grade": "Original grade received",
+          "usGrade": "Converted US grade (A, B, C, D, F)",
+          "usCredits": "Converted US semester credits as string",
+          "level": "LD or UD or GR",
+          "conversionSource": "AICE_RULES or AI_INFERRED"
         }
       ],
       "gradeConversion": [
         {
-          "grade": "Original grade (e.g., 5.0, A, Excellent)",
-          "usGrade": "US equivalent (A, A-, B+, B, C+, C, D, F)"
+          "grade": "Original grade (e.g., 85-100, 5, A)",
+          "usGrade": "US equivalent (A, B, C, D, F)"
         }
       ]
     }
@@ -86,7 +98,7 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<{
   data: Record<string, unknown> | null
 }> {
   const client = getGeminiClient()
-  const model = client.getGenerativeModel({ model: "gemini-3-pro" })
+  const model = client.getGenerativeModel({ model: "gemini-2.5-flash" })
 
   // Convert ArrayBuffer to base64 for Gemini
   const base64Data = Buffer.from(pdfBuffer).toString("base64")
