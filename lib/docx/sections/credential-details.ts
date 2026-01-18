@@ -4,7 +4,7 @@
  * Creates detail table for each credential
  */
 
-import { Paragraph, TextRun, Table, TableRow, TableCell, WidthType, VerticalAlign } from 'docx'
+import { Paragraph, TextRun, Table, TableRow, TableCell, WidthType, VerticalAlign, PageBreak } from 'docx'
 import { Credential } from '../../report-data'
 import { TEXT_STYLES, SPACING, PAGE_WIDTH_DXA, COLUMN_WIDTHS, CELL_BORDERS } from '../styles'
 import { createSectionTitle } from '../utils'
@@ -14,6 +14,9 @@ export function createCredentialDetails(
     credentialIndex: number
 ): (Paragraph | Table)[] {
     const children: (Paragraph | Table)[] = []
+
+    // Page break before each credential
+    children.push(new Paragraph({ children: [new PageBreak()] }))
 
     // Section title
     children.push(
