@@ -4,7 +4,7 @@ description: How to use the PDF analysis feature to auto-fill FCE reports from u
 
 # PDF Analysis Workflow
 
-Upload a transcript/diploma PDF and let Gemini AI extract data automatically, with integrated grade conversion, GPA calculation, and reference generation.
+Upload a transcript/diploma PDF and let Gemini AI extract data automatically, with integrated Function Calling for grade conversion, GPA calculation, and reference generation.
 
 ## Prerequisites
 
@@ -20,78 +20,78 @@ Upload a transcript/diploma PDF and let Gemini AI extract data automatically, wi
 
 1. Click **"Import PDF"** in toolbar
 2. Upload PDF (drag & drop or click)
-3. Wait for AI analysis (~5-10s) (Uses `gemini-3-flash-preview`)
-4. Review extracted data (grades, credits, GPA)
+3. Wait for AI analysis (~30-60s) (Uses `gemini-3-flash-preview` with Function Calling)
+4. Review extracted data (grades, credits, GPA, references, equivalence)
 5. Click **"Import Data"**
 
-## Pipeline Architecture
+## Architecture
 
 ```
 PDF Upload
   ↓
-Gemini AI (extract raw data)
+Gemini AI (gemini-3-flash-preview)
+  ├── Function Call: lookup_grade_conversion (Supabase)
+  ├── Function Call: calculate_gpa (AICE 4.35-point scale)
+  └── Function Call: lookup_references (JSON database)
   ↓
-Grade Conversion (skill: aice-fce-grade-conversion)
-  ↓
-GPA Calculation (skill: aice-gpa-calculation)
-  ↓
-Reference Lookup (skill: aice-fce-reference)
+Structured Output (Zod validated)
   ↓
 User Review → Import to Report
 ```
 
-## Integrated Skills
+## Function Calling Tools
 
-### 1. Grade Conversion (`aice-fce-grade-conversion`)
+### 1. `lookup_grade_conversion`
+Queries Supabase for grade conversion rules by country and grade.
 
-Converts international grades to US equivalents.
+| Parameter | Description |
+|-----------|-------------|
+| `country` | Country of education (e.g., "China", "Armenia") |
+| `grade` | Original grade (e.g., "5", "A", "85") |
+| `educationLevel` | "undergraduate" or "graduate" |
 
-| Step | Action |
-|------|--------|
-| 1 | Query `aet_aice_grade_conversion_rules` by country + grade |
-| 2 | If found → use stored rule |
-| 3 | If not found → AI inference with `(AI_INFERRED)` marker |
-| 4 | On save → store AI-inferred rules for future use |
+**Fallback**: If not found, returns empty and Gemini infers with `AI_INFERRED` marker.
 
-**Credit Conversion:**
-- ECTS (Europe): 60 ECTS = 30 US Credits
-- CATS (UK): 120 CATS = 30 US Credits
-- China: Normalize to 30/year
-
-### 2. GPA Calculation (`aice-gpa-calculation`)
-
+### 2. `calculate_gpa`
 Calculates GPA using AICE 4.35-point scale.
 
-```
-GPA = totalPoints / gpaCredits
-```
+| Parameter | Description |
+|-----------|-------------|
+| `courses` | Array of `{usGrade, usCredits}` |
 
-- **GPA Credits**: A through F grades (including WF)
-- **Total Credits**: All valid grades including P/CR/T
-- **Excluded**: Invalid or unrecognized grades
+Returns: `{totalCredits, gpa}`
 
-### 3. Reference Lookup (`aice-fce-reference`)
+### 3. `lookup_references`
+Looks up APA-format bibliographic references.
 
-Generates APA-format references based on credential context.
+| Parameter | Description |
+|-----------|-------------|
+| `country` | Country of education |
+| `degreeLevel` | "undergraduate", "graduate", "secondary" |
+| `year` | Year for edition matching |
 
-```bash
-python scripts/lookup_refs.py --context "<Country> <Level> <Document Type>" --year <Year>
-```
-
-Optional: Search institution website and generate citation:
-```bash
-python scripts/lookup_refs.py --make-citation "<Institution>" "<URL>"
-```
+**Mapping**:
+- China → Chinese Universities, China Databases, IAU Handbook
+- USA → Best 387 Colleges, Peterson's, AACRAO Guide
+- Other → IAU Handbook, Europa World, WHED (global defaults)
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `lib/gemini.ts` | Gemini API client, sends PDF directly to AI |
-| `lib/pdf-parser.ts` | Data conversion and grade mapping |
-| `lib/gpa.ts` | GPA and credit calculation logic |
+| `lib/gemini/client.ts` | Gemini API client with function calling loop |
+| `lib/gemini/schemas.ts` | Zod schemas and ResponseSchema |
+| `lib/gemini/tools/` | Function tool implementations |
+| `lib/pdf-parser.ts` | Data conversion to SampleData format |
 | `app/api/parse-pdf/route.ts` | API endpoint |
-| `components/pdf-upload-dialog.tsx` | Upload UI |
+
+## Extracted Fields
+
+- `name`, `dob`, `country` (student info)
+- `credentials[]` with courses, grades, GPA
+- `documents[]` (diploma/certificate info)
+- `references[]` (APA citations)
+- `equivalenceStatement` (US degree equivalence with major)
 
 ## Error Handling
 
@@ -100,12 +100,18 @@ python scripts/lookup_refs.py --make-citation "<Institution>" "<URL>"
 | `NON_ENGLISH_CONTENT` | Use English document |
 | `FILE_TOO_LARGE` | Keep under 10MB |
 | `AI_ERROR` / 429 | Check API key, wait & retry |
-| Unknown grade system | AI will infer with `(AI_INFERRED)` marker |
+| Function call fails | Returns empty, AI infers, warning collected |
+
+## Warnings
+
+Warnings from function call failures (e.g., "No grade rule found for Armenia") are:
+- Logged to backend console (`=== PDF IMPORT WARNINGS ===`)
+- Returned to frontend for display
+- Merged with local warnings (missing credentials, empty courses)
 
 ## Extending
 
-- **Gemini Prompt**: Edit `TRANSCRIPT_ANALYSIS_PROMPT` in `lib/gemini.ts`
-- **Grade Mapping**: Edit `convertToSampleData()` in `lib/pdf-parser.ts`
-- **Grade Rules**: See `aice-fce-grade-conversion/references/grade-rules.md`
-- **GPA Rules**: See `aice-gpa-calculation/references/gpa-rules.md`
-- **References**: Run `scripts/lookup_refs.py` for bibliography lookup
+- **Schema**: Edit `lib/gemini/schemas.ts`
+- **Tools**: Add new tools in `lib/gemini/tools/`
+- **References**: Edit `.agent/skills/aice-fce-reference/resources/references.json`
+- **Grade Rules**: Add to Supabase `aet_aice_grade_conversion_rules` table
