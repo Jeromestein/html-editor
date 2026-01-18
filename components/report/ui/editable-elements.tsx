@@ -17,6 +17,17 @@ export const EditableInput = ({ value, onChange, className = "", placeholder = "
             if (readOnly) return
             onChange(event.target.value)
         }}
+        onKeyDown={(event) => {
+            // Shift+Enter inserts a newline at cursor position (switches to textarea mode)
+            if (event.key === 'Enter' && event.shiftKey && !readOnly) {
+                event.preventDefault()
+                const input = event.currentTarget
+                const start = input.selectionStart || 0
+                const end = input.selectionEnd || 0
+                const newValue = value.substring(0, start) + '\n' + value.substring(end)
+                onChange(newValue)
+            }
+        }}
         readOnly={readOnly}
         className={`bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none focus:bg-blue-50 transition-colors w-full p-1 ${className}`}
         placeholder={placeholder}
@@ -35,7 +46,7 @@ export const EditableTextarea = ({
     value,
     onChange,
     className = "",
-    rows = 3,
+    rows = 1,
     readOnly = false,
 }: EditableTextareaProps) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -44,7 +55,7 @@ export const EditableTextarea = ({
         if (!textareaRef.current) return
         textareaRef.current.style.height = "auto"
         textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
-    })
+    }, [value])
 
     return (
         <textarea
@@ -56,7 +67,7 @@ export const EditableTextarea = ({
             }}
             rows={rows}
             readOnly={readOnly}
-            className={`bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none focus:bg-blue-50 transition-colors w-full p-1 resize-none ${className}`}
+            className={`bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none focus:bg-blue-50 transition-colors w-full py-0.5 px-2 resize-none leading-snug ${className}`}
         />
     )
 }

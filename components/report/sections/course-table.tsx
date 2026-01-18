@@ -1,6 +1,6 @@
 import { RefObject } from "react"
 import { Trash2, Plus } from "lucide-react"
-import { EditableInput } from "../ui/editable-elements"
+import { EditableInput, EditableTextarea } from "../ui/editable-elements"
 import { Course, UpdateCourseRow } from "../types"
 
 type CourseTableProps = {
@@ -48,7 +48,7 @@ export const CourseTable = ({
                     <tr>
                         <th className="border border-gray-300 p-1 w-20">Year</th>
                         <th className="border border-gray-300 p-1 text-center">Course Title</th>
-                        <th className="border border-gray-300 p-1 w-16">U.S. Credits</th>
+                        <th className="border border-gray-300 p-1 w-20">U.S. Credits</th>
                         <th className="border border-gray-300 p-1 w-20">U.S. Grade</th>
                         {showActions && <th className="border border-gray-300 p-1 w-6 no-print"></th>}
                     </tr>
@@ -65,12 +65,21 @@ export const CourseTable = ({
                                 />
                             </td>
                             <td className="border border-gray-300 p-0 editable-cell">
-                                <EditableInput
-                                    value={course.name}
-                                    onChange={(value) => updateCourse(course.id, "name", value)}
-                                    className="text-left px-2 h-full"
-                                    readOnly={readOnly}
-                                />
+                                {course.name.includes('\n') ? (
+                                    <EditableTextarea
+                                        value={course.name}
+                                        onChange={(value) => updateCourse(course.id, "name", value)}
+                                        className="text-left px-2 text-xs leading-snug"
+                                        readOnly={readOnly}
+                                    />
+                                ) : (
+                                    <EditableInput
+                                        value={course.name}
+                                        onChange={(value) => updateCourse(course.id, "name", value)}
+                                        className="text-left px-2 h-[30px]"
+                                        readOnly={readOnly}
+                                    />
+                                )}
                             </td>
                             <td className="border border-gray-300 p-0 editable-cell">
                                 <EditableInput

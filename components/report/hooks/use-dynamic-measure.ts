@@ -58,6 +58,17 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
     const cachedMeasurementsRef = useRef<CachedMeasurements | null>(null)
     const measurementCompleteRef = useRef(false)
 
+    // Calculate a hash of course names to detect content changes (especially newlines)
+    const courseContentHash = data.credentials
+        .flatMap(c => c.courses.map(course => course.name))
+        .join('|')
+
+    // Invalidate cache when course content changes (e.g., user adds newlines)
+    useEffect(() => {
+        cachedMeasurementsRef.current = null
+        measurementCompleteRef.current = false
+    }, [courseContentHash])
+
     // Wait for fonts to load
     useEffect(() => {
         if (!onReady) return
