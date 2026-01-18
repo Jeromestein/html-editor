@@ -105,7 +105,8 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
         const itemEl = documentItemRef.current
 
         let rafId = requestAnimationFrame(() => {
-            const safetyPadding = 36
+            // Extra padding to account for credential table textareas (2 lines instead of 1)
+            const safetyPadding = 60
             const documentSafetyPadding = 24
 
             // =====================================================================
