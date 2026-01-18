@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react"
 import { Printer, RotateCcw, Plus, Trash2, Globe } from "lucide-react"
 import { buildSampleData, rehydrateData, type Course, type SampleData, type GradeConversionRow } from "@/lib/report-data"
-import { SaveReportDialog, LoadReportDialog } from "./report-manager"
+import { SaveReportDialog, LoadReportDialog } from "./report/ui/report-dialogs"
 import { calculateStats } from "@/lib/gpa"
 import Image from "next/image"
 import Link from "next/link"
@@ -12,7 +12,7 @@ import Link from "next/link"
 // 1. Type definitions and sample data
 // -----------------------------------------------------------------------------
 
-type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes" | "evaluatorName" | "evaluatorSignature" | "seniorEvaluatorName" | "seniorEvaluatorSignature"
+type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes" | "evaluatorName" | "evaluatorSignature" | "seniorEvaluatorName" | "seniorEvaluatorSignature" | "references"
 
 type CourseField = "year" | "name" | "level" | "credits" | "grade"
 
@@ -1360,7 +1360,7 @@ function ReportPage({
         {showSignatures && (
           <div className="mt-4" ref={tailRef}>
             <SectionTitle>{referencesNum}. References</SectionTitle>
-            <References />
+            {/* <References references={data.references} updateDataField={updateDataField} readOnly={readOnly} /> */}
 
             <SectionTitle>{notesNum}. Evaluation Notes</SectionTitle>
             <EditableTextarea
