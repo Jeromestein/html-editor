@@ -204,11 +204,19 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<{
     const response = result.response
     const responseText = response.text()
 
+    console.log("=== GEMINI RAW RESPONSE ===")
+    console.log(responseText)
+    console.log("===========================")
+
     // With structured output, Gemini guarantees valid JSON
     const parsed = JSON.parse(responseText) as TranscriptResponse
 
     // Validate with Zod for runtime type safety
     const validated = TranscriptResponseSchema.parse(parsed)
+
+    console.log("=== ZOD VALIDATED DATA ===")
+    console.log(JSON.stringify(validated, null, 2))
+    console.log("==========================")
 
     return {
       isEnglish: validated.isEnglish !== false,
