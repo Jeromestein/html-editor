@@ -35,7 +35,7 @@ export function convertToSampleData(
                 standardProgramLength: String(cred.standardProgramLength || "N/A"),
                 yearsAttended: String(cred.yearsAttended || "N/A"),
                 yearOfGraduation: String(cred.yearOfGraduation || "N/A"),
-                equivalenceStatement: "", // To be filled by evaluator
+                equivalenceStatement: String(cred.equivalenceStatement || ""),
                 gpa: "", // Will be calculated
                 totalCredits: "", // Will be calculated
                 courses: Array.isArray(cred.courses)

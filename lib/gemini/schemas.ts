@@ -37,6 +37,7 @@ export const CredentialSchema = z.object({
     yearsAttended: z.string().describe("Start year - End year"),
     yearOfGraduation: z.string().describe("Graduation year"),
     totalYearCredits: z.string().describe("Typical total credits per academic year"),
+    equivalenceStatement: z.string().describe("US equivalence statement with degree and major, e.g. 'Bachelor\\'s degree with a major in Computer Science' or 'Four years of undergraduate study with a major in Engineering'"),
     courses: z.array(CourseSchema),
     gradeConversion: z.array(GradeConversionSchema),
 })
@@ -94,6 +95,7 @@ export const transcriptResponseSchema: ResponseSchema = {
                     yearsAttended: { type: SchemaType.STRING, description: "Start year - End year" },
                     yearOfGraduation: { type: SchemaType.STRING, description: "Graduation year" },
                     totalYearCredits: { type: SchemaType.STRING, description: "Typical total credits per academic year" },
+                    equivalenceStatement: { type: SchemaType.STRING, description: "US equivalence statement with degree and major, e.g. 'Bachelor's degree with a major in Computer Science'" },
                     courses: {
                         type: SchemaType.ARRAY,
                         items: {
@@ -123,7 +125,7 @@ export const transcriptResponseSchema: ResponseSchema = {
                         },
                     },
                 },
-                required: ["awardingInstitution", "country", "program", "admissionRequirements", "grantsAccessTo", "standardProgramLength", "yearsAttended", "yearOfGraduation", "totalYearCredits", "courses", "gradeConversion"],
+                required: ["awardingInstitution", "country", "program", "admissionRequirements", "grantsAccessTo", "standardProgramLength", "yearsAttended", "yearOfGraduation", "totalYearCredits", "equivalenceStatement", "courses", "gradeConversion"],
             },
         },
         documents: {
