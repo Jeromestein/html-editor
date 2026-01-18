@@ -4,7 +4,7 @@ description: How to use the PDF analysis feature to auto-fill FCE reports from u
 
 # PDF Analysis Workflow
 
-Upload a transcript/diploma PDF and let Gemini AI extract data automatically.
+Upload a transcript/diploma PDF and let Gemini AI extract data automatically, with integrated grade conversion, GPA calculation, and reference generation.
 
 ## Prerequisites
 
@@ -21,20 +21,77 @@ Upload a transcript/diploma PDF and let Gemini AI extract data automatically.
 1. Click **"Import PDF"** in toolbar
 2. Upload PDF (drag & drop or click)
 3. Wait for AI analysis (~5-10s)
-4. Review extracted data
+4. Review extracted data (grades, credits, GPA)
 5. Click **"Import Data"**
 
-## Architecture
+## Pipeline Architecture
 
 ```
-PDF Upload → API Route → Gemini AI (direct PDF) → Data Mapping → Report
+PDF Upload
+  ↓
+Gemini AI (extract raw data)
+  ↓
+Grade Conversion (skill: aice-fce-grade-conversion)
+  ↓
+GPA Calculation (skill: aice-gpa-calculation)
+  ↓
+Reference Lookup (skill: aice-fce-reference)
+  ↓
+User Review → Import to Report
 ```
 
-**Key Files:**
-- `lib/gemini.ts` - Gemini API client, sends PDF directly to AI
-- `lib/pdf-parser.ts` - Data conversion only (no text extraction)
-- `app/api/parse-pdf/route.ts` - API endpoint
-- `components/pdf-upload-dialog.tsx` - Upload UI
+## Integrated Skills
+
+### 1. Grade Conversion (`aice-fce-grade-conversion`)
+
+Converts international grades to US equivalents.
+
+| Step | Action |
+|------|--------|
+| 1 | Query `aet_aice_grade_conversion_rules` by country + grade |
+| 2 | If found → use stored rule |
+| 3 | If not found → AI inference with `(AI_INFERRED)` marker |
+| 4 | On save → store AI-inferred rules for future use |
+
+**Credit Conversion:**
+- ECTS (Europe): 60 ECTS = 30 US Credits
+- CATS (UK): 120 CATS = 30 US Credits
+- China: Normalize to 30/year
+
+### 2. GPA Calculation (`aice-gpa-calculation`)
+
+Calculates GPA using AICE 4.35-point scale.
+
+```
+GPA = totalPoints / gpaCredits
+```
+
+- **GPA Credits**: A through F grades (including WF)
+- **Total Credits**: All valid grades including P/CR/T
+- **Excluded**: Invalid or unrecognized grades
+
+### 3. Reference Lookup (`aice-fce-reference`)
+
+Generates APA-format references based on credential context.
+
+```bash
+python scripts/lookup_refs.py --context "<Country> <Level> <Document Type>" --year <Year>
+```
+
+Optional: Search institution website and generate citation:
+```bash
+python scripts/lookup_refs.py --make-citation "<Institution>" "<URL>"
+```
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `lib/gemini.ts` | Gemini API client, sends PDF directly to AI |
+| `lib/pdf-parser.ts` | Data conversion and grade mapping |
+| `lib/gpa.ts` | GPA and credit calculation logic |
+| `app/api/parse-pdf/route.ts` | API endpoint |
+| `components/pdf-upload-dialog.tsx` | Upload UI |
 
 ## Error Handling
 
@@ -43,8 +100,12 @@ PDF Upload → API Route → Gemini AI (direct PDF) → Data Mapping → Report
 | `NON_ENGLISH_CONTENT` | Use English document |
 | `FILE_TOO_LARGE` | Keep under 10MB |
 | `AI_ERROR` / 429 | Check API key, wait & retry |
+| Unknown grade system | AI will infer with `(AI_INFERRED)` marker |
 
 ## Extending
 
-- **Prompt**: Edit `TRANSCRIPT_ANALYSIS_PROMPT` in `lib/gemini.ts`
-- **Data mapping**: Edit `convertToSampleData()` in `lib/pdf-parser.ts`
+- **Gemini Prompt**: Edit `TRANSCRIPT_ANALYSIS_PROMPT` in `lib/gemini.ts`
+- **Grade Mapping**: Edit `convertToSampleData()` in `lib/pdf-parser.ts`
+- **Grade Rules**: See `aice-fce-grade-conversion/references/grade-rules.md`
+- **GPA Rules**: See `aice-gpa-calculation/references/gpa-rules.md`
+- **References**: Run `scripts/lookup_refs.py` for bibliography lookup
