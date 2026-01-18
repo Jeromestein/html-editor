@@ -17,7 +17,7 @@ export type DocumentEntry = {
 
 export type TopLevelField = "refNo" | "name" | "dob" | "country" | "date" | "purpose" | "evaluationNotes" | "evaluatorName" | "evaluatorSignature" | "seniorEvaluatorName" | "seniorEvaluatorSignature" | "references"
 
-export type CourseField = "year" | "name" | "level" | "credits" | "grade"
+export type CourseField = "year" | "name" | "level" | "credits" | "grade" | "usCredits" | "usGrade" | "conversionSource"
 
 export type CredentialField = keyof Omit<SampleData["credentials"][number], "id" | "courses" | "gradeConversion">
 

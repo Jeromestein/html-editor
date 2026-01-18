@@ -48,8 +48,8 @@ export const CourseTable = ({
                     <tr>
                         <th className="border border-gray-300 p-1 w-20">Year</th>
                         <th className="border border-gray-300 p-1 text-center">Course Title</th>
-                        <th className="border border-gray-300 p-1 w-16">Credits</th>
-                        <th className="border border-gray-300 p-1 w-20">Grade</th>
+                        <th className="border border-gray-300 p-1 w-16">U.S. Credits</th>
+                        <th className="border border-gray-300 p-1 w-20">U.S. Grade</th>
                         {showActions && <th className="border border-gray-300 p-1 w-6 no-print"></th>}
                     </tr>
                 </thead>
@@ -74,16 +74,16 @@ export const CourseTable = ({
                             </td>
                             <td className="border border-gray-300 p-0 editable-cell">
                                 <EditableInput
-                                    value={course.credits}
-                                    onChange={(value) => updateCourse(course.id, "credits", value)}
+                                    value={course.usCredits || course.credits}
+                                    onChange={(value) => updateCourse(course.id, "usCredits", value)}
                                     className="text-left px-2 h-full"
                                     readOnly={readOnly}
                                 />
                             </td>
                             <td className="border border-gray-300 p-0 editable-cell">
                                 <EditableInput
-                                    value={course.grade}
-                                    onChange={(value) => updateCourse(course.id, "grade", value)}
+                                    value={course.usGrade || course.grade}
+                                    onChange={(value) => updateCourse(course.id, "usGrade", value)}
                                     className="text-left px-2 h-full"
                                     readOnly={readOnly}
                                 />
