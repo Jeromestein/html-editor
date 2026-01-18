@@ -20,7 +20,7 @@ Upload a transcript/diploma PDF and let Gemini AI extract data automatically, wi
 
 1. Click **"Import PDF"** in toolbar
 2. Upload PDF (drag & drop or click)
-3. Wait for AI analysis (~5-10s)
+3. Wait for AI analysis (~5-10s) (Uses `gemini-3-flash-preview`)
 4. Review extracted data (grades, credits, GPA)
 5. Click **"Import Data"**
 
