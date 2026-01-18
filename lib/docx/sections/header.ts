@@ -2,7 +2,7 @@
  * Header Section Generator
  * 
  * Creates: AET Logo + Company Name + Website as a page header
- * This appears on every page of the document
+ * Layout: [Logo] | AET (line 1) + AMERICAN EVALUATION... (line 2) | website (right)
  */
 
 import * as fs from 'fs'
@@ -37,17 +37,22 @@ export function createPageHeader(): Header {
         console.warn('Warning: Logo image not found at', logoPath)
     }
 
-    // Create header table (logo left, text right)
+    // Column widths: logo (800) | company info (5560) | website (3000)
+    const logoWidth = 800
+    const companyWidth = 5560
+    const websiteWidth = PAGE_WIDTH_DXA - logoWidth - companyWidth
+
+    // Header table with 3 columns
     const headerTable = new Table({
-        columnWidths: [1200, PAGE_WIDTH_DXA - 1200],
+        columnWidths: [logoWidth, companyWidth, websiteWidth],
         rows: [
             new TableRow({
                 children: [
                     // Logo cell
                     new TableCell({
-                        width: { size: 1200, type: WidthType.DXA },
-                        verticalAlign: VerticalAlign.CENTER,
+                        width: { size: logoWidth, type: WidthType.DXA },
                         borders: NO_BORDERS,
+                        verticalAlign: VerticalAlign.CENTER,
                         children: [
                             new Paragraph({
                                 children: logoBuffer
@@ -55,7 +60,7 @@ export function createPageHeader(): Header {
                                         new ImageRun({
                                             type: 'png',
                                             data: logoBuffer,
-                                            transformation: { width: 50, height: 50 },
+                                            transformation: { width: 45, height: 45 },
                                             altText: {
                                                 title: 'AET Logo',
                                                 description: 'American Evaluation & Translation Services Logo',
@@ -67,36 +72,55 @@ export function createPageHeader(): Header {
                             }),
                         ],
                     }),
-                    // Text cell
+                    // Company info cell - AET on line 1, full name on line 2
                     new TableCell({
-                        width: { size: PAGE_WIDTH_DXA - 1200, type: WidthType.DXA },
-                        verticalAlign: VerticalAlign.CENTER,
+                        width: { size: companyWidth, type: WidthType.DXA },
                         borders: NO_BORDERS,
+                        verticalAlign: VerticalAlign.CENTER,
                         children: [
+                            // Line 1: AET
                             new Paragraph({
-                                alignment: AlignmentType.LEFT,
                                 spacing: { before: 0, after: 0 },
                                 children: [
                                     new TextRun({
                                         text: 'AET',
-                                        size: 48,
+                                        size: 36,
                                         bold: true,
                                         color: COLORS.blue900,
-                                        font: 'Times New Roman',
+                                        font: 'Arial',
                                     }),
+                                ],
+                            }),
+                            // Line 2: Full company name
+                            new Paragraph({
+                                spacing: { before: 0, after: 0 },
+                                children: [
                                     new TextRun({
-                                        text: '  American Evaluation & Translation Services',
-                                        size: 18,
-                                        bold: true,
+                                        text: 'AMERICAN EVALUATION & TRANSLATION SERVICES',
+                                        size: 14,
                                         color: COLORS.gray500,
                                         font: 'Arial',
                                     }),
                                 ],
                             }),
+                        ],
+                    }),
+                    // Website cell
+                    new TableCell({
+                        width: { size: websiteWidth, type: WidthType.DXA },
+                        borders: NO_BORDERS,
+                        verticalAlign: VerticalAlign.CENTER,
+                        children: [
                             new Paragraph({
-                                alignment: AlignmentType.LEFT,
-                                spacing: { before: 20, after: 0 },
+                                alignment: AlignmentType.RIGHT,
+                                spacing: { before: 0, after: 0 },
                                 children: [
+                                    new TextRun({
+                                        text: '⊕ ',
+                                        size: 16,
+                                        color: COLORS.gray400,
+                                        font: 'Arial',
+                                    }),
                                     new TextRun({
                                         text: 'www.americantranslationservice.com',
                                         size: 16,
@@ -112,17 +136,29 @@ export function createPageHeader(): Header {
         ],
     })
 
-    // Separator line
-    const separatorLine = new Paragraph({
-        spacing: { before: 60, after: 0 },
-        border: {
-            bottom: { style: BorderStyle.SINGLE, size: 8, color: COLORS.blue900 },
-        },
-        children: [],
+    // Separator line using table with thick bottom border
+    const separatorLine = new Table({
+        columnWidths: [PAGE_WIDTH_DXA],
+        rows: [
+            new TableRow({
+                children: [
+                    new TableCell({
+                        width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA },
+                        margins: { top: 60, bottom: 0, left: 0, right: 0 },
+                        borders: {
+                            top: { style: BorderStyle.NONE, size: 0, color: 'ffffff' },
+                            bottom: { style: BorderStyle.SINGLE, size: 12, color: COLORS.blue900 },
+                            left: { style: BorderStyle.NONE, size: 0, color: 'ffffff' },
+                            right: { style: BorderStyle.NONE, size: 0, color: 'ffffff' },
+                        },
+                        children: [new Paragraph({ children: [] })],
+                    }),
+                ],
+            }),
+        ],
     })
 
     return new Header({
         children: [headerTable, separatorLine],
     })
 }
-
