@@ -19,8 +19,8 @@ function paginateCourses(courses: Course[], counts: PaginationCounts): CoursePag
     const firstCount = Math.max(0, counts.first)
     const firstWithTailCount = Math.max(0, counts.firstWithTail)
     const fullCount = Math.max(1, counts.full)
-    const lastCount = Math.max(1, counts.last)
 
+    // If all courses fit on first page with tail space
     if (remainingCourses.length <= firstWithTailCount) {
         pages.push({
             courses: remainingCourses.splice(0),
@@ -28,22 +28,18 @@ function paginateCourses(courses: Course[], counts: PaginationCounts): CoursePag
         return pages
     }
 
+    // First page
     const firstPageCourses = remainingCourses.splice(0, Math.min(firstCount, remainingCourses.length))
     pages.push({
         courses: firstPageCourses,
     })
 
-    while (remainingCourses.length > lastCount) {
-        const take = Math.min(fullCount, remainingCourses.length - lastCount)
+    // Fill remaining pages fully (grade conversion handling done in usePagination)
+    while (remainingCourses.length > 0) {
+        const take = Math.min(fullCount, remainingCourses.length)
         const pageCourses = remainingCourses.splice(0, take)
         pages.push({
             courses: pageCourses,
-        })
-    }
-
-    if (remainingCourses.length > 0) {
-        pages.push({
-            courses: remainingCourses.splice(0),
         })
     }
 
@@ -120,15 +116,12 @@ export const usePagination = ({ data, readOnly, measurements }: UsePaginationPro
 
     const coursePagesByCredential = useMemo(
         () =>
-            data.credentials.map((credential, credentialIndex) => {
-                const gradeConversionOverhead = credential.gradeConversion.length + 6
-                const lastPageCapacity = Math.max(1, rowsPerFullPage - gradeConversionOverhead - 1)
-
+            data.credentials.map((credential) => {
                 return paginateCourses(credential.courses, {
                     first: rowsPerFirstPage,
                     firstWithTail: rowsPerFirstPageWithTail,
                     full: rowsPerFullPage,
-                    last: lastPageCapacity,
+                    last: rowsPerFullPage, // Not used anymore but kept for type compatibility
                 })
             }),
         [data.credentials, rowsPerFirstPage, rowsPerFirstPageWithTail, rowsPerFullPage]

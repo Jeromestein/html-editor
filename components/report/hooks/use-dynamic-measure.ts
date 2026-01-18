@@ -58,16 +58,16 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
     const cachedMeasurementsRef = useRef<CachedMeasurements | null>(null)
     const measurementCompleteRef = useRef(false)
 
-    // Calculate a hash of course names to detect content changes (especially newlines)
-    const courseContentHash = data.credentials
-        .flatMap(c => c.courses.map(course => course.name))
-        .join('|')
+    // Count total newlines in course names - only invalidate cache when this changes
+    const totalNewlines = data.credentials.reduce((acc, c) =>
+        acc + c.courses.reduce((acc2, course) =>
+            acc2 + (course.name.match(/\n/g) || []).length, 0), 0)
 
-    // Invalidate cache when course content changes (e.g., user adds newlines)
+    // Invalidate cache only when number of newlines changes
     useEffect(() => {
         cachedMeasurementsRef.current = null
         measurementCompleteRef.current = false
-    }, [courseContentHash])
+    }, [totalNewlines])
 
     // Wait for fonts to load
     useEffect(() => {
@@ -133,7 +133,10 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
                     const rowRect = rowEl.getBoundingClientRect()
 
                     if (contentRect.height > 0 && rowRect.height > 0) {
-                        rowHeight = rowRect.height
+                        // Use minimum of measured height or 26px (single-line row)
+                        // This prevents multiline rows from affecting pagination for all rows
+                        const singleLineRowHeight = 26
+                        rowHeight = Math.min(rowRect.height, singleLineRowHeight)
                         headerHeight = headerRect.height
                         contentHeight = contentRect.height
                         headerOffset = Math.max(0, startRect.top - contentRect.top)
