@@ -122,7 +122,7 @@ function getBestEdition(ref: Reference, targetYear?: number) {
 }
 
 /**
- * Format APA citation
+ * Format APA citation (plain text, no markdown)
  */
 function formatCitation(ref: Reference, edition: Reference["editions"][0]): string {
     const editionStr = edition.edition && !edition.edition.includes("Online")
@@ -130,9 +130,9 @@ function formatCitation(ref: Reference, edition: Reference["editions"][0]): stri
         : ""
 
     if (ref.author === ref.publisher) {
-        return `${ref.author}. (${edition.year}). *${ref.title}*${editionStr}.`
+        return `${ref.author}. (${edition.year}). ${ref.title}${editionStr}.`
     }
-    return `${ref.author}. (${edition.year}). *${ref.title}*${editionStr}. ${ref.publisher}.`
+    return `${ref.author}. (${edition.year}). ${ref.title}${editionStr}. ${ref.publisher}.`
 }
 
 /**
