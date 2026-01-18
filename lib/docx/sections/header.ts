@@ -19,6 +19,12 @@ import {
     VerticalAlign,
     BorderStyle,
     Header,
+    TextWrappingType,
+    TextWrappingSide,
+    HorizontalPositionAlign,
+    VerticalPositionAlign,
+    HorizontalPositionRelativeFrom,
+    VerticalPositionRelativeFrom,
 } from 'docx'
 import { TEXT_STYLES, PAGE_WIDTH_DXA, COLORS, NO_BORDERS } from '../styles'
 
@@ -158,7 +164,55 @@ export function createPageHeader(): Header {
         ],
     })
 
+    // Load watermark image (separate from logo)
+    const watermarkPath = path.join(process.cwd(), 'public', 'AET-watermark.png')
+    let watermarkBuffer: Buffer | undefined
+
+    try {
+        watermarkBuffer = fs.readFileSync(watermarkPath)
+    } catch (e) {
+        console.warn('Warning: Watermark image not found at', watermarkPath)
+    }
+
+    // Watermark paragraph - positioned in center, behind content
+    const watermarkParagraph = watermarkBuffer
+        ? new Paragraph({
+            children: [
+                new ImageRun({
+                    type: 'png',
+                    data: watermarkBuffer,
+                    transformation: {
+                        width: 400,
+                        height: 400,
+                    },
+                    floating: {
+                        horizontalPosition: {
+                            align: HorizontalPositionAlign.CENTER,
+                            relative: HorizontalPositionRelativeFrom.PAGE,
+                        },
+                        verticalPosition: {
+                            align: VerticalPositionAlign.CENTER,
+                            relative: VerticalPositionRelativeFrom.PAGE,
+                        },
+                        wrap: {
+                            type: TextWrappingType.NONE,
+                            side: TextWrappingSide.BOTH_SIDES,
+                        },
+                        behindDocument: true,
+                    },
+                    altText: {
+                        title: 'Watermark',
+                        description: 'AET watermark logo',
+                        name: 'Watermark',
+                    },
+                }),
+            ],
+        })
+        : null
+
     return new Header({
-        children: [headerTable, separatorLine],
+        children: watermarkParagraph
+            ? [watermarkParagraph, headerTable, separatorLine]
+            : [headerTable, separatorLine],
     })
 }
