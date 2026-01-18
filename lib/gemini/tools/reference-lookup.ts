@@ -1,0 +1,195 @@
+/**
+ * Reference Lookup Tool
+ * 
+ * Allows Gemini to look up bibliographic references for FCE reports.
+ * 
+ * NOTE: Currently reads from .agent/skills/ JSON file.
+ * TODO: Future optimization - migrate to Supabase for faster lookups.
+ */
+
+import type { FunctionDeclaration } from "@google/generative-ai"
+import { SchemaType } from "@google/generative-ai"
+import * as fs from "fs"
+import * as path from "path"
+
+// Function declaration for Gemini
+export const referenceLookupDeclaration: FunctionDeclaration = {
+    name: "lookup_references",
+    description: "Look up authoritative bibliographic references for a credential evaluation based on country and education level.",
+    parameters: {
+        type: SchemaType.OBJECT,
+        properties: {
+            country: {
+                type: SchemaType.STRING,
+                description: "Country of education (e.g., 'China', 'USA', 'Global')",
+            },
+            degreeLevel: {
+                type: SchemaType.STRING,
+                description: "Degree level: 'undergraduate', 'graduate', 'secondary'",
+            },
+            year: {
+                type: SchemaType.NUMBER,
+                description: "Year of credential (for edition matching)",
+            },
+        },
+        required: ["country"],
+    },
+}
+
+// Reference type from JSON
+type Reference = {
+    id: string
+    title: string
+    author: string
+    publisher: string
+    editions: Array<{
+        edition: string
+        year: number
+        isbn: string
+    }>
+    url?: string
+    keywords: string[]
+    description: string
+}
+
+// Tool execution result type
+export type ReferenceLookupResult = {
+    success: boolean
+    references: Array<{
+        citation: string
+        isbn?: string
+    }>
+    warning?: string
+}
+
+/**
+ * Load references from JSON file
+ * TODO: Migrate to Supabase for better performance and easier updates
+ */
+function loadReferences(): Reference[] {
+    try {
+        const jsonPath = path.join(
+            process.cwd(),
+            ".agent/skills/aice-fce-reference/resources/references.json"
+        )
+        const content = fs.readFileSync(jsonPath, "utf-8")
+        return JSON.parse(content) as Reference[]
+    } catch (error) {
+        console.warn("Failed to load references JSON:", error)
+        return []
+    }
+}
+
+/**
+ * Calculate relevance score for a reference
+ */
+function calculateRelevance(ref: Reference, context: string[]): number {
+    let score = 0
+    const keywords = ref.keywords.map((k) => k.toLowerCase())
+    const contextLower = context.map((c) => c.toLowerCase())
+
+    // Title match
+    if (contextLower.some((term) => ref.title.toLowerCase().includes(term))) {
+        score += 5
+    }
+
+    // Keyword match
+    for (const term of contextLower) {
+        if (keywords.includes(term)) {
+            score += 3
+        } else if (keywords.some((k) => k.includes(term))) {
+            score += 1
+        }
+    }
+
+    return score
+}
+
+/**
+ * Get best edition for target year
+ */
+function getBestEdition(ref: Reference, targetYear?: number) {
+    const editions = ref.editions.sort((a, b) => a.year - b.year)
+
+    if (!targetYear) {
+        return editions[editions.length - 1] // Latest
+    }
+
+    const validEditions = editions.filter((e) => e.year <= targetYear)
+    return validEditions.length > 0
+        ? validEditions[validEditions.length - 1]
+        : editions[0]
+}
+
+/**
+ * Format APA citation
+ */
+function formatCitation(ref: Reference, edition: Reference["editions"][0]): string {
+    const editionStr = edition.edition && !edition.edition.includes("Online")
+        ? ` (${edition.edition})`
+        : ""
+
+    if (ref.author === ref.publisher) {
+        return `${ref.author}. (${edition.year}). *${ref.title}*${editionStr}.`
+    }
+    return `${ref.author}. (${edition.year}). *${ref.title}*${editionStr}. ${ref.publisher}.`
+}
+
+/**
+ * Execute reference lookup
+ */
+export async function executeReferenceLookup(args: {
+    country: string
+    degreeLevel?: string
+    year?: number
+}): Promise<ReferenceLookupResult> {
+    try {
+        const refs = loadReferences()
+
+        if (refs.length === 0) {
+            return {
+                success: false,
+                references: [],
+                warning: "Reference database not available. Please add references manually.",
+            }
+        }
+
+        // Build context terms
+        const context = [args.country]
+        if (args.degreeLevel) context.push(args.degreeLevel)
+
+        // Score and sort references
+        const scored = refs
+            .map((ref) => ({ ref, score: calculateRelevance(ref, context) }))
+            .filter((item) => item.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3)
+
+        // Fallback to defaults if no matches
+        if (scored.length === 0) {
+            const defaultIds = ["iau_handbook", "europa_world", "aacrao_transcript_guide"]
+            const defaults = refs.filter((r) => defaultIds.includes(r.id))
+            scored.push(...defaults.map((ref) => ({ ref, score: 0 })))
+        }
+
+        const references = scored.map(({ ref }) => {
+            const edition = getBestEdition(ref, args.year)
+            return {
+                citation: formatCitation(ref, edition),
+                isbn: edition.isbn || undefined,
+            }
+        })
+
+        return {
+            success: true,
+            references,
+        }
+    } catch (error) {
+        console.warn("Reference lookup failed:", error)
+        return {
+            success: false,
+            references: [],
+            warning: "Reference lookup failed. Please add references manually.",
+        }
+    }
+}
