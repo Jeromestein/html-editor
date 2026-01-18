@@ -47,9 +47,7 @@ export function convertToSampleData(
                             level: String(course.level || "LD"),
                             credits: String(course.credits || "0"),
                             grade: String(course.grade || ""),
-                            usGrade: course.conversionSource === "AI_INFERRED"
-                                ? `${String(course.usGrade || "")} (AI_INFERRED)`
-                                : String(course.usGrade || ""),
+                            usGrade: String(course.usGrade || ""),
                             usCredits: String(course.usCredits || ""),
                             conversionSource: String(course.conversionSource || "AI_INFERRED"),
                         })
@@ -59,7 +57,9 @@ export function convertToSampleData(
                     ? cred.gradeConversion.map(
                         (gc: Record<string, unknown>): GradeConversionRow => ({
                             grade: String(gc.grade || ""),
-                            usGrade: String(gc.usGrade || ""),
+                            usGrade: gc.conversionSource === "AI_INFERRED"
+                                ? `${String(gc.usGrade || "")} (AI)`
+                                : String(gc.usGrade || ""),
                         })
                     )
                     : [],
