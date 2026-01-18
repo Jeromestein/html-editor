@@ -86,7 +86,7 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<{
   data: Record<string, unknown> | null
 }> {
   const client = getGeminiClient()
-  const model = client.getGenerativeModel({ model: "gemini-2.0-flash" })
+  const model = client.getGenerativeModel({ model: "gemini-3-pro" })
 
   // Convert ArrayBuffer to base64 for Gemini
   const base64Data = Buffer.from(pdfBuffer).toString("base64")
