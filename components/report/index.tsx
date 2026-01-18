@@ -98,6 +98,42 @@ export default function ReportEditor({
 
   const handlePrint = () => window.print()
 
+  const handleDownloadDocx = useCallback(async () => {
+    try {
+      const response = await fetch('/api/generate-docx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate DOCX')
+      }
+
+      const blob = await response.blob()
+
+      // Extract filename from Content-Disposition header
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = 'Evaluation_Report.docx'
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/)
+        if (match) filename = match[1]
+      }
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error downloading DOCX:', error)
+      alert('Failed to generate DOCX. Please try again.')
+    }
+  }, [data])
+
   return (
     <div className="min-h-screen bg-slate-200 flex flex-col items-center font-sans text-gray-900 pb-10 print:bg-white print:pb-0">
       {/* PDF Import Dialog */}
@@ -134,6 +170,7 @@ export default function ReportEditor({
           onReset={handleReset}
           onPrint={handlePrint}
           onImportPdf={() => setPdfDialogOpen(true)}
+          onDownloadDocx={handleDownloadDocx}
         />
       )}
 

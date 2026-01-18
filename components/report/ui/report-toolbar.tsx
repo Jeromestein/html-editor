@@ -1,4 +1,4 @@
-import { Printer, RotateCcw, Sparkles } from "lucide-react"
+import { Printer, RotateCcw, Sparkles, FileDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SaveReportDialog, LoadReportDialog } from "./report-dialogs"
 import { SampleData } from "../types"
@@ -9,9 +9,10 @@ type ReportToolbarProps = {
     onReset: () => void
     onPrint: () => void
     onImportPdf: () => void
+    onDownloadDocx: () => void
 }
 
-export const ReportToolbar = ({ data, onLoad, onReset, onPrint, onImportPdf }: ReportToolbarProps) => {
+export const ReportToolbar = ({ data, onLoad, onReset, onPrint, onImportPdf, onDownloadDocx }: ReportToolbarProps) => {
     return (
         <div className="sticky top-0 z-50 bg-white border-b border-gray-200 w-full px-6 py-3 flex items-center justify-between shadow-sm no-print">
             <h1 className="font-bold text-blue-900 flex items-center gap-2">
@@ -35,6 +36,10 @@ export const ReportToolbar = ({ data, onLoad, onReset, onPrint, onImportPdf }: R
 
                 <Button variant="ghost" size="icon" onClick={onReset} title="Reset">
                     <RotateCcw size={18} />
+                </Button>
+
+                <Button onClick={onDownloadDocx} className="gap-2">
+                    <FileDown size={18} /> DOCX
                 </Button>
 
                 <Button onClick={onPrint} className="gap-2">
