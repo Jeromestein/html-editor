@@ -46,10 +46,10 @@ export const CourseTable = ({
             <table className="course-table w-full text-xs text-center border-collapse border border-gray-300 table-fixed">
                 <thead className="bg-gray-100 print:bg-gray-50" ref={headerRef}>
                     <tr>
-                        <th className="border border-gray-300 p-1 w-20">Year</th>
+                        <th className="border border-gray-300 p-1 w-24 text-center">Year</th>
                         <th className="border border-gray-300 p-1 text-center">Course Title</th>
-                        <th className="border border-gray-300 p-1 w-20">U.S. Credits</th>
-                        <th className="border border-gray-300 p-1 w-20">U.S. Grade</th>
+                        <th className="border border-gray-300 p-1 w-20 text-center">U.S. Credits</th>
+                        <th className="border border-gray-300 p-1 w-20 text-center">U.S. Grade</th>
                         {showActions && <th className="border border-gray-300 p-1 w-6 no-print"></th>}
                     </tr>
                 </thead>
@@ -60,7 +60,7 @@ export const CourseTable = ({
                                 <EditableInput
                                     value={course.year}
                                     onChange={(value) => updateCourse(course.id, "year", value)}
-                                    className="text-left px-2 h-full"
+                                    className="text-center h-full"
                                     readOnly={readOnly}
                                 />
                             </td>

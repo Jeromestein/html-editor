@@ -11,45 +11,35 @@ The report pagination system dynamically calculates how many items fit on each p
 
 ## Pagination Principles
 
-### 1. Fill Pages Fully
+### 1. Row Units (Multiline Course Support)
 
-Each page should be filled to capacity before moving to the next page. Do NOT pre-reserve space on intermediate pages.
+Each course takes a number of "row units" based on newlines in its name:
+- Normal course = 1 row unit
+- Course with 1 newline = 2 row units
+- Course with 2 newlines = 3 row units
 
 ```typescript
-// GOOD: Fill each page fully
+function getCourseRowUnits(course: Course): number {
+    return 1 + (course.name.match(/\n/g) || []).length
+}
+```
+
+### 2. Fill Pages by Row Units
+
+Pages are filled based on total row units, not course count:
+
+```typescript
 while (remainingCourses.length > 0) {
-    const take = Math.min(fullCount, remainingCourses.length)
-    pages.push({ courses: remainingCourses.splice(0, take) })
-}
-
-// BAD: Pre-reserve space causing blank areas
-while (remainingCourses.length > lastCount) {
-    const take = Math.min(fullCount, remainingCourses.length - lastCount)
-    // This leaves blank space on intermediate pages
-}
-```
-
-### 2. Grade Conversion Handling
-
-Grade Conversion tables should be placed on the same page as the last courses if space allows. If not, create an extra page for Grade Conversion only.
-
-```typescript
-if (isLastOfCredential) {
-    if (capacity - rowsUsed - 1 >= gradeConversionOverhead) {
-        showGradeConversion = true  // Same page
-    } else {
-        needsExtraPage = true  // New page for Grade Conversion
+    let pageCourses: Course[] = []
+    let pageUnits = 0
+    while (remainingCourses.length > 0) {
+        const nextUnits = getCourseRowUnits(remainingCourses[0])
+        if (pageUnits + nextUnits > fullCapacity) break
+        pageCourses.push(remainingCourses.shift()!)
+        pageUnits += nextUnits
     }
+    pages.push({ courses: pageCourses })
 }
-```
-
-### 3. Row Height Measurement
-
-Use a fixed single-line row height (26px) as the baseline for pagination calculations. This prevents multiline rows (from textarea wrapping) from affecting the entire pagination.
-
-```typescript
-const singleLineRowHeight = 26
-rowHeight = Math.min(rowRect.height, singleLineRowHeight)
 ```
 
 ### 4. Cache Invalidation

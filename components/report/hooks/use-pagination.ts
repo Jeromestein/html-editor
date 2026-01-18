@@ -13,34 +13,62 @@ type PaginationCounts = {
     last: number
 }
 
+// Count how many "row units" a course takes (1 + number of newlines)
+function getCourseRowUnits(course: Course): number {
+    return 1 + (course.name.match(/\n/g) || []).length
+}
+
+// Get total row units for a list of courses
+function getTotalRowUnits(courses: Course[]): number {
+    return courses.reduce((sum, course) => sum + getCourseRowUnits(course), 0)
+}
+
 function paginateCourses(courses: Course[], counts: PaginationCounts): CoursePage[] {
     const pages: CoursePage[] = []
     const remainingCourses = [...courses]
-    const firstCount = Math.max(0, counts.first)
-    const firstWithTailCount = Math.max(0, counts.firstWithTail)
-    const fullCount = Math.max(1, counts.full)
+    const firstCapacity = Math.max(0, counts.first)
+    const firstWithTailCapacity = Math.max(0, counts.firstWithTail)
+    const fullCapacity = Math.max(1, counts.full)
 
     // If all courses fit on first page with tail space
-    if (remainingCourses.length <= firstWithTailCount) {
+    if (getTotalRowUnits(remainingCourses) <= firstWithTailCapacity) {
         pages.push({
             courses: remainingCourses.splice(0),
         })
         return pages
     }
 
-    // First page
-    const firstPageCourses = remainingCourses.splice(0, Math.min(firstCount, remainingCourses.length))
-    pages.push({
-        courses: firstPageCourses,
-    })
-
-    // Fill remaining pages fully (grade conversion handling done in usePagination)
+    // First page - take courses until we reach capacity
+    let firstPageCourses: Course[] = []
+    let firstPageUnits = 0
     while (remainingCourses.length > 0) {
-        const take = Math.min(fullCount, remainingCourses.length)
-        const pageCourses = remainingCourses.splice(0, take)
-        pages.push({
-            courses: pageCourses,
-        })
+        const nextCourse = remainingCourses[0]
+        const nextUnits = getCourseRowUnits(nextCourse)
+        if (firstPageUnits + nextUnits > firstCapacity) break
+        firstPageCourses.push(remainingCourses.shift()!)
+        firstPageUnits += nextUnits
+    }
+    if (firstPageCourses.length > 0) {
+        pages.push({ courses: firstPageCourses })
+    }
+
+    // Fill remaining pages based on row units
+    while (remainingCourses.length > 0) {
+        let pageCourses: Course[] = []
+        let pageUnits = 0
+        while (remainingCourses.length > 0) {
+            const nextCourse = remainingCourses[0]
+            const nextUnits = getCourseRowUnits(nextCourse)
+            if (pageUnits + nextUnits > fullCapacity) break
+            pageCourses.push(remainingCourses.shift()!)
+            pageUnits += nextUnits
+        }
+        if (pageCourses.length > 0) {
+            pages.push({ courses: pageCourses })
+        } else {
+            // Force at least one course per page to avoid infinite loop
+            pages.push({ courses: [remainingCourses.shift()!] })
+        }
     }
 
     return pages
