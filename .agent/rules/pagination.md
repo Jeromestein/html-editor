@@ -67,3 +67,14 @@ Course names use `<input>` by default (single line). Users can press **Shift+Ent
     <EditableInput ... />
 )}
 ```
+
+## Layout Stability & Flickering Prevention
+
+- **Gap Awareness**: Pagination calculations MUST account for CSS gaps (e.g., `space-y-2` = 8px)
+- **Conservative Prediction**: Use pessimistic values in `useLayoutEffect`:
+  - **Safety Padding**: 12px+ buffer for browser rendering variations
+  - **Element Estimates**: Overestimate dynamic element heights (e.g., 48px for 32px button)
+- **Reactive Overflow Check**: After predictive calculation, check `scrollHeight > clientHeight`. If true, reduce item count to break flicker cycle.
+- **Dynamic Button Placement**:
+  - "Add Documents" → pinned to last document page
+  - "Add Course" → in Course Table footer

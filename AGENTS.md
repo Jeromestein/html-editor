@@ -66,20 +66,11 @@ These sections appear after **all** credentials have been listed:
 
 # Layout Stability & Flickering Prevention
 
-- **Gap Awareness**: Pagination calculations MUST explicitly account for CSS gaps (e.g., `space-y-2` = 8px). Ignoring gaps leads to capacity overestimation and layout instability.
-- **Conservative Prediction**: When pre-calculating page capacity in `useLayoutEffect`, use "pessimistic" values:
-    - **Safety Padding**: Increase buffer (e.g., 12px) to handle browser rendering variations.
-    - **Element Estimates**: Overestimate dynamic element heights (e.g., assume 48px for a 32px button) to prevent "fits on page -> renders -> overflows -> moves to next page" infinite loops.
-- **Reactive Overflow Check**: Always include a fail-safe check after the predictive calculation:
-    - Measure `container.scrollHeight > container.clientHeight`.
-    - If true (actual overflow detected), forcefully reduce the item count per page to break the flicker cycle.
-- **Dynamic Button Placement**:
-    - The "Add Documents" button is pinned to the **last** page of the document list.
-    - The "Add Course" button is located in the **footer** of the Course Table to appear contextually with the data.
+See `.agent/rules/pagination.md` for detailed rules.
 
 # Data Calculation Rules
 
-- **GPA Calculation**: Must strictly follow the logic defined in `GPA_RULES.md`.
+- **GPA Calculation**: Must strictly follow the logic defined in `.agent/skills/aice-gpa-calculation/SKILL.md`.
 
 # Typography Rules (Agent Reference)
 
