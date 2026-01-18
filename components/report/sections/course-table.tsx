@@ -83,7 +83,7 @@ export const CourseTable = ({
                             </td>
                             <td className="border border-gray-300 p-0 editable-cell">
                                 <EditableInput
-                                    value={course.usCredits || course.credits}
+                                    value={course.usCredits || ""}
                                     onChange={(value) => updateCourse(course.id, "usCredits", value)}
                                     className="text-left px-2 h-full"
                                     readOnly={readOnly}
@@ -91,7 +91,7 @@ export const CourseTable = ({
                             </td>
                             <td className="border border-gray-300 p-0 editable-cell">
                                 <EditableInput
-                                    value={course.usGrade || course.grade}
+                                    value={course.usGrade || ""}
                                     onChange={(value) => updateCourse(course.id, "usGrade", value)}
                                     className="text-left px-2 h-full"
                                     readOnly={readOnly}

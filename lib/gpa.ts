@@ -35,13 +35,15 @@ export function calculateStats(courses: Course[]) {
     let gpaCredits = 0
 
     for (const course of courses) {
-        const creditsStr = (course.credits || "0").trim()
+        // Use US credits for calculation
+        const creditsStr = (course.usCredits || course.credits || "0").trim()
         const credits = parseFloat(creditsStr)
 
         // Skip invalid credits
         if (isNaN(credits)) continue
 
-        let grade = (course.grade || "").trim().toUpperCase()
+        // Use US grade for calculation
+        let grade = (course.usGrade || course.grade || "").trim().toUpperCase()
 
         // Normalize grade
         if (ALIASES.hasOwnProperty(grade)) {
