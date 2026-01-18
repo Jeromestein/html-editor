@@ -79,5 +79,12 @@ export function convertToSampleData(
         )
     }
 
+    // References - convert array of {citation} objects to bullet-point string
+    if (Array.isArray(aiData.references) && aiData.references.length > 0) {
+        result.references = aiData.references
+            .map((ref: Record<string, unknown>) => `• ${String(ref.citation || "")}`)
+            .join("\n")
+    }
+
     return result
 }

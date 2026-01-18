@@ -150,9 +150,9 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<Anal
                 }
             }
 
-            // Add function responses to history
+            // Add function responses to history (must use 'function' role, not 'user')
             history.push({
-                role: "user",
+                role: "function",
                 parts: functionResponseParts,
             })
 

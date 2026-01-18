@@ -48,6 +48,10 @@ export const DocumentSchema = z.object({
     certificateNo: z.string().describe("Certificate/diploma number or N/A"),
 })
 
+export const ReferenceSchema = z.object({
+    citation: z.string().describe("APA formatted citation"),
+})
+
 export const TranscriptResponseSchema = z.object({
     isEnglish: z.boolean().describe("Whether the document is in English"),
     detectedLanguage: z.string().describe("Detected language of the document"),
@@ -56,6 +60,7 @@ export const TranscriptResponseSchema = z.object({
     country: z.string().describe("Country where the institution is located"),
     credentials: z.array(CredentialSchema),
     documents: z.array(DocumentSchema),
+    references: z.array(ReferenceSchema).describe("APA formatted references for the evaluation"),
 })
 
 // Export types for use in other modules
@@ -134,8 +139,18 @@ export const transcriptResponseSchema: ResponseSchema = {
                 required: ["title", "issuedBy", "dateIssued", "certificateNo"],
             },
         },
+        references: {
+            type: SchemaType.ARRAY,
+            items: {
+                type: SchemaType.OBJECT,
+                properties: {
+                    citation: { type: SchemaType.STRING, description: "APA formatted citation" },
+                },
+                required: ["citation"],
+            },
+        },
     },
-    required: ["isEnglish", "detectedLanguage", "name", "dob", "country", "credentials", "documents"],
+    required: ["isEnglish", "detectedLanguage", "name", "dob", "country", "credentials", "documents", "references"],
 }
 
 // ============================================================================

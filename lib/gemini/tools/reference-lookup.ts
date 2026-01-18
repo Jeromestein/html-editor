@@ -154,25 +154,38 @@ export async function executeReferenceLookup(args: {
             }
         }
 
-        // Build context terms
-        const context = [args.country]
-        if (args.degreeLevel) context.push(args.degreeLevel)
+        // Build context terms - only use country for matching, not degree level
+        // (degree level can cause false matches like "undergraduate" -> US colleges)
+        const context = [args.country.toLowerCase()]
 
-        // Score and sort references
-        const scored = refs
-            .map((ref) => ({ ref, score: calculateRelevance(ref, context) }))
-            .filter((item) => item.score > 0)
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 3)
-
-        // Fallback to defaults if no matches
-        if (scored.length === 0) {
-            const defaultIds = ["iau_handbook", "europa_world", "aacrao_transcript_guide"]
-            const defaults = refs.filter((r) => defaultIds.includes(r.id))
-            scored.push(...defaults.map((ref) => ({ ref, score: 0 })))
+        // Check for specific country matches
+        const countrySpecificIds: Record<string, string[]> = {
+            "china": ["china_universities", "china_databases", "iau_handbook"],
+            "usa": ["best_387_colleges", "petersons_grad_series", "aacrao_transcript_guide"],
+            "united states": ["best_387_colleges", "petersons_grad_series", "aacrao_transcript_guide"],
         }
 
-        const references = scored.map(({ ref }) => {
+        const countryKey = args.country.toLowerCase()
+
+        // If we have country-specific references, use those
+        if (countrySpecificIds[countryKey]) {
+            const specificRefs = refs.filter((r) => countrySpecificIds[countryKey].includes(r.id))
+            const references = specificRefs.map((ref) => {
+                const edition = getBestEdition(ref, args.year)
+                return {
+                    citation: formatCitation(ref, edition),
+                    isbn: edition.isbn || undefined,
+                }
+            })
+            return { success: true, references }
+        }
+
+        // For all other countries, use global defaults
+        // These are the most universally applicable references
+        const globalDefaultIds = ["iau_handbook", "europa_world", "whed_online"]
+        const globalRefs = refs.filter((r) => globalDefaultIds.includes(r.id))
+
+        const references = globalRefs.map((ref) => {
             const edition = getBestEdition(ref, args.year)
             return {
                 citation: formatCitation(ref, edition),
