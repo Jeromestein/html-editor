@@ -2,14 +2,43 @@
 
 ## Overview
 
-The report pagination system dynamically calculates how many items fit on each page based on actual DOM measurements, then distributes content accordingly.
+The report pagination system uses a hybrid approach:
+- **Course rows**: Dynamic measurement based on actual DOM heights
+- **Documents**: Fixed defaults based on page layout estimates
 
 ## Key Files
 
 - `components/report/hooks/use-dynamic-measure.ts` - Measures DOM elements and caches values
 - `components/report/hooks/use-pagination.ts` - Distributes content across pages
+- `components/report/constants.ts` - Default pagination values
 
-## Pagination Principles
+## Constants
+
+```typescript
+// Course rows per page
+export const DEFAULT_ROWS_PER_FIRST_PAGE = 14
+export const DEFAULT_ROWS_PER_FULL_PAGE = 30
+
+// Documents per page - fixed values based on US Letter layout
+export const DEFAULT_DOCS_PER_FIRST_PAGE = 4
+export const DEFAULT_DOCS_PER_FULL_PAGE = 8
+```
+
+## Document Pagination
+
+Documents use **fixed defaults** instead of dynamic measurement:
+
+| Constant | Value | Rationale |
+|----------|-------|-----------|
+| `DEFAULT_DOCS_PER_FIRST_PAGE` | 4 | First page has header, applicant info, equivalence summary |
+| `DEFAULT_DOCS_PER_FULL_PAGE` | 8 | Subsequent pages have more space |
+
+**Why fixed values?**
+- Dynamic measurement was causing flickering due to feedback loops
+- Document items have variable heights that are hard to measure accurately
+- Fixed estimates based on US Letter layout work reliably
+
+## Course Row Pagination
 
 ### 1. Row Units (Multiline Course Support)
 
@@ -42,9 +71,9 @@ while (remainingCourses.length > 0) {
 }
 ```
 
-### 4. Cache Invalidation
+### 3. Cache Invalidation
 
-Only invalidate the measurement cache when the number of newlines in course names changes, NOT on every content edit. This prevents unnecessary recalculations.
+Only invalidate the measurement cache when the number of newlines in course names changes, NOT on every content edit:
 
 ```typescript
 const totalNewlines = data.credentials.reduce((acc, c) => 
@@ -70,11 +99,10 @@ Course names use `<input>` by default (single line). Users can press **Shift+Ent
 
 ## Layout Stability & Flickering Prevention
 
-- **Gap Awareness**: Pagination calculations MUST account for CSS gaps (e.g., `space-y-2` = 8px)
-- **Conservative Prediction**: Use pessimistic values in `useLayoutEffect`:
-  - **Safety Padding**: 12px+ buffer for browser rendering variations
-  - **Element Estimates**: Overestimate dynamic element heights (e.g., 48px for 32px button)
-- **Reactive Overflow Check**: After predictive calculation, check `scrollHeight > clientHeight`. If true, reduce item count to break flicker cycle.
-- **Dynamic Button Placement**:
-  - "Add Documents" → pinned to last document page
-  - "Add Course" → in Course Table footer
+1. **Fixed Defaults for Documents**: Use `DEFAULT_DOCS_PER_FIRST_PAGE` and `DEFAULT_DOCS_PER_FULL_PAGE` instead of dynamic measurement
+2. **Measurement Caching**: Course row measurements are cached to prevent re-measurement loops
+3. **Gap Awareness**: Pagination calculations account for CSS gaps (e.g., `space-y-2` = 8px)
+4. **Safety Padding**: 36px buffer for course content, 24px for documents
+5. **Dynamic Button Placement**:
+   - "Add Documents" → pinned to last document page
+   - "Add Course" → in Course Table footer

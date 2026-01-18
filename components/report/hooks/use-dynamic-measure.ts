@@ -13,7 +13,7 @@
 
 import { useRef, useState, useEffect, useLayoutEffect, useCallback } from "react"
 import { SampleData } from "../types"
-import { DEFAULT_ROWS_PER_FIRST_PAGE, DEFAULT_ROWS_PER_FULL_PAGE } from "../constants"
+import { DEFAULT_ROWS_PER_FIRST_PAGE, DEFAULT_ROWS_PER_FULL_PAGE, DEFAULT_DOCS_PER_FIRST_PAGE, DEFAULT_DOCS_PER_FULL_PAGE } from "../constants"
 
 type UseDynamicMeasureProps = {
     data: SampleData
@@ -37,8 +37,8 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
     const [rowsPerFirstPageWithTail, setRowsPerFirstPageWithTail] = useState(DEFAULT_ROWS_PER_FIRST_PAGE)
     const [rowsPerFullPage, setRowsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
     const [rowsPerLastPage, setRowsPerLastPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
-    const [documentsPerPage, setDocumentsPerPage] = useState(() => Math.max(1, data.documents.length))
-    const [documentsPerFullPage, setDocumentsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
+    const [documentsPerPage, setDocumentsPerPage] = useState(DEFAULT_DOCS_PER_FIRST_PAGE)
+    const [documentsPerFullPage, setDocumentsPerFullPage] = useState(DEFAULT_DOCS_PER_FULL_PAGE)
 
     // Element refs
     const courseContentRef = useRef<HTMLDivElement>(null)
@@ -163,7 +163,8 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
                     const itemMarginTop = Number.parseFloat(itemStyle.marginTop) || 0
                     const itemMarginBottom = Number.parseFloat(itemStyle.marginBottom) || 0
                     documentItemHeight = itemRect.height + itemMarginTop + itemMarginBottom
-                    documentsListOffset = listRect.top - introRect.top
+                    // Calculate available space from list top to content bottom
+                    documentsListOffset = introRect.bottom - listRect.top
                     contentHeight = contentHeight || introRect.height
                 }
 
@@ -228,33 +229,10 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
                 nextLast = Math.max(1, Math.floor(availableLast / rowHeight))
             }
 
-            // Calculate documents per page
-            if (documentItemHeight > 0 && contentHeight > 0) {
-                const availableDocumentsFirst = contentHeight - documentsListOffset - documentSafetyPadding
-                const itemWithGap = documentItemHeight + documentItemGap
-
-                nextDocumentsPerPage = Math.max(1, Math.floor((availableDocumentsFirst + documentItemGap) / itemWithGap))
-
-                // Account for "Add Document" button when all documents fit on first page
-                const totalDocuments = data.documents.length
-                if (totalDocuments > 0 && totalDocuments <= nextDocumentsPerPage + 1) {
-                    const buttonHeightApprox = 60
-                    const heightForDocs = totalDocuments * documentItemHeight + Math.max(0, totalDocuments - 1) * documentItemGap
-                    const heightWithButton = heightForDocs + documentItemGap + buttonHeightApprox
-
-                    if (totalDocuments <= nextDocumentsPerPage && heightWithButton > availableDocumentsFirst) {
-                        nextDocumentsPerPage = Math.max(1, nextDocumentsPerPage - 1)
-                    }
-                }
-
-                const sectionTitleOverhead = 60
-                const availableDocumentsFull = contentHeight - sectionTitleOverhead - documentSafetyPadding
-                nextDocumentsPerFullPage = Math.max(1, Math.floor(availableDocumentsFull / documentItemHeight))
-            }
-
-            // Apply safety margin to prevent edge-case overflow
-            // This is a key part of the caching strategy: be slightly conservative
-            nextDocumentsPerPage = Math.max(1, nextDocumentsPerPage)
+            // Documents per page: Use fixed defaults from constants
+            // No dynamic calculation needed - fixed layout estimates work better
+            nextDocumentsPerPage = DEFAULT_DOCS_PER_FIRST_PAGE
+            nextDocumentsPerFullPage = DEFAULT_DOCS_PER_FULL_PAGE
 
             const changed =
                 nextFirst !== rowsPerFirstPage ||
