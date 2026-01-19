@@ -81,11 +81,23 @@ Looks up APA-format bibliographic references.
 - USA → Best 387 Colleges, Peterson's, AACRAO Guide
 - Other → IAU Handbook, Europa World, WHED (global defaults)
 
+**Minimum References**: Automatically fills with global defaults if fewer than 3 references found.
+
+## Stage 2: Institution Website Search
+
+After Stage 1 completes, a second API call uses `gemini-2.0-flash` with Google Search to find official websites for each awarding institution.
+
+- **Input**: Unique institution names from extracted credentials
+- **Output**: APA-formatted website citations (e.g., `University Name. (n.d.). Home. https://example.edu`)
+- **Merge**: Citations appended to the `references[]` array
+
+This is separate from Stage 1 because Gemini 3 Preview does not support combining Function Calling with Google Search.
+
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `lib/gemini/client.ts` | Gemini API client with function calling loop |
+| `lib/gemini/client.ts` | Gemini API client with function calling loop + `searchInstitutionWebsites()` |
 | `lib/gemini/schemas.ts` | Zod schemas and ResponseSchema |
 | `lib/gemini/tools/` | Function tool implementations |
 | `lib/pdf-parser.ts` | Data conversion to SampleData format |

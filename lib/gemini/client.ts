@@ -257,14 +257,21 @@ If you cannot find the official website for an institution, skip it.`
 
         console.log("Website search response:", response)
 
-        // Parse the JSON array response (strip markdown code fences if present)
+        // Parse the JSON array response (handle various formats)
         let jsonText = response.trim()
-        if (jsonText.startsWith("```")) {
-            // Remove opening fence (e.g., ```json or ```)
-            jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, "")
-            // Remove closing fence
-            jsonText = jsonText.replace(/\n?```\s*$/, "")
+
+        // Try to extract JSON array using regex (handles markdown fences and extra content)
+        const jsonArrayMatch = jsonText.match(/\[[\s\S]*?\]/);
+        if (jsonArrayMatch) {
+            jsonText = jsonArrayMatch[0]
+        } else {
+            // Fallback: strip markdown fences
+            if (jsonText.startsWith("```")) {
+                jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, "")
+                jsonText = jsonText.replace(/\n?```[\s\S]*$/, "")
+            }
         }
+
         const citations = JSON.parse(jsonText) as string[]
         return Array.isArray(citations) ? citations : []
     } catch (error) {
