@@ -29,15 +29,21 @@ Upload a transcript/diploma PDF and let Gemini AI extract data automatically, wi
 ```
 PDF Upload
   ↓
-Gemini AI (gemini-3-flash-preview)
+Stage 1: Gemini AI (gemini-3-flash-preview) + Function Calling
   ├── Function Call: lookup_grade_conversion (Supabase)
   ├── Function Call: calculate_gpa (AICE 4.35-point scale)
-  └── Function Call: lookup_references (JSON database)
+  └── Function Call: lookup_references (JSON database, min 3 refs)
   ↓
-Structured Output (Zod validated)
+Stage 2: Gemini AI (gemini-2.0-flash) + Google Search
+  └── Search institution websites (APA citations)
+  ↓
+Merge Results → Structured Output (Zod validated)
   ↓
 User Review → Import to Report
 ```
+
+> **Note:** Stage 1 and Stage 2 use different models because Gemini 3 Preview
+> does not support mixing Function Calling with built-in tools like Google Search.
 
 ## Function Calling Tools
 

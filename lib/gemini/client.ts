@@ -60,10 +60,7 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<Anal
             responseMimeType: "application/json",
             responseSchema: transcriptResponseSchema,
         },
-        tools: [{
-            functionDeclarations: toolDeclarations,
-            googleSearch: {},
-        } as any],
+        tools: [{ functionDeclarations: toolDeclarations }],
     })
 
     // Convert ArrayBuffer to base64 for Gemini
@@ -185,6 +182,24 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<Anal
         console.log(JSON.stringify(validated, null, 2))
         console.log("==========================")
 
+        // Stage 2: Search for institution websites
+        const institutionNames = validated.credentials
+            .map((c) => c.awardingInstitution)
+            .filter((name, index, self) => self.indexOf(name) === index) // unique
+
+        const websiteCitations = await searchInstitutionWebsites(institutionNames)
+
+        // Append website citations to references
+        if (websiteCitations.length > 0) {
+            console.log("=== WEBSITE CITATIONS ===")
+            console.log(websiteCitations)
+            console.log("=========================")
+
+            for (const citation of websiteCitations) {
+                validated.references.push({ citation })
+            }
+        }
+
         return {
             isEnglish: validated.isEnglish !== false,
             detectedLanguage: validated.detectedLanguage || "Unknown",
@@ -196,5 +211,64 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<Anal
         throw new Error(
             `AI analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`
         )
+    }
+}
+
+/**
+ * Stage 2: Search for institution websites using Gemini 2.0 Flash with Google Search
+ * @param institutionNames - Array of institution names to search
+ * @returns Array of APA-formatted website citations
+ */
+export async function searchInstitutionWebsites(institutionNames: string[]): Promise<string[]> {
+    if (institutionNames.length === 0) {
+        return []
+    }
+
+    const client = getGeminiClient()
+
+    // Use Gemini 2.0 Flash with Google Search (no function calling)
+    const model = client.getGenerativeModel({
+        model: "gemini-2.0-flash",
+        generationConfig: {
+            responseMimeType: "application/json",
+        },
+        tools: [{ googleSearch: {} } as any],
+    })
+
+    const prompt = `Search for the official websites of the following educational institutions and return APA-formatted citations.
+
+Institutions to search:
+${institutionNames.map((name, i) => `${i + 1}. ${name}`).join("\n")}
+
+For each institution, search for its official website URL and format as an APA citation:
+Format: Institution Name. (n.d.). Home. URL
+
+Return a JSON array of citation strings. Example:
+["Peking University. (n.d.). Home. https://www.pku.edu.cn", "Tsinghua University. (n.d.). Home. https://www.tsinghua.edu.cn"]
+
+If you cannot find the official website for an institution, skip it.`
+
+    try {
+        console.log("=== STAGE 2: SEARCHING INSTITUTION WEBSITES ===")
+        console.log("Institutions:", institutionNames)
+
+        const result = await model.generateContent(prompt)
+        const response = result.response.text()
+
+        console.log("Website search response:", response)
+
+        // Parse the JSON array response (strip markdown code fences if present)
+        let jsonText = response.trim()
+        if (jsonText.startsWith("```")) {
+            // Remove opening fence (e.g., ```json or ```)
+            jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, "")
+            // Remove closing fence
+            jsonText = jsonText.replace(/\n?```\s*$/, "")
+        }
+        const citations = JSON.parse(jsonText) as string[]
+        return Array.isArray(citations) ? citations : []
+    } catch (error) {
+        console.warn("Website search failed:", error)
+        return []
     }
 }

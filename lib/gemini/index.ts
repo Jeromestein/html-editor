@@ -5,7 +5,7 @@
  */
 
 // Client
-export { getGeminiClient, analyzePdfWithGemini, type AnalyzePdfResult } from "./client"
+export { getGeminiClient, analyzePdfWithGemini, searchInstitutionWebsites, type AnalyzePdfResult } from "./client"
 
 // Schemas
 export {

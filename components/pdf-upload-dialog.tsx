@@ -275,6 +275,14 @@ export function PdfUploadDialog({
                                             </td>
                                         </tr>
                                     )}
+                                    {result?.data.references && result.data.references.length > 0 && (
+                                        <tr>
+                                            <td className="px-3 py-2 font-medium bg-gray-50">References</td>
+                                            <td className="px-3 py-2">
+                                                {result.data.references.length} reference(s) found
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
