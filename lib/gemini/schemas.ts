@@ -98,6 +98,15 @@ IMPORTANT RULES:
 6. Be precise with dates, names, and numbers
 7. If information is not found, use "N/A"
 
+FORMAT RULES:
+1. PROGRAM: Use format "English Name (Original Name in Native Language)" to preserve the source language name.
+   Example: "Degree of Master of Science in Engineering (Civilingenjörsexamen) in Electrical Engineering"
+2. STANDARD PROGRAM LENGTH: Use English words instead of numbers.
+   Examples: "Four years", "Four and a half years", "Five years", "Two years", "One and a half years"
+   Do NOT use: "4 years", "4.5 years", "5 years"
+3. INSTITUTION NAME: Use format "English Name (Original Name in Native Language)".
+   Example: "Royal Institute of Technology (Kungliga Tekniska högskolan, KTH)"
+
 TOOL USAGE (MANDATORY):
 1. ALWAYS call lookup_grade_conversion for each unique grade in the document.
 2. ALWAYS call calculate_gpa with all courses after extraction.
@@ -108,5 +117,4 @@ REFERENCES RULES (CRITICAL):
 2. The lookup_references function returns authoritative references from our database - these MUST appear in your output.
 3. Do NOT skip or omit any references returned by lookup_references.
 4. Institution website citations will be added automatically by a separate process - do not add them yourself.`
-
 
