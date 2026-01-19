@@ -87,7 +87,17 @@ export const TRANSCRIPT_ANALYSIS_INSTRUCTION = `You are an expert at analyzing a
 
 IMPORTANT RULES:
 1. LANGUAGE HANDLING: Set isEnglish to true if the document contains enough English content to extract meaningful information (student name, courses, grades, etc.), even if it also contains content in other languages. Only set isEnglish to false if the document is entirely in a non-English language with no usable English content. Set detectedLanguage to the primary language of the original document (e.g., "Swedish", "Chinese").
-2. Extract ALL courses with their year, name, credits, and grades.
+
+2. COURSE EXTRACTION (CRITICAL - DO NOT SKIP ANY COURSES):
+   - Extract EVERY SINGLE course listed in the document, no exceptions
+   - A 3.5-4 year program typically has 40-60+ courses - extract ALL of them
+   - Maintain the EXACT order as they appear in the document
+   - Include courses with 0 credits (e.g., lab courses, seminars, training)
+   - Include courses with PASS/FAIL grades
+   - Do NOT summarize, merge, or skip any courses
+   - Each row in the transcript = one course in the output
+   - If the transcript has multiple pages, extract courses from ALL pages
+
 3. Convert grades to US equivalents using AICE standards:
    - China (0-100): 85-100=A, 75-84=B, 60-74=C, <60=F
    - Russia (1-5): 5=A, 4=B, 3=C, 2=F

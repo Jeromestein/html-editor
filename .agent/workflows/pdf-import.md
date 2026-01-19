@@ -151,6 +151,18 @@ After Stage 2, a third API call uses `gemini-3-flash-preview` with Google Search
 - `equivalenceStatement` (US degree equivalence with major)
 - `evaluationNotes` (comprehensive summary → displayed in Notes section)
 
+### Course Extraction Rules (Critical)
+
+> [!IMPORTANT]
+> Every single course must be extracted - no exceptions. A 3.5-4 year program typically has 40-60+ courses.
+
+- Extract **ALL** courses in the document, maintaining original order
+- Include courses with 0 credits (labs, seminars, training)
+- Include courses with PASS/FAIL grades
+- Do NOT summarize, merge, or skip any courses
+- Each row in transcript = one course in output
+- Extract from ALL pages of the document
+
 ### Evaluation Notes Content
 
 The `evaluationNotes` field contains:
