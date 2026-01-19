@@ -34,10 +34,23 @@ export type UseReportDataOptions = {
     readOnly?: boolean
 }
 
+// Report metadata for tracking save status
+export type ReportMeta = {
+    id: string | null
+    name: string
+    isDirty: boolean
+}
+
 export type UseReportDataReturn = {
     // State
     data: SampleData
     setData: React.Dispatch<React.SetStateAction<SampleData>>
+
+    // Report metadata
+    reportMeta: ReportMeta
+    setReportName: (name: string) => void
+    setReportMeta: (meta: Partial<ReportMeta>) => void
+    markClean: () => void
 
     // Update functions
     updateEquivalenceField: UpdateEquivalenceField
@@ -57,7 +70,7 @@ export type UseReportDataReturn = {
 
     // Utility functions
     handleReset: () => void
-    rehydrate: (newData: SampleData) => void
+    rehydrate: (newData: SampleData, meta?: Partial<ReportMeta>) => void
 }
 
 export function useReportData({
@@ -66,12 +79,20 @@ export function useReportData({
 }: UseReportDataOptions = {}): UseReportDataReturn {
     const [data, setData] = useState<SampleData>(() => initialData ?? buildSampleData())
 
+    // Report metadata state
+    const [reportMeta, setReportMetaState] = useState<ReportMeta>({
+        id: null,
+        name: "Unnamed Draft",
+        isDirty: false,
+    })
+
     // -------------------------------------------------------------------------
     // Update functions
     // -------------------------------------------------------------------------
 
     const updateEquivalenceField: UpdateEquivalenceField = useCallback((credentialIndex, field, value) => {
         if (readOnly) return
+        setReportMetaState((prev) => ({ ...prev, isDirty: true }))
         setData((prev) => ({
             ...prev,
             credentials: prev.credentials.map((cred, index) =>
@@ -101,6 +122,7 @@ export function useReportData({
 
     const updateDataField: UpdateDataField = useCallback((field, value) => {
         if (readOnly) return
+        setReportMetaState((prev) => ({ ...prev, isDirty: true }))
         setData((prev) => ({
             ...prev,
             [field]: value,
@@ -121,6 +143,7 @@ export function useReportData({
 
     const updateCourse: UpdateCourse = useCallback((credentialIndex, id, field, value) => {
         if (readOnly) return
+        setReportMetaState((prev) => ({ ...prev, isDirty: true }))
         setData((prev) => ({
             ...prev,
             credentials: prev.credentials.map((credential, index) => {
@@ -212,6 +235,7 @@ export function useReportData({
 
     const addDocument = useCallback(() => {
         if (readOnly) return
+        setReportMetaState((prev) => ({ ...prev, isDirty: true }))
         setData((prev) => ({
             ...prev,
             documents: [
@@ -227,6 +251,22 @@ export function useReportData({
     }, [readOnly])
 
     // -------------------------------------------------------------------------
+    // Report metadata functions
+    // -------------------------------------------------------------------------
+
+    const setReportName = useCallback((name: string) => {
+        setReportMetaState((prev) => ({ ...prev, name, isDirty: true }))
+    }, [])
+
+    const setReportMeta = useCallback((meta: Partial<ReportMeta>) => {
+        setReportMetaState((prev) => ({ ...prev, ...meta }))
+    }, [])
+
+    const markClean = useCallback(() => {
+        setReportMetaState((prev) => ({ ...prev, isDirty: false }))
+    }, [])
+
+    // -------------------------------------------------------------------------
     // Utility functions
     // -------------------------------------------------------------------------
 
@@ -234,17 +274,27 @@ export function useReportData({
         if (readOnly) return
         if (typeof window !== "undefined" && window.confirm("Reset data to sample?")) {
             setData(buildSampleData())
+            setReportMetaState({ id: null, name: "Unnamed Draft", isDirty: false })
         }
     }, [readOnly])
 
-    const rehydrate = useCallback((newData: SampleData) => {
+    const rehydrate = useCallback((newData: SampleData, meta?: Partial<ReportMeta>) => {
         setData(rehydrateData(newData))
+        if (meta) {
+            setReportMetaState((prev) => ({ ...prev, ...meta, isDirty: false }))
+        }
     }, [])
 
     return {
         // State
         data,
         setData,
+
+        // Report metadata
+        reportMeta,
+        setReportName,
+        setReportMeta,
+        markClean,
 
         // Update functions
         updateEquivalenceField,

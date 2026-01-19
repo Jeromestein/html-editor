@@ -13,12 +13,13 @@
 
 "use client"
 
-import { useMemo, useState, useCallback } from "react"
+import { useMemo, useState, useCallback, useEffect } from "react"
 import { type SampleData } from "@/lib/report-data"
 
 import { ReportToolbar } from "./ui/report-toolbar"
 import { ReportPage } from "./ui/report-page"
 import { PdfUploadDialog } from "@/components/pdf-upload-dialog"
+import { SaveReportDialog, LoadReportDialog } from "./ui/report-dialogs"
 
 import { useDynamicMeasure } from "./hooks/use-dynamic-measure"
 import { usePagination } from "./hooks/use-pagination"
@@ -41,6 +42,9 @@ export default function ReportEditor({
   const {
     data,
     setData,
+    reportMeta,
+    setReportName,
+    setReportMeta,
     updateEquivalenceField,
     updateGradeConversion,
     updateDataField,
@@ -72,6 +76,24 @@ export default function ReportEditor({
   // PDF import dialog state
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false)
 
+  // Save/Load dialog states
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false)
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (reportMeta.isDirty) {
+        e.preventDefault()
+        // Legacy browsers require returnValue to be set
+        // Using empty string as modern browsers ignore custom messages anyway
+        return ""
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [reportMeta.isDirty])
+
   const handleImportPdf = useCallback((importedData: Partial<SampleData>) => {
     // Merge imported data with existing data
     setData((prev) => ({
@@ -88,6 +110,28 @@ export default function ReportEditor({
     }))
     setPdfDialogOpen(false)
   }, [setData])
+
+  // Handle Load with unsaved changes warning
+  const handleLoadClick = useCallback(() => {
+    if (reportMeta.isDirty) {
+      if (!window.confirm("You have unsaved changes. Loading a new report will discard them. Continue?")) {
+        return
+      }
+    }
+    setLoadDialogOpen(true)
+  }, [reportMeta.isDirty])
+
+  // Handle successful load - update metadata
+  const handleLoadComplete = useCallback((loadedData: SampleData, meta: { id: string; name: string }) => {
+    rehydrate(loadedData, { id: meta.id, name: meta.name })
+    setLoadDialogOpen(false)
+  }, [rehydrate])
+
+  // Handle successful save - update metadata
+  const handleSaveComplete = useCallback((savedId: string, savedName: string) => {
+    setReportMeta({ id: savedId, name: savedName, isDirty: false })
+    setSaveDialogOpen(false)
+  }, [setReportMeta])
 
   const firstCoursePageIndex = useMemo(() => {
     const pageWithCourses = reportPages.findIndex((page) => page.courses.length > 0)
@@ -143,6 +187,21 @@ export default function ReportEditor({
         onImport={handleImportPdf}
       />
 
+      {/* Save/Load Dialogs */}
+      <SaveReportDialog
+        data={data}
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        defaultName={reportMeta.name}
+        currentId={reportMeta.id}
+        onSaved={handleSaveComplete}
+      />
+      <LoadReportDialog
+        open={loadDialogOpen}
+        onOpenChange={setLoadDialogOpen}
+        onLoad={handleLoadComplete}
+      />
+
       {/* Table and editable element styles */}
       <style>{`
         .editable-cell:hover {
@@ -165,14 +224,17 @@ export default function ReportEditor({
 
       {showToolbar && (
         <ReportToolbar
-          data={data}
-          onLoad={(newData) => rehydrate(newData)}
-          onReset={handleReset}
           onPrint={handlePrint}
           onImportPdf={() => setPdfDialogOpen(true)}
           onDownloadDocx={handleDownloadDocx}
+          reportMeta={reportMeta}
+          onNameChange={setReportName}
+          onSave={() => setSaveDialogOpen(true)}
+          onLoad={handleLoadClick}
+          onReset={handleReset}
         />
       )}
+
 
       <div className="page-stack mt-8 print:mt-0">
         {reportPages.map((pageData, index) => {
@@ -224,5 +286,3 @@ export default function ReportEditor({
     </div>
   )
 }
-
-

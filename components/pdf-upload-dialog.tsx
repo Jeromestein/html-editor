@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useRef } from "react"
-import { FileUp, Loader2, AlertCircle, CheckCircle2, X } from "lucide-react"
+import { FileUp, Loader2, AlertCircle, CheckCircle2, X, Circle, XCircle, Sparkles } from "lucide-react"
 import {
     Dialog,
     DialogContent,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { SampleData } from "@/lib/report-data"
+import type { ProgressPhase } from "@/lib/gemini"
 
 type DialogState = "idle" | "uploading" | "parsing" | "preview" | "error"
 
@@ -26,6 +27,40 @@ type PdfUploadDialogProps = {
     onImport: (data: Partial<SampleData>) => void
 }
 
+// Step status types
+type StepStatus = "pending" | "active" | "done" | "error"
+
+type Step = {
+    id: string
+    phase: ProgressPhase | null  // null means this step is not tied to a specific phase
+    message: string
+    status: StepStatus
+}
+
+// Initial steps configuration - aligned with multi-stage architecture
+const INITIAL_STEPS: Step[] = [
+    { id: "upload", phase: "uploading", message: "Uploading document...", status: "pending" },
+    { id: "parse", phase: "parsing_pdf", message: "Analyzing document structure...", status: "pending" },
+    { id: "courses", phase: "extracting_courses", message: "Extracting courses...", status: "pending" },
+    { id: "grades", phase: "converting_grades", message: "Looking up grade conversion rules...", status: "pending" },
+    { id: "refs", phase: "finding_refs", message: "Finding references...", status: "pending" },
+    { id: "gpa", phase: "calculating_gpa", message: "Calculating GPA...", status: "pending" },
+    { id: "websites", phase: "searching_websites", message: "Searching institution websites...", status: "pending" },
+    { id: "complete", phase: "complete", message: "Analysis complete!", status: "pending" },
+]
+
+// Map phase to step index for progress updates
+const PHASE_TO_STEP_INDEX: Record<ProgressPhase, number> = {
+    uploading: 0,
+    parsing_pdf: 1,
+    extracting_courses: 2,
+    converting_grades: 3,
+    finding_refs: 4,
+    calculating_gpa: 5,
+    searching_websites: 6,
+    complete: 7,
+}
+
 export function PdfUploadDialog({
     open,
     onOpenChange,
@@ -35,6 +70,7 @@ export function PdfUploadDialog({
     const [error, setError] = useState<string>("")
     const [result, setResult] = useState<ParsedResult | null>(null)
     const [dragActive, setDragActive] = useState(false)
+    const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS)
     const inputRef = useRef<HTMLInputElement>(null)
 
     // Reset state when dialog closes
@@ -44,13 +80,49 @@ export function PdfUploadDialog({
                 setState("idle")
                 setError("")
                 setResult(null)
+                setSteps(INITIAL_STEPS)
             }
             onOpenChange(newOpen)
         },
         [onOpenChange]
     )
 
-    // Handle file upload
+    // Update steps based on progress phase
+    const updateProgress = useCallback((phase: ProgressPhase) => {
+        const targetIndex = PHASE_TO_STEP_INDEX[phase]
+
+        setSteps((prev) =>
+            prev.map((step, index) => {
+                if (index < targetIndex) {
+                    return { ...step, status: "done" }
+                }
+                if (index === targetIndex) {
+                    return { ...step, status: "active" }
+                }
+                return { ...step, status: "pending" }
+            })
+        )
+    }, [])
+
+    // Mark all steps as done
+    const markAllDone = useCallback(() => {
+        setSteps((prev) => prev.map((step) => ({ ...step, status: "done" })))
+    }, [])
+
+    // Mark current step as error
+    const markError = useCallback((phase?: ProgressPhase) => {
+        setSteps((prev) => {
+            const targetIndex = phase ? PHASE_TO_STEP_INDEX[phase] : prev.findIndex((s) => s.status === "active")
+            return prev.map((step, index) => {
+                if (index === targetIndex || (targetIndex === -1 && index === prev.findIndex((s) => s.status === "active"))) {
+                    return { ...step, status: "error" }
+                }
+                return step
+            })
+        })
+    }, [])
+
+    // Handle file upload with SSE streaming
     const handleFile = useCallback(async (file: File) => {
         // Validate file type
         if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
@@ -66,39 +138,77 @@ export function PdfUploadDialog({
             return
         }
 
-        setState("uploading")
+        // Reset and start
+        setSteps(INITIAL_STEPS)
+        setState("parsing")
         setError("")
 
         try {
             const formData = new FormData()
             formData.append("file", file)
 
-            setState("parsing")
-
-            const response = await fetch("/api/parse-pdf", {
+            // Use SSE streaming endpoint
+            const response = await fetch("/api/parse-pdf-stream", {
                 method: "POST",
                 body: formData,
             })
 
-            const json = await response.json()
-
-            if (!json.success) {
-                setError(json.message || "Failed to parse PDF")
-                setState("error")
-                return
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status}`)
             }
 
-            setResult({
-                data: json.data,
-                warnings: json.warnings || [],
-            })
-            setState("preview")
+            const reader = response.body?.getReader()
+            if (!reader) {
+                throw new Error("No response body")
+            }
+
+            const decoder = new TextDecoder()
+            let buffer = ""
+
+            // Read SSE stream
+            while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+
+                buffer += decoder.decode(value, { stream: true })
+
+                // Process complete SSE messages
+                const lines = buffer.split("\n\n")
+                buffer = lines.pop() || "" // Keep incomplete message in buffer
+
+                for (const line of lines) {
+                    if (line.startsWith("data: ")) {
+                        const jsonStr = line.slice(6)
+                        try {
+                            const event = JSON.parse(jsonStr)
+
+                            if (event.type === "progress") {
+                                updateProgress(event.phase as ProgressPhase)
+                            } else if (event.type === "complete") {
+                                markAllDone()
+                                setResult({
+                                    data: event.data,
+                                    warnings: event.warnings || [],
+                                })
+                                setState("preview")
+                            } else if (event.type === "error") {
+                                markError()
+                                setError(event.message || "Analysis failed")
+                                setState("error")
+                            }
+                        } catch (e) {
+                            console.warn("Failed to parse SSE event:", e)
+                        }
+                    }
+                }
+            }
         } catch (err) {
             console.error("Upload error:", err)
+            markError()
             setError("Network error. Please check your connection and try again.")
             setState("error")
         }
-    }, [])
+    }, [updateProgress, markAllDone, markError])
 
     // Handle drag and drop
     const handleDrag = useCallback((e: React.DragEvent) => {
@@ -142,6 +252,27 @@ export function PdfUploadDialog({
         }
     }, [result, onImport, handleOpenChange])
 
+    // Handle retry
+    const handleRetry = useCallback(() => {
+        setState("idle")
+        setError("")
+        setSteps(INITIAL_STEPS)
+    }, [])
+
+    // Render step icon
+    const renderStepIcon = (status: StepStatus) => {
+        switch (status) {
+            case "done":
+                return <CheckCircle2 className="text-green-500 flex-shrink-0" size={14} />
+            case "active":
+                return <Loader2 className="text-blue-500 animate-spin flex-shrink-0" size={14} />
+            case "error":
+                return <XCircle className="text-red-500 flex-shrink-0" size={14} />
+            default:
+                return <Circle className="text-gray-300 flex-shrink-0" size={14} />
+        }
+    }
+
     // Render content based on state
     const renderContent = () => {
         switch (state) {
@@ -178,32 +309,72 @@ export function PdfUploadDialog({
             case "uploading":
             case "parsing":
                 return (
-                    <div className="flex flex-col items-center justify-center py-12">
-                        <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
-                        <p className="mt-4 text-sm text-gray-600">
-                            {state === "uploading" ? "Uploading file..." : "Analyzing with AI..."}
+                    <div className="space-y-4">
+                        {/* AI Progress Container with gradient border */}
+                        <div className="ai-progress-container relative p-4 rounded-lg bg-white">
+                            <div className="space-y-2">
+                                {steps.map((step) => (
+                                    <div key={step.id} className="flex items-center gap-2 text-sm">
+                                        {renderStepIcon(step.status)}
+                                        <span
+                                            className={`
+                                                ${step.status === "active" ? "text-blue-600 font-medium" : ""}
+                                                ${step.status === "done" ? "text-gray-600" : ""}
+                                                ${step.status === "pending" ? "text-gray-400" : ""}
+                                                ${step.status === "error" ? "text-red-600" : ""}
+                                            `}
+                                        >
+                                            {step.message}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <p className="text-center text-xs text-gray-500">
+                            <Sparkles className="inline-block mr-1 text-purple-500" size={12} />
+                            AI analysis in progress...
                         </p>
-                        <p className="mt-1 text-xs text-gray-500">This may take a few seconds</p>
                     </div>
                 )
 
             case "error":
                 return (
-                    <div className="flex flex-col items-center justify-center py-8">
-                        <div className="rounded-full bg-red-100 p-3">
-                            <AlertCircle className="h-8 w-8 text-red-500" />
+                    <div className="space-y-4">
+                        {/* Show steps with error state */}
+                        <div className="ai-progress-container relative p-4 rounded-lg bg-white">
+                            <div className="space-y-2">
+                                {steps.map((step) => (
+                                    <div key={step.id} className="flex items-center gap-2 text-sm">
+                                        {renderStepIcon(step.status)}
+                                        <span
+                                            className={`
+                                                ${step.status === "active" ? "text-blue-600 font-medium" : ""}
+                                                ${step.status === "done" ? "text-gray-600" : ""}
+                                                ${step.status === "pending" ? "text-gray-400" : ""}
+                                                ${step.status === "error" ? "text-red-600" : ""}
+                                            `}
+                                        >
+                                            {step.message}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <p className="mt-4 text-sm font-medium text-red-600">{error}</p>
-                        <Button
-                            variant="outline"
-                            className="mt-4"
-                            onClick={() => {
-                                setState("idle")
-                                setError("")
-                            }}
-                        >
-                            Try Again
-                        </Button>
+
+                        {/* Error message */}
+                        <div className="flex flex-col items-center justify-center py-4">
+                            <div className="rounded-full bg-red-100 p-2">
+                                <AlertCircle className="h-6 w-6 text-red-500" />
+                            </div>
+                            <p className="mt-3 text-sm font-medium text-red-600 text-center">{error}</p>
+                            <Button
+                                variant="outline"
+                                className="mt-4"
+                                onClick={handleRetry}
+                            >
+                                Try Again
+                            </Button>
+                        </div>
                     </div>
                 )
 
@@ -275,6 +446,15 @@ export function PdfUploadDialog({
                                             </td>
                                         </tr>
                                     )}
+                                    {result?.data.references && result.data.references.length > 0 && (
+                                        <tr>
+                                            <td className="px-3 py-2 font-medium bg-gray-50">References</td>
+                                            <td className="px-3 py-2">
+                                                {/* references is a string with bullet points separated by newlines */}
+                                                {(result.data.references as string).split('\n').filter(line => line.trim()).length} reference(s) found
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -288,7 +468,7 @@ export function PdfUploadDialog({
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <FileUp className="h-5 w-5" />
+                        <Sparkles className="h-5 w-5 text-purple-500" />
                         Import from PDF
                     </DialogTitle>
                     <DialogDescription>
@@ -315,6 +495,30 @@ export function PdfUploadDialog({
                         </Button>
                     )}
                 </DialogFooter>
+
+                {/* AI Glow Effect Styles for progress container */}
+                <style>{`
+                    .ai-progress-container {
+                        position: relative;
+                        overflow: visible;
+                    }
+                    .ai-progress-container::before {
+                        content: '';
+                        position: absolute;
+                        inset: -1px;
+                        border-radius: 9px;
+                        background: linear-gradient(90deg, #f472b6, #a78bfa, #38bdf8, #34d399, #facc15, #f472b6);
+                        background-size: 300% 100%;
+                        animation: ai-progress-rotate 3s linear infinite;
+                        z-index: -1;
+                        opacity: 0.5;
+                        filter: blur(3px);
+                    }
+                    @keyframes ai-progress-rotate {
+                        0% { background-position: 0% 50%; }
+                        100% { background-position: 300% 50%; }
+                    }
+                `}</style>
             </DialogContent>
         </Dialog>
     )

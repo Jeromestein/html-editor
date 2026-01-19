@@ -13,7 +13,7 @@
 
 import { useRef, useState, useEffect, useLayoutEffect, useCallback } from "react"
 import { SampleData } from "../types"
-import { DEFAULT_ROWS_PER_FIRST_PAGE, DEFAULT_ROWS_PER_FULL_PAGE } from "../constants"
+import { DEFAULT_ROWS_PER_FIRST_PAGE, DEFAULT_ROWS_PER_FULL_PAGE, DEFAULT_DOCS_PER_FIRST_PAGE, DEFAULT_DOCS_PER_FULL_PAGE } from "../constants"
 
 type UseDynamicMeasureProps = {
     data: SampleData
@@ -37,8 +37,8 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
     const [rowsPerFirstPageWithTail, setRowsPerFirstPageWithTail] = useState(DEFAULT_ROWS_PER_FIRST_PAGE)
     const [rowsPerFullPage, setRowsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
     const [rowsPerLastPage, setRowsPerLastPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
-    const [documentsPerPage, setDocumentsPerPage] = useState(() => Math.max(1, data.documents.length))
-    const [documentsPerFullPage, setDocumentsPerFullPage] = useState(DEFAULT_ROWS_PER_FULL_PAGE)
+    const [documentsPerPage, setDocumentsPerPage] = useState(DEFAULT_DOCS_PER_FIRST_PAGE)
+    const [documentsPerFullPage, setDocumentsPerFullPage] = useState(DEFAULT_DOCS_PER_FULL_PAGE)
 
     // Element refs
     const courseContentRef = useRef<HTMLDivElement>(null)
@@ -57,6 +57,17 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
     // CACHING: Store measured values to prevent re-measurement
     const cachedMeasurementsRef = useRef<CachedMeasurements | null>(null)
     const measurementCompleteRef = useRef(false)
+
+    // Count total newlines in course names - only invalidate cache when this changes
+    const totalNewlines = data.credentials.reduce((acc, c) =>
+        acc + c.courses.reduce((acc2, course) =>
+            acc2 + (course.name.match(/\n/g) || []).length, 0), 0)
+
+    // Invalidate cache only when number of newlines changes
+    useEffect(() => {
+        cachedMeasurementsRef.current = null
+        measurementCompleteRef.current = false
+    }, [totalNewlines])
 
     // Wait for fonts to load
     useEffect(() => {
@@ -94,7 +105,8 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
         const itemEl = documentItemRef.current
 
         let rafId = requestAnimationFrame(() => {
-            const safetyPadding = 36
+            // Extra padding to account for credential table textareas (2 lines instead of 1)
+            const safetyPadding = 60
             const documentSafetyPadding = 24
 
             // =====================================================================
@@ -122,7 +134,10 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
                     const rowRect = rowEl.getBoundingClientRect()
 
                     if (contentRect.height > 0 && rowRect.height > 0) {
-                        rowHeight = rowRect.height
+                        // Use minimum of measured height or 26px (single-line row)
+                        // This prevents multiline rows from affecting pagination for all rows
+                        const singleLineRowHeight = 26
+                        rowHeight = Math.min(rowRect.height, singleLineRowHeight)
                         headerHeight = headerRect.height
                         contentHeight = contentRect.height
                         headerOffset = Math.max(0, startRect.top - contentRect.top)
@@ -148,7 +163,8 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
                     const itemMarginTop = Number.parseFloat(itemStyle.marginTop) || 0
                     const itemMarginBottom = Number.parseFloat(itemStyle.marginBottom) || 0
                     documentItemHeight = itemRect.height + itemMarginTop + itemMarginBottom
-                    documentsListOffset = listRect.top - introRect.top
+                    // Calculate available space from list top to content bottom
+                    documentsListOffset = introRect.bottom - listRect.top
                     contentHeight = contentHeight || introRect.height
                 }
 
@@ -213,33 +229,10 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
                 nextLast = Math.max(1, Math.floor(availableLast / rowHeight))
             }
 
-            // Calculate documents per page
-            if (documentItemHeight > 0 && contentHeight > 0) {
-                const availableDocumentsFirst = contentHeight - documentsListOffset - documentSafetyPadding
-                const itemWithGap = documentItemHeight + documentItemGap
-
-                nextDocumentsPerPage = Math.max(1, Math.floor((availableDocumentsFirst + documentItemGap) / itemWithGap))
-
-                // Account for "Add Document" button when all documents fit on first page
-                const totalDocuments = data.documents.length
-                if (totalDocuments > 0 && totalDocuments <= nextDocumentsPerPage + 1) {
-                    const buttonHeightApprox = 60
-                    const heightForDocs = totalDocuments * documentItemHeight + Math.max(0, totalDocuments - 1) * documentItemGap
-                    const heightWithButton = heightForDocs + documentItemGap + buttonHeightApprox
-
-                    if (totalDocuments <= nextDocumentsPerPage && heightWithButton > availableDocumentsFirst) {
-                        nextDocumentsPerPage = Math.max(1, nextDocumentsPerPage - 1)
-                    }
-                }
-
-                const sectionTitleOverhead = 60
-                const availableDocumentsFull = contentHeight - sectionTitleOverhead - documentSafetyPadding
-                nextDocumentsPerFullPage = Math.max(1, Math.floor(availableDocumentsFull / documentItemHeight))
-            }
-
-            // Apply safety margin to prevent edge-case overflow
-            // This is a key part of the caching strategy: be slightly conservative
-            nextDocumentsPerPage = Math.max(1, nextDocumentsPerPage)
+            // Documents per page: Use fixed defaults from constants
+            // No dynamic calculation needed - fixed layout estimates work better
+            nextDocumentsPerPage = DEFAULT_DOCS_PER_FIRST_PAGE
+            nextDocumentsPerFullPage = DEFAULT_DOCS_PER_FULL_PAGE
 
             const changed =
                 nextFirst !== rowsPerFirstPage ||

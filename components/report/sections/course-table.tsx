@@ -1,6 +1,6 @@
 import { RefObject } from "react"
 import { Trash2, Plus } from "lucide-react"
-import { EditableInput } from "../ui/editable-elements"
+import { EditableInput, EditableTextarea } from "../ui/editable-elements"
 import { Course, UpdateCourseRow } from "../types"
 
 type CourseTableProps = {
@@ -46,10 +46,10 @@ export const CourseTable = ({
             <table className="course-table w-full text-xs text-center border-collapse border border-gray-300 table-fixed">
                 <thead className="bg-gray-100 print:bg-gray-50" ref={headerRef}>
                     <tr>
-                        <th className="border border-gray-300 p-1 w-20">Year</th>
+                        <th className="border border-gray-300 p-1 w-24 text-center">Year</th>
                         <th className="border border-gray-300 p-1 text-center">Course Title</th>
-                        <th className="border border-gray-300 p-1 w-16">Credits</th>
-                        <th className="border border-gray-300 p-1 w-20">Grade</th>
+                        <th className="border border-gray-300 p-1 w-20 text-center">U.S. Credits</th>
+                        <th className="border border-gray-300 p-1 w-20 text-center">U.S. Grade</th>
                         {showActions && <th className="border border-gray-300 p-1 w-6 no-print"></th>}
                     </tr>
                 </thead>
@@ -60,30 +60,39 @@ export const CourseTable = ({
                                 <EditableInput
                                     value={course.year}
                                     onChange={(value) => updateCourse(course.id, "year", value)}
+                                    className="text-center h-full"
+                                    readOnly={readOnly}
+                                />
+                            </td>
+                            <td className="border border-gray-300 p-0 editable-cell">
+                                {course.name.includes('\n') ? (
+                                    <EditableTextarea
+                                        value={course.name}
+                                        onChange={(value) => updateCourse(course.id, "name", value)}
+                                        className="text-left px-2 text-xs leading-snug"
+                                        readOnly={readOnly}
+                                    />
+                                ) : (
+                                    <EditableInput
+                                        value={course.name}
+                                        onChange={(value) => updateCourse(course.id, "name", value)}
+                                        className="text-left px-2 h-[30px]"
+                                        readOnly={readOnly}
+                                    />
+                                )}
+                            </td>
+                            <td className="border border-gray-300 p-0 editable-cell">
+                                <EditableInput
+                                    value={course.usCredits || ""}
+                                    onChange={(value) => updateCourse(course.id, "usCredits", value)}
                                     className="text-left px-2 h-full"
                                     readOnly={readOnly}
                                 />
                             </td>
                             <td className="border border-gray-300 p-0 editable-cell">
                                 <EditableInput
-                                    value={course.name}
-                                    onChange={(value) => updateCourse(course.id, "name", value)}
-                                    className="text-left px-2 h-full"
-                                    readOnly={readOnly}
-                                />
-                            </td>
-                            <td className="border border-gray-300 p-0 editable-cell">
-                                <EditableInput
-                                    value={course.credits}
-                                    onChange={(value) => updateCourse(course.id, "credits", value)}
-                                    className="text-left px-2 h-full"
-                                    readOnly={readOnly}
-                                />
-                            </td>
-                            <td className="border border-gray-300 p-0 editable-cell">
-                                <EditableInput
-                                    value={course.grade}
-                                    onChange={(value) => updateCourse(course.id, "grade", value)}
+                                    value={course.usGrade || ""}
+                                    onChange={(value) => updateCourse(course.id, "usGrade", value)}
                                     className="text-left px-2 h-full"
                                     readOnly={readOnly}
                                 />

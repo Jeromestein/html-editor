@@ -54,7 +54,17 @@ export async function generateDocx(
     children.push(...createDocumentsList(data))
 
     // 4. For each credential: Details + Courses + Grade Conversion
-    data.credentials.forEach((credential, idx) => {
+    // Sort credentials by enrollment year (earliest first)
+    const sortedCredentials = [...data.credentials].sort((a, b) => {
+        // Extract start year from yearsAttended (e.g., "2010 - 2014" -> 2010)
+        const getStartYear = (yearsAttended: string): number => {
+            const match = yearsAttended.match(/(\d{4})/)
+            return match ? parseInt(match[1], 10) : 9999
+        }
+        return getStartYear(a.yearsAttended) - getStartYear(b.yearsAttended)
+    })
+
+    sortedCredentials.forEach((credential, idx) => {
         children.push(...createCredentialDetails(credential, idx))
         children.push(...createCourseTable(credential))
         children.push(...createGradeConversion(credential.gradeConversion))

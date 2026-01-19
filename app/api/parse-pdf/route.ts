@@ -107,8 +107,8 @@ export async function POST(
         // Convert to SampleData format
         const parsedData = convertToSampleData(aiResult.data || {})
 
-        // Collect warnings
-        const warnings: string[] = []
+        // Collect warnings (merge AI warnings with local warnings)
+        const warnings: string[] = [...(aiResult.warnings || [])]
 
         if (!parsedData.credentials || parsedData.credentials.length === 0) {
             warnings.push("No credential information was found in the document.")
@@ -116,6 +116,13 @@ export async function POST(
 
         if (parsedData.credentials?.some((c) => c.courses.length === 0)) {
             warnings.push("Some credentials have no course information.")
+        }
+
+        // Log warnings to backend console
+        if (warnings.length > 0) {
+            console.warn("=== PDF IMPORT WARNINGS ===")
+            warnings.forEach((w) => console.warn(`  - ${w}`))
+            console.warn("===========================")
         }
 
         return NextResponse.json({

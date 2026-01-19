@@ -4,9 +4,12 @@ export type Course = {
   id: number
   year: string
   name: string
-  level: string
+  level: string  // "LD" | "UD" | "GR"
   credits: string
   grade: string
+  usGrade?: string  // Converted US grade
+  usCredits?: string  // Converted US credits
+  conversionSource?: string  // "AICE_RULES" | "AI_INFERRED" | "USER_VERIFIED"
 }
 
 export type CredentialDocument = {
