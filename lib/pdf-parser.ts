@@ -102,5 +102,10 @@ export function convertToSampleData(
             .join("\n")
     }
 
+    // Evaluation Notes
+    if (typeof aiData.evaluationNotes === "string" && aiData.evaluationNotes.trim()) {
+        result.evaluationNotes = aiData.evaluationNotes
+    }
+
     return result
 }

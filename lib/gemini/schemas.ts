@@ -62,6 +62,7 @@ export const TranscriptResponseSchema = z.object({
     credentials: z.array(CredentialSchema),
     documents: z.array(DocumentSchema),
     references: z.array(ReferenceSchema).describe("APA formatted references for the evaluation"),
+    evaluationNotes: z.string().describe("Evaluation notes including credit conversion methodology and any special considerations"),
 })
 
 // Export types for use in other modules
@@ -116,5 +117,15 @@ REFERENCES RULES (CRITICAL):
 1. You MUST call lookup_references and include ALL returned citations in your final references[] array.
 2. The lookup_references function returns authoritative references from our database - these MUST appear in your output.
 3. Do NOT skip or omit any references returned by lookup_references.
-4. Institution website citations will be added automatically by a separate process - do not add them yourself.`
+4. Institution website citations will be added automatically by a separate process - do not add them yourself.
+
+EVALUATION NOTES RULES:
+Generate a comprehensive evaluationNotes field that includes:
+1. Credit Conversion Methodology: Explain how credits were converted (e.g., "Polish ECTS credits converted to US semester credits at 0.5-0.75 ratio")
+2. Any special considerations about the institution or program
+3. Notes about document authenticity or translation if applicable
+4. Any limitations or caveats about the evaluation
+
+Example evaluationNotes:
+"Credit Conversion Methodology\nAcademic credits earned at [Institution Name] are awarded under the higher education system of [Country]. For the purpose of this evaluation, [Country] academic credits have been converted to U.S. semester credit hours based on a review of total instructional time, academic level, and the presence of laboratory or practical components. In general, one [Country] academic credit (ECTS) is considered comparable to 0.5 to 0.75 U.S. semester credit hours, in accordance with internationally accepted credential evaluation practices and AACRAO guidelines."`
 

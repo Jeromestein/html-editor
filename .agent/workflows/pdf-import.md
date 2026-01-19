@@ -149,17 +149,50 @@ After Stage 2, a third API call uses `gemini-3-flash-preview` with Google Search
 - `documents[]` (diploma/certificate info)
 - `references[]` (APA citations)
 - `equivalenceStatement` (US degree equivalence with major)
+- `evaluationNotes` (comprehensive summary → displayed in Notes section)
 
-**Institution Name Format:**
-For non-English institutions, names include original language:
+### Evaluation Notes Content
+
+The `evaluationNotes` field contains:
+1. **Credit Conversion Methodology**: How credits were converted to US semester credits
+2. **Special considerations**: Institution-specific or program-specific notes
+3. **Document notes**: Translation or authenticity considerations
+4. **Limitations**: Any caveats about the evaluation
+
+Example:
+```
+Credit Conversion Methodology
+Academic credits earned at Royal Institute of Technology are awarded under the 
+higher education system of Sweden. For the purpose of this evaluation, Swedish 
+academic credits have been converted to U.S. semester credit hours based on a 
+review of total instructional time, academic level, and the presence of laboratory 
+or practical components.
+```
+
+## Output Format Rules
+
+**Institution Name:**
 ```
 English Name (Original Name in Native Language)
 ```
-Example: `Gyumri State Pedagogical Institute (Գdelays Պdelays Մdelays)`
+Example: `Royal Institute of Technology (Kungliga Tekniska högskolan, KTH)`
 
-This applies to:
+**Program Name:**
+```
+English Name (Original Name in Native Language)
+```
+Example: `Degree of Master of Science in Engineering (Civilingenjörsexamen) in Electrical Engineering`
+
+**Standard Program Length:**
+Use English words instead of numbers.
+- ✓ `Four years`, `Four and a half years`, `Five years`
+- ✗ `4 years`, `4.5 years`, `5 years`
+
+These formats apply to:
 - `awardingInstitution` in credentials
 - `issuedBy` in documents
+- `program` in credentials
+- `standardProgramLength` in credentials
 
 ## Error Handling
 
