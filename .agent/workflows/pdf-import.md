@@ -4,230 +4,124 @@ description: How to use the PDF analysis feature to auto-fill FCE reports from u
 
 # PDF Analysis Workflow
 
-Upload a transcript/diploma PDF and let Gemini AI extract data automatically, with integrated Function Calling for grade conversion, GPA calculation, and reference generation.
+Upload a transcript/diploma PDF and let Gemini AI extract data automatically using a **multi-stage architecture** for improved accuracy and data completeness.
+
+## Multi-Stage Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         PDF Upload                                   │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  STAGE 1: Pure PDF Parsing (gemini-3-flash-preview)                 │
+│  ├── NO tools - focus on data completeness                         │
+│  ├── Extract ALL courses (40-60+ courses per credential)           │
+│  ├── Extract student info, documents, credentials                   │
+│  └── Output: RawCourseSchema (credits, grade, level only)           │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  STAGE 2: Data Processing (gemini-3-flash-preview + Function Calls) │
+│  ├── Tool: lookup_grade_conversion_batch (Supabase)                 │
+│  ├── Tool: lookup_references                                        │
+│  ├── Convert to US grades/credits via Gemini + tool results         │
+│  ├── Generate gradeConversion table, evaluationNotes                │
+│  └── Output: TranscriptResponseSchema (usGrade, usCredits)          │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  STAGE 2.5: Direct Database Lookup (executeReferenceLookup)         │
+│  └── Merge authoritative references (IAU Handbook, Europa World)    │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  STAGE 3: Website Search (gemini-3-flash-preview + Google Search)   │
+│  └── Search institution websites, append APA citations              │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  GPA Calculation (lib/gpa.ts - LOCAL, not Gemini)                   │
+│  └── Calculate using AICE 4.35-point scale                          │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                ▼
+                      User Review → Import to Report
+```
 
 ## SDK
 
-- **Primary**: `@google/genai` (v1.37+) for main analysis with Function Calling
-- **Legacy**: `@google/generative-ai` (v0.24) retained for gradual migration
+- **Primary**: `@google/genai` (v1.37+)
 
 ## Prerequisites
 
 1. **GEMINI_API_KEY** in `.env`
-   ```
-   GEMINI_API_KEY=your-api-key-here
-   ```
-   Get your key: https://aistudio.google.com/apikey
-
-2. **Multi-language support**: Documents with mixed languages are supported. If the document contains non-English content, a warning is shown but processing continues as long as meaningful data can be extracted.
+2. **Multi-language support**: Documents with mixed languages are supported
 
 ## Usage
 
 1. Click **"AI Parse PDF"** in toolbar
 2. Upload PDF (drag & drop or click)
 3. Watch real-time progress (8-step log-style UI with SSE streaming)
-4. Review extracted data (grades, credits, GPA, references, equivalence)
+4. Review extracted data
 5. Click **"Import Data"**
 
 ## Real-time Progress (SSE)
 
-The import process shows 8 steps with live status updates:
-
-| Step | Description |
-|------|-------------|
-| 1 | Uploading document... |
-| 2 | Detecting document type... |
-| 3 | Extracting student info... |
-| 4 | Extracting courses... |
-| 5 | Looking up grade conversion rules... (function call) |
-| 6 | Calculating GPA... (function call) |
-| 7 | Finding references... (function call) |
-| 8 | Generating final report... |
-
-**Status Icons:**
-- ✓ Green checkmark = Completed
-- ◉ Blue spinner = In progress
-- ○ Gray circle = Pending
-- ✗ Red X = Error**
-
-## Architecture
-
-```
-PDF Upload
-  ↓
-Stage 1: Gemini AI (gemini-3-flash-preview) + Function Calling
-  ├── Function Call: lookup_grade_conversion (Supabase)
-  ├── Function Call: calculate_gpa (AICE 4.35-point scale)
-  └── Extracts student info, courses, documents
-  ↓
-Stage 2: Direct Database Lookup (executeReferenceLookup)
-  └── Get 3 authoritative references (IAU Handbook, Europa World, WHED)
-  ↓
-Stage 3: Gemini AI (gemini-3-flash-preview) + Google Search
-  └── Search institution websites (APA citations)
-  ↓
-Merge Results → Structured Output (Zod validated)
-  ↓
-User Review → Import to Report
-```
-
-> **Note:** References are now fetched directly from the database (Stage 2)
-> instead of relying on Gemini function calls, ensuring consistent results.
-> Stage 3 uses the same model with Google Search for website lookups.
+| Step | Phase | Description |
+|------|-------|-------------|
+| 1 | `uploading` | Uploading document... |
+| 2 | `parsing_pdf` | Analyzing document structure... (Stage 1) |
+| 3 | `extracting_courses` | Extracting courses... (Stage 1) |
+| 4 | `converting_grades` | Looking up grade conversion rules... (Stage 2) |
+| 5 | `finding_refs` | Finding references... (Stage 2) |
+| 6 | `calculating_gpa` | Calculating GPA... (Local) |
+| 7 | `searching_websites` | Searching institution websites... (Stage 3) |
+| 8 | `complete` | Analysis complete! |
 
 ## Function Calling Tools
 
-### 1. `lookup_grade_conversion`
-Queries Supabase for grade conversion rules by country and grade.
+### 1. `lookup_grade_conversion_batch`
+**Batch lookup** - queries Supabase for multiple grades at once.
 
 | Parameter | Description |
 |-----------|-------------|
-| `country` | Country of education (e.g., "China", "Armenia") |
-| `grade` | Original grade (e.g., "5", "A", "85") |
+| `country` | Country of education |
+| `grades` | Array of unique original grades (e.g., `["85", "92", "Pass"]`) |
 | `educationLevel` | "undergraduate" or "graduate" |
 
-**Fallback**: If not found, returns empty and Gemini infers with `AI_INFERRED` marker.
-
-### 2. `calculate_gpa`
-Calculates GPA using AICE 4.35-point scale.
-
-| Parameter | Description |
-|-----------|-------------|
-| `courses` | Array of `{usGrade, usCredits}` |
-
-Returns: `{totalCredits, gpa}`
-
-### 3. `lookup_references`
+### 2. `lookup_references`
 Looks up APA-format bibliographic references.
 
 | Parameter | Description |
 |-----------|-------------|
 | `country` | Country of education |
-| `degreeLevel` | "undergraduate", "graduate", "secondary" |
-| `year` | Year for edition matching |
 
-**Mapping**:
-- China → Chinese Universities, China Databases, IAU Handbook
-- USA → Best 387 Colleges, Peterson's, AACRAO Guide
-- Other → IAU Handbook, Europa World, WHED (global defaults)
-
-**Minimum References**: Automatically fills with global defaults if fewer than 3 references found.
-
-## Stage 2: Database Reference Lookup
-
-After Stage 1 completes, the backend directly calls `executeReferenceLookup` to fetch authoritative references from our JSON database:
-
-- **Source**: `.agent/skills/aice-fce-reference/resources/references.json`
-- **Output**: 3 APA-formatted citations (IAU Handbook, Europa World, WHED)
-- **Replaces**: Any AI-generated references (ensures consistency)
-
-## Stage 3: Institution Website Search
-
-After Stage 2, a third API call uses `gemini-3-flash-preview` with Google Search to find official websites for each awarding institution.
-
-- **Model**: `gemini-3-flash-preview` with `googleSearch` tool
-- **Input**: Unique institution names from extracted credentials
-- **Output**: APA-formatted website citations (e.g., `University Name. (n.d.). Home. Retrieved from URL`)
-- **Merge**: Citations appended to the `references[]` array
+> **Note**: GPA calculation is now done locally via `lib/gpa.ts`, not as a Gemini tool.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `lib/gemini/client.ts` | Gemini API client with progress callback + `searchInstitutionWebsites()` |
-| `lib/gemini/schemas.ts` | Zod schemas + `zod-to-json-schema` for Gemini |
-| `lib/gemini/tools/` | Function tool implementations (using `@google/genai` Type format) |
+| `lib/gemini/client.ts` | Multi-stage Gemini client |
+| `lib/gemini/schemas.ts` | Stage 1 & Stage 2 Zod schemas |
+| `lib/gemini/tools/` | Function tool implementations |
+| `lib/gpa.ts` | Local GPA calculation |
 | `lib/pdf-parser.ts` | Data conversion to SampleData format |
-| `app/api/parse-pdf-stream/route.ts` | **Primary** SSE streaming endpoint |
-| `app/api/parse-pdf/route.ts` | Legacy non-streaming endpoint (backup) |
-| `components/pdf-upload-dialog.tsx` | UI with log-style progress and AI gradient border |
+| `app/api/parse-pdf-stream/route.ts` | SSE streaming endpoint |
+| `components/pdf-upload-dialog.tsx` | UI with progress display |
 
-## Extracted Fields
+## Schemas
 
-- `name`, `dob`, `country` (student info)
-- `credentials[]` with courses, grades, GPA
-- `documents[]` (diploma/certificate info)
-- `references[]` (APA citations)
-- `equivalenceStatement` (US degree equivalence with major)
-- `evaluationNotes` (comprehensive summary → displayed in Notes section)
+### Stage 1: `ParsedPdfResponseSchema`
+Raw extraction - no grade conversion:
+- `RawCourseSchema`: `year`, `name`, `credits`, `grade`, `level`
+- No `usGrade`, `usCredits`, `conversionSource`
+- No `references[]`, `gradeConversion[]`
 
-### Course Extraction Rules (Critical)
-
-> [!IMPORTANT]
-> Every single course must be extracted - no exceptions. A 3.5-4 year program typically has 40-60+ courses.
-
-- Extract **ALL** courses in the document, maintaining original order
-- Include courses with 0 credits (labs, seminars, training)
-- Include courses with PASS/FAIL grades
-- Do NOT summarize, merge, or skip any courses
-- Each row in transcript = one course in output
-- Extract from ALL pages of the document
-
-### Evaluation Notes Content
-
-The `evaluationNotes` field contains:
-1. **Credit Conversion Methodology**: How credits were converted to US semester credits
-2. **Special considerations**: Institution-specific or program-specific notes
-3. **Document notes**: Translation or authenticity considerations
-4. **Limitations**: Any caveats about the evaluation
-
-Example:
-```
-Credit Conversion Methodology
-Academic credits earned at Royal Institute of Technology are awarded under the 
-higher education system of Sweden. For the purpose of this evaluation, Swedish 
-academic credits have been converted to U.S. semester credit hours based on a 
-review of total instructional time, academic level, and the presence of laboratory 
-or practical components.
-```
-
-## Output Format Rules
-
-**Credential Order:**
-Credentials are sorted by enrollment year (earliest first) when generating DOCX output.
-- Uses the start year from `yearsAttended` (e.g., "2010 - 2014" → 2010)
-- Undergraduate credentials typically appear before graduate credentials
-
-**Institution Name:**
-```
-English Name (Original Name in Native Language)
-```
-Example: `Royal Institute of Technology (Kungliga Tekniska högskolan, KTH)`
-
-**Program Name:**
-```
-English Name (Original Name in Native Language)
-```
-Example: `Degree of Master of Science in Engineering (Civilingenjörsexamen) in Electrical Engineering`
-
-**Standard Program Length:**
-Use English words instead of numbers.
-- ✓ `Four years`, `Four and a half years`, `Five years`
-- ✗ `4 years`, `4.5 years`, `5 years`
-
-**Grade Conversion Table:**
-
-| Original Grade | U.S. Grade |
-|----------------|------------|
-| 5.0 - bardzo dobry (out of 5) | A |
-| 4.5 - dobry plus (out of 5) | A- |
-| 4.0 - dobry (out of 5) | B+ |
-
-Format rules:
-- **Original Grade**: Include range/value + scale (e.g., "out of 5") + local name when available
-- **U.S. Grade**: Use "U.S. Grade" terminology (A, B, C, D, F)
-- Examples for different countries:
-  - Poland: `5.0 - bardzo dobry (out of 5)` → A
-  - Russia: `5 - отлично (out of 5)` → A
-  - Sweden: `A - Utmärkt` → A
-  - China: `90-100 (out of 100)` → A
-
-These formats apply to:
-- `awardingInstitution` in credentials
-- `issuedBy` in documents
-- `program` in credentials
-- `standardProgramLength` in credentials
-- `gradeConversion[]` in credentials
+### Stage 2: `TranscriptResponseSchema`
+Final output with conversions:
+- `CourseSchema`: includes `usGrade`, `usCredits`, `conversionSource`
+- `gradeConversion[]`, `references[]`, `evaluationNotes`
 
 ## Error Handling
 
@@ -235,15 +129,8 @@ These formats apply to:
 |-------|----------|
 | `FILE_TOO_LARGE` | Keep under 10MB |
 | `AI_ERROR` / 429 | Check API key, wait & retry |
-| Function call fails | Returns empty, AI infers, warning collected |
-| Non-English content | Warning added, but processing continues |
-
-## Warnings
-
-Warnings from function call failures (e.g., "No grade rule found for Armenia") are:
-- Logged to backend console (`=== PDF IMPORT WARNINGS ===`)
-- Returned to frontend for display
-- Merged with local warnings (missing credentials, empty courses)
+| Function call fails | AI infers, warning collected |
+| Non-English content | Processing continues with warning |
 
 ## Extending
 

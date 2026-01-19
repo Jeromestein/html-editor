@@ -1,15 +1,23 @@
 /**
  * Gemini API Client
  * 
- * Handles Gemini client initialization and PDF analysis with function calling.
+ * Multi-stage PDF analysis architecture:
+ *   Stage 1: Pure PDF parsing - no tools, focus on data completeness
+ *   Stage 2: Data processing - grade conversion, references, evaluation notes
+ *   Stage 3: Website search - Google Search for institution websites
+ * 
  * Uses @google/genai SDK with progress callback support.
  */
 
 import { GoogleGenAI, type Content, type Part, type FunctionCall } from "@google/genai"
 import {
+    ParsedPdfResponseSchema,
+    parsedPdfResponseJsonSchema,
     TranscriptResponseSchema,
     transcriptResponseJsonSchema,
-    TRANSCRIPT_ANALYSIS_INSTRUCTION,
+    STAGE1_PDF_PARSING_INSTRUCTION,
+    STAGE2_DATA_PROCESSING_INSTRUCTION,
+    type ParsedPdfResponse,
     type TranscriptResponse,
 } from "./schemas"
 import { toolDeclarations, executeTool } from "./tools"
@@ -40,13 +48,11 @@ const MAX_FUNCTION_CALL_ROUNDS = 10
  */
 export type ProgressPhase =
     | "uploading"
-    | "detecting"
-    | "extracting_student"
+    | "parsing_pdf"
     | "extracting_courses"
     | "converting_grades"
-    | "calculating_gpa"
     | "finding_refs"
-    | "generating"
+    | "calculating_gpa"
     | "searching_websites"
     | "complete"
 
@@ -62,247 +68,235 @@ export type AnalyzePdfResult = {
     warnings: string[]
 }
 
-/**
- * Map function call name to progress phase
- */
-function getFunctionCallPhase(name: string): ProgressPhase {
-    switch (name) {
-        case "lookup_grade_conversion":
-            return "converting_grades"
-        case "calculate_gpa":
-            return "calculating_gpa"
-        case "lookup_references":
-            return "finding_refs"
-        default:
-            return "generating"
-    }
-}
+// ============================================================================
+// Stage 1: Pure PDF Parsing
+// ============================================================================
 
 /**
- * Analyze PDF directly using Gemini API with structured output and function calling
+ * Stage 1: Parse PDF and extract raw data
+ * Focus: Data completeness - extract ALL courses without any conversion
+ * 
  * @param pdfBuffer - PDF file as ArrayBuffer
  * @param onProgress - Optional callback for progress updates
- * @returns Structured data for report (type-safe) with warnings
+ * @returns Raw parsed PDF data (no usGrade, usCredits, references)
  */
-export async function analyzePdfWithGemini(
+async function stage1ParsePdf(
     pdfBuffer: ArrayBuffer,
     onProgress?: ProgressCallback
-): Promise<AnalyzePdfResult> {
+): Promise<ParsedPdfResponse> {
+    const client = getGeminiClient()
+
+    onProgress?.("parsing_pdf", "Analyzing document structure...")
+
+    const base64Data = Buffer.from(pdfBuffer).toString("base64")
+
+    console.log("=== STAGE 1: PDF PARSING ===")
+
+    const result = await client.models.generateContent({
+        model: "gemini-3-flash-preview",
+        config: {
+            systemInstruction: STAGE1_PDF_PARSING_INSTRUCTION,
+            responseMimeType: "application/json" as const,
+            responseSchema: parsedPdfResponseJsonSchema,
+        },
+        // NO tools - pure extraction
+        contents: [
+            {
+                role: "user",
+                parts: [
+                    {
+                        inlineData: {
+                            mimeType: "application/pdf",
+                            data: base64Data,
+                        },
+                    },
+                    { text: "Extract ALL information from this academic document. Do NOT skip any courses." },
+                ],
+            },
+        ],
+    })
+
+    const textPart = result.candidates?.[0]?.content?.parts?.find((p: Part) => p.text)
+    const response = textPart?.text || ""
+
+    console.log("=== STAGE 1 RAW RESPONSE ===")
+    console.log(response.substring(0, 2000) + (response.length > 2000 ? "..." : ""))
+
+    const parsed = JSON.parse(response) as ParsedPdfResponse
+    const validated = ParsedPdfResponseSchema.parse(parsed)
+
+    // Log extraction stats
+    const totalCourses = validated.credentials.reduce(
+        (sum, cred) => sum + cred.courses.length, 0
+    )
+    console.log(`=== STAGE 1 COMPLETE: Extracted ${totalCourses} courses ===`)
+
+    onProgress?.("extracting_courses", `Extracted ${totalCourses} courses`)
+
+    return validated
+}
+
+// ============================================================================
+// Stage 2: Data Processing
+// ============================================================================
+
+/**
+ * Stage 2: Process parsed data with grade conversion and references
+ * 
+ * @param parsedData - Raw data from Stage 1
+ * @param onProgress - Optional callback for progress updates
+ * @returns Full TranscriptResponse with usGrade, usCredits, references, etc.
+ */
+async function stage2ProcessData(
+    parsedData: ParsedPdfResponse,
+    onProgress?: ProgressCallback
+): Promise<{ data: TranscriptResponse; warnings: string[] }> {
     const client = getGeminiClient()
     const warnings: string[] = []
 
-    // Notify: detecting document type
-    onProgress?.("detecting", "Starting AI analysis...")
+    onProgress?.("converting_grades", "Processing grades and credits...")
 
-    // Convert ArrayBuffer to base64 for Gemini
-    const base64Data = Buffer.from(pdfBuffer).toString("base64")
+    console.log("=== STAGE 2: DATA PROCESSING ===")
 
-    try {
-        // Prepare model configuration
-        const modelConfig = {
-            model: "gemini-3-flash-preview",
-            systemInstruction: TRANSCRIPT_ANALYSIS_INSTRUCTION,
-            config: {
-                responseMimeType: "application/json" as const,
-                responseSchema: transcriptResponseJsonSchema,
+    const modelConfig = {
+        model: "gemini-3-flash-preview",
+        config: {
+            systemInstruction: STAGE2_DATA_PROCESSING_INSTRUCTION,
+            responseMimeType: "application/json" as const,
+            responseSchema: transcriptResponseJsonSchema,
+        },
+        tools: [{ functionDeclarations: toolDeclarations }],
+    }
+
+    // Initial request with parsed data as context
+    let result = await client.models.generateContent({
+        ...modelConfig,
+        contents: [
+            {
+                role: "user",
+                parts: [
+                    {
+                        text: `Process this parsed academic document data and:
+1. Convert all grades to US equivalents using lookup_grade_conversion_batch
+2. Calculate US credits (1 Year = 30 US Credits)
+3. Get references using lookup_references
+4. Generate grade conversion table
+5. Generate equivalence statement and evaluation notes
+
+Parsed PDF Data:
+${JSON.stringify(parsedData, null, 2)}`,
+                    },
+                ],
             },
-            tools: [{ functionDeclarations: toolDeclarations }],
+        ],
+    })
+
+    let rounds = 0
+
+    // Function calling loop
+    while (rounds < MAX_FUNCTION_CALL_ROUNDS) {
+        rounds++
+
+        const candidate = result.candidates?.[0]
+        if (!candidate) {
+            throw new Error("No response candidate from Gemini")
         }
 
-        // First call with PDF content
-        console.log("=== INITIAL REQUEST ===")
-        onProgress?.("extracting_student", "Extracting student information...")
+        const functionCalls = (candidate.content?.parts || []).filter(
+            (p: Part) => p.functionCall !== undefined
+        )
 
-        let result = await client.models.generateContent({
-            ...modelConfig,
-            contents: [
-                {
-                    role: "user",
-                    parts: [
-                        {
-                            inlineData: {
-                                mimeType: "application/pdf",
-                                data: base64Data,
-                            },
-                        },
-                        { text: "Analyze this academic document and extract structured information. Use the tools available to look up grade conversion rules, calculate GPA, and find references." },
-                    ],
-                },
-            ],
+        if (functionCalls.length === 0) {
+            console.log(`=== STAGE 2 ROUND ${rounds}: FINAL RESPONSE ===`)
+            break
+        }
+
+        console.log(`=== STAGE 2 ROUND ${rounds}: ${functionCalls.length} FUNCTION CALL(S) ===`)
+
+        // Build conversation history
+        const history: Content[] = [
+            {
+                role: "user",
+                parts: [
+                    { text: `Process this parsed data: ${JSON.stringify(parsedData)}` },
+                ],
+            },
+            {
+                role: "model",
+                parts: candidate.content?.parts || [],
+            },
+        ]
+
+        // Process function calls
+        const functionResponseParts: Part[] = []
+
+        for (const part of functionCalls) {
+            if (part.functionCall) {
+                const { name, args } = part.functionCall as FunctionCall
+
+                // Update progress
+                if (name === "lookup_grade_conversion_batch") {
+                    onProgress?.("converting_grades", "Looking up grade conversion rules...")
+                } else if (name === "lookup_references") {
+                    onProgress?.("finding_refs", "Finding references...")
+                }
+
+                const { result: toolResult, warning } = await executeTool(
+                    name || "",
+                    (args as Record<string, unknown>) || {}
+                )
+
+                if (warning) {
+                    warnings.push(warning)
+                }
+
+                functionResponseParts.push({
+                    functionResponse: {
+                        name: name || "",
+                        response: toolResult as Record<string, unknown>,
+                    },
+                })
+            }
+        }
+
+        // Add function responses and continue
+        history.push({
+            role: "user",
+            parts: functionResponseParts,
         })
 
-        let rounds = 0
-
-        // Function calling loop
-        while (rounds < MAX_FUNCTION_CALL_ROUNDS) {
-            rounds++
-
-            const candidate = result.candidates?.[0]
-            if (!candidate) {
-                throw new Error("No response candidate from Gemini")
-            }
-
-            // Check for function calls
-            const functionCalls = (candidate.content?.parts || []).filter(
-                (p: Part) => p.functionCall !== undefined
-            )
-
-            if (functionCalls.length === 0) {
-                // No function calls - this is the final response
-                console.log(`=== ROUND ${rounds}: FINAL RESPONSE (no function calls) ===`)
-                break
-            }
-
-            console.log(`=== ROUND ${rounds}: ${functionCalls.length} FUNCTION CALL(S) ===`)
-
-            // Build conversation history
-            const history: Content[] = [
-                {
-                    role: "user",
-                    parts: [
-                        {
-                            inlineData: {
-                                mimeType: "application/pdf",
-                                data: base64Data,
-                            },
-                        },
-                        { text: "Analyze this academic document and extract structured information." },
-                    ],
-                },
-                {
-                    role: "model",
-                    parts: candidate.content?.parts || [],
-                },
-            ]
-
-            // Process function calls and build responses
-            const functionResponseParts: Part[] = []
-
-            for (const part of functionCalls) {
-                if (part.functionCall) {
-                    const { name, args } = part.functionCall as FunctionCall
-
-                    // Notify progress for this function call
-                    const phase = getFunctionCallPhase(name || "")
-                    onProgress?.(phase, `Processing ${name}...`)
-
-                    // Execute the tool
-                    const { result: toolResult, warning } = await executeTool(
-                        name || "",
-                        (args as Record<string, unknown>) || {}
-                    )
-
-                    // Collect warnings
-                    if (warning) {
-                        warnings.push(warning)
-                    }
-
-                    // Add function response
-                    functionResponseParts.push({
-                        functionResponse: {
-                            name: name || "",
-                            response: toolResult as Record<string, unknown>,
-                        },
-                    })
-                }
-            }
-
-            // Add function responses to history
-            history.push({
-                role: "user",
-                parts: functionResponseParts,
-            })
-
-            onProgress?.("generating", "Generating final report...")
-
-            // Continue with function results
-            result = await client.models.generateContent({
-                ...modelConfig,
-                contents: history,
-            })
-        }
-
-        if (rounds >= MAX_FUNCTION_CALL_ROUNDS) {
-            warnings.push(`Max function call rounds (${MAX_FUNCTION_CALL_ROUNDS}) reached`)
-        }
-
-        const finalCandidate = result.candidates?.[0]
-        const textPart = finalCandidate?.content?.parts?.find((p: Part) => p.text)
-        const finalResponse = textPart?.text || ""
-
-        console.log("=== GEMINI RAW RESPONSE ===")
-        console.log(finalResponse)
-        console.log("===========================")
-
-        // With structured output, Gemini guarantees valid JSON
-        const parsed = JSON.parse(finalResponse) as TranscriptResponse
-
-        // Validate with Zod for runtime type safety
-        const validated = TranscriptResponseSchema.parse(parsed)
-
-        console.log("=== ZOD VALIDATED DATA ===")
-        console.log(JSON.stringify(validated, null, 2))
-        console.log("==========================")
-
-        // Stage 2: Get authoritative references from our database
-        onProgress?.("finding_refs", "Looking up authoritative references...")
-
-        // Import and call reference lookup directly to ensure we get our database references
-        const { executeReferenceLookup } = await import("./tools/reference-lookup")
-
-        // Get country from first credential
-        const country = validated.credentials[0]?.country || validated.country || "Global"
-        const refResult = await executeReferenceLookup({ country })
-
-        if (refResult.success && refResult.references.length > 0) {
-            console.log("=== DATABASE REFERENCES ===")
-            console.log(refResult.references)
-            console.log("===========================")
-
-            // Clear any AI-generated references and use our database references
-            validated.references = refResult.references.map(ref => ({
-                citation: ref.citation
-            }))
-        }
-
-        // Stage 3: Search for institution websites
-        onProgress?.("searching_websites", "Searching institution websites...")
-
-        const institutionNames = validated.credentials
-            .map((c) => c.awardingInstitution)
-            .filter((name, index, self) => self.indexOf(name) === index) // unique
-
-        const websiteCitations = await searchInstitutionWebsites(institutionNames)
-
-        // Append website citations to references
-        if (websiteCitations.length > 0) {
-            console.log("=== WEBSITE CITATIONS ===")
-            console.log(websiteCitations)
-            console.log("=========================")
-
-            for (const citation of websiteCitations) {
-                validated.references.push({ citation })
-            }
-        }
-
-        onProgress?.("complete", "Analysis complete!")
-
-        return {
-            isEnglish: validated.isEnglish !== false,
-            detectedLanguage: validated.detectedLanguage || "Unknown",
-            data: validated,
-            warnings,
-        }
-    } catch (error) {
-        console.error("Gemini API error:", error)
-        throw new Error(
-            `AI analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`
-        )
+        result = await client.models.generateContent({
+            ...modelConfig,
+            contents: history,
+        })
     }
+
+    if (rounds >= MAX_FUNCTION_CALL_ROUNDS) {
+        warnings.push(`Max function call rounds (${MAX_FUNCTION_CALL_ROUNDS}) reached`)
+    }
+
+    const finalCandidate = result.candidates?.[0]
+    const textPart = finalCandidate?.content?.parts?.find((p: Part) => p.text)
+    const finalResponse = textPart?.text || ""
+
+    console.log("=== STAGE 2 RAW RESPONSE ===")
+    console.log(finalResponse.substring(0, 2000) + (finalResponse.length > 2000 ? "..." : ""))
+
+    const parsed = JSON.parse(finalResponse) as TranscriptResponse
+    const validated = TranscriptResponseSchema.parse(parsed)
+
+    console.log("=== STAGE 2 COMPLETE ===")
+
+    return { data: validated, warnings }
 }
 
+// ============================================================================
+// Stage 3: Website Search
+// ============================================================================
+
 /**
- * Stage 2: Search for institution websites using Gemini 2.0 Flash with Google Search
+ * Stage 3: Search for institution websites using Google Search
+ * 
  * @param institutionNames - Array of institution names to search
  * @returns Array of APA-formatted website citations
  */
@@ -340,7 +334,6 @@ Your response (JSON array only):`
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         })
 
-        // Log full response for debugging
         console.log("Full API result candidates:", JSON.stringify(result.candidates?.[0]?.content?.parts, null, 2))
 
         const textPart = result.candidates?.[0]?.content?.parts?.find((p: Part) => p.text)
@@ -348,30 +341,25 @@ Your response (JSON array only):`
 
         console.log("Website search response:", response)
 
-        // Handle empty response
         if (!response || response.trim() === "") {
             console.warn("Website search returned empty response")
             return []
         }
 
-        // Parse the JSON array response (handle various formats)
         let jsonText = response.trim()
 
         console.log("Raw jsonText:", jsonText.substring(0, 500))
 
-        // Try to extract JSON array using regex (use greedy match for complete array)
         const jsonArrayMatch = jsonText.match(/\[[\s\S]*\]/)
         if (jsonArrayMatch) {
             jsonText = jsonArrayMatch[0]
         } else {
-            // Fallback: strip markdown fences
             if (jsonText.startsWith("```")) {
                 jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, "")
                 jsonText = jsonText.replace(/\n?```[\s\S]*$/, "")
             }
         }
 
-        // Validate before parsing
         if (!jsonText || jsonText.trim() === "" || !jsonText.includes("[")) {
             console.warn("Website search response is not a valid JSON array")
             return []
@@ -387,5 +375,100 @@ Your response (JSON array only):`
     } catch (error) {
         console.warn("Website search failed:", error)
         return []
+    }
+}
+
+// ============================================================================
+// Main Entry Point
+// ============================================================================
+
+/**
+ * Analyze PDF using multi-stage Gemini processing
+ * 
+ * Stage 1: Pure PDF parsing (no tools) - ensures data completeness
+ * Stage 2: Data processing (with tools) - grade conversion, references
+ * Stage 3: Website search - institution official websites
+ * 
+ * @param pdfBuffer - PDF file as ArrayBuffer
+ * @param onProgress - Optional callback for progress updates
+ * @returns Structured data for report with warnings
+ */
+export async function analyzePdfWithGemini(
+    pdfBuffer: ArrayBuffer,
+    onProgress?: ProgressCallback
+): Promise<AnalyzePdfResult> {
+    const warnings: string[] = []
+
+    try {
+        // ========== Stage 1: Pure PDF Parsing ==========
+        const parsedData = await stage1ParsePdf(pdfBuffer, onProgress)
+
+        // ========== Stage 2: Data Processing ==========
+        const { data: processedData, warnings: stage2Warnings } = await stage2ProcessData(
+            parsedData,
+            onProgress
+        )
+        warnings.push(...stage2Warnings)
+
+        // ========== Stage 2.5: Direct Database Reference Lookup ==========
+        onProgress?.("finding_refs", "Looking up authoritative references...")
+
+        const { executeReferenceLookup } = await import("./tools/reference-lookup")
+        const country = processedData.credentials[0]?.country || processedData.country || "Global"
+        const refResult = await executeReferenceLookup({ country })
+
+        if (refResult.success && refResult.references.length > 0) {
+            console.log("=== DATABASE REFERENCES ===")
+            console.log(refResult.references)
+
+            // Merge with existing references (avoid duplicates)
+            const existingCitations = new Set(
+                processedData.references.map(r => r.citation)
+            )
+            for (const ref of refResult.references) {
+                if (!existingCitations.has(ref.citation)) {
+                    processedData.references.push({ citation: ref.citation })
+                }
+            }
+        }
+
+        // ========== Stage 3: Website Search ==========
+        onProgress?.("searching_websites", "Searching institution websites...")
+
+        const institutionNames = processedData.credentials
+            .map((c) => c.awardingInstitution)
+            .filter((name, index, self) => self.indexOf(name) === index)
+
+        const websiteCitations = await searchInstitutionWebsites(institutionNames)
+
+        if (websiteCitations.length > 0) {
+            console.log("=== WEBSITE CITATIONS ===")
+            console.log(websiteCitations)
+
+            for (const citation of websiteCitations) {
+                processedData.references.push({ citation })
+            }
+        }
+
+        // ========== Complete ==========
+        onProgress?.("complete", "Analysis complete!")
+
+        console.log("=== FINAL RESULT ===")
+        console.log(`Total courses: ${processedData.credentials.reduce(
+            (sum, c) => sum + c.courses.length, 0
+        )}`)
+        console.log(`Total references: ${processedData.references.length}`)
+
+        return {
+            isEnglish: processedData.isEnglish !== false,
+            detectedLanguage: processedData.detectedLanguage || "Unknown",
+            data: processedData,
+            warnings,
+        }
+    } catch (error) {
+        console.error("Gemini API error:", error)
+        throw new Error(
+            `AI analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`
+        )
     }
 }

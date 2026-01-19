@@ -2,6 +2,10 @@
  * Gemini Module
  * 
  * Re-exports all Gemini-related functionality.
+ * Multi-stage architecture:
+ *   - Stage 1: Pure PDF parsing (ParsedPdfResponseSchema)
+ *   - Stage 2: Data processing (TranscriptResponseSchema)
+ *   - Stage 3: Website search
  */
 
 // Client
@@ -14,7 +18,19 @@ export {
     type ProgressCallback,
 } from "./client"
 
-// Schemas
+// Schemas - Stage 1 (Raw PDF Parsing)
+export {
+    RawCourseSchema,
+    RawCredentialSchema,
+    ParsedPdfResponseSchema,
+    parsedPdfResponseJsonSchema,
+    STAGE1_PDF_PARSING_INSTRUCTION,
+    type ParsedPdfResponse,
+    type RawCourse,
+    type RawCredential,
+} from "./schemas"
+
+// Schemas - Stage 2 (Final Output)
 export {
     TranscriptResponseSchema,
     CourseSchema,
@@ -22,6 +38,7 @@ export {
     DocumentSchema,
     GradeConversionSchema,
     transcriptResponseJsonSchema,
+    STAGE2_DATA_PROCESSING_INSTRUCTION,
     TRANSCRIPT_ANALYSIS_INSTRUCTION,
     type TranscriptResponse,
     type Course,
@@ -32,6 +49,7 @@ export {
 export { toolDeclarations, executeTool } from "./tools"
 export type {
     GradeConversionResult,
-    GpaCalculatorResult,
     ReferenceLookupResult,
 } from "./tools"
+
+

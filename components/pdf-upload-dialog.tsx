@@ -37,29 +37,27 @@ type Step = {
     status: StepStatus
 }
 
-// Initial steps configuration
+// Initial steps configuration - aligned with multi-stage architecture
 const INITIAL_STEPS: Step[] = [
     { id: "upload", phase: "uploading", message: "Uploading document...", status: "pending" },
-    { id: "detect", phase: "detecting", message: "Detecting document type...", status: "pending" },
-    { id: "student", phase: "extracting_student", message: "Extracting student info...", status: "pending" },
+    { id: "parse", phase: "parsing_pdf", message: "Analyzing document structure...", status: "pending" },
     { id: "courses", phase: "extracting_courses", message: "Extracting courses...", status: "pending" },
     { id: "grades", phase: "converting_grades", message: "Looking up grade conversion rules...", status: "pending" },
-    { id: "gpa", phase: "calculating_gpa", message: "Calculating GPA...", status: "pending" },
     { id: "refs", phase: "finding_refs", message: "Finding references...", status: "pending" },
-    { id: "final", phase: "generating", message: "Generating final report...", status: "pending" },
+    { id: "gpa", phase: "calculating_gpa", message: "Calculating GPA...", status: "pending" },
+    { id: "websites", phase: "searching_websites", message: "Searching institution websites...", status: "pending" },
+    { id: "complete", phase: "complete", message: "Analysis complete!", status: "pending" },
 ]
 
 // Map phase to step index for progress updates
 const PHASE_TO_STEP_INDEX: Record<ProgressPhase, number> = {
     uploading: 0,
-    detecting: 1,
-    extracting_student: 2,
-    extracting_courses: 3,
-    converting_grades: 4,
+    parsing_pdf: 1,
+    extracting_courses: 2,
+    converting_grades: 3,
+    finding_refs: 4,
     calculating_gpa: 5,
-    finding_refs: 6,
-    generating: 7,
-    searching_websites: 7, // Part of final step
+    searching_websites: 6,
     complete: 7,
 }
 

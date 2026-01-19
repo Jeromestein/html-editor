@@ -2,6 +2,7 @@
  * Gemini Tools
  * 
  * Exports all function tool declarations and a unified dispatcher.
+ * Note: GPA calculation is done locally via lib/gpa.ts, not as a Gemini tool.
  */
 
 import type { FunctionDeclaration } from "@google/genai"
@@ -14,12 +15,6 @@ import {
 } from "./grade-conversion"
 
 import {
-    gpaCalculatorDeclaration,
-    executeGpaCalculator,
-    type GpaCalculatorResult,
-} from "./gpa-calculator"
-
-import {
     referenceLookupDeclaration,
     executeReferenceLookup,
     type ReferenceLookupResult,
@@ -28,12 +23,11 @@ import {
 // Export all declarations as an array for Gemini
 export const toolDeclarations: FunctionDeclaration[] = [
     gradeConversionDeclaration,
-    gpaCalculatorDeclaration,
     referenceLookupDeclaration,
 ]
 
 // Result type union
-export type ToolResult = GradeConversionResult | GpaCalculatorResult | ReferenceLookupResult
+export type ToolResult = GradeConversionResult | ReferenceLookupResult
 
 /**
  * Execute a tool by name with given arguments
@@ -52,12 +46,8 @@ export async function executeTool(
     let result: ToolResult
 
     switch (name) {
-        case "lookup_grade_conversion":
+        case "lookup_grade_conversion_batch":
             result = await executeGradeConversion(args as Parameters<typeof executeGradeConversion>[0])
-            break
-
-        case "calculate_gpa":
-            result = await executeGpaCalculator(args as Parameters<typeof executeGpaCalculator>[0])
             break
 
         case "lookup_references":
@@ -82,4 +72,5 @@ export async function executeTool(
 }
 
 // Re-export types
-export type { GradeConversionResult, GpaCalculatorResult, ReferenceLookupResult }
+export type { GradeConversionResult, ReferenceLookupResult }
+

@@ -39,7 +39,7 @@ Pass the schema to the model's generation config.
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 const response = await client.models.generateContent({
-  model: "gemini-2.0-flash",
+  model: "gemini-3-flash-preview",
   contents: "How to make cookies?",
   config: {
     responseMimeType: "application/json",
@@ -69,7 +69,7 @@ const responseSchema = {
 };
 
 const model = client.getGenerativeModel({
-  model: "gemini-2.0-flash",
+  model: "gemini-3-flash-preview",
   generationConfig: {
     responseMimeType: "application/json",
     responseSchema: responseSchema,
