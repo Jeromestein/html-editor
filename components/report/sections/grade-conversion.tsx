@@ -1,4 +1,4 @@
-import { EditableInput } from "../ui/editable-elements"
+import { EditableInput, EditableTextarea } from "../ui/editable-elements"
 import { GradeConversionRow, GradeConversionField } from "../types"
 
 type GradeConversionProps = {
@@ -59,10 +59,10 @@ export const GradeConversion = ({ rows, onUpdate, readOnly = false }: GradeConve
                 {rows.map((row, index) => (
                     <tr key={index} className="hover:bg-blue-50">
                         <td className="border border-gray-300 p-0 editable-cell">
-                            <EditableInput
+                            <EditableTextarea
                                 value={row.grade}
                                 onChange={(value) => onUpdate(index, "grade", value)}
-                                className="text-center h-full"
+                                className="text-center leading-snug"
                                 readOnly={readOnly}
                             />
                         </td>
