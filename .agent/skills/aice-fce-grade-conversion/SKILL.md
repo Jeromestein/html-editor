@@ -45,6 +45,12 @@ AI-inferred grades display as: `A (AI_INFERRED)`
 | CATS (UK) | 120 CATS = 30 US Credits |
 | China | Normalize to 30/year |
 
+**Rounding Rule**: Round US Credits to nearest 0.5
+- 1.62 → 1.50
+- 0.95 → 1.00
+- 4.28 → 4.50
+- 18.34 → 18.50
+
 ## Grade Scales
 
 See [references/grade-rules.md](references/grade-rules.md) for country-specific tables.

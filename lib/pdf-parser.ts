@@ -2,6 +2,22 @@
 import type { SampleData, Credential, CredentialDocument, Course, GradeConversionRow } from "./report-data"
 
 /**
+ * Round a number to nearest 0.5
+ */
+function roundToHalf(value: number): number {
+    return Math.round(value * 2) / 2
+}
+
+/**
+ * Format usCredits with 0.5 rounding
+ */
+function formatUsCredits(rawCredits: unknown): string {
+    const num = parseFloat(String(rawCredits || "0"))
+    if (isNaN(num)) return "0.00"
+    return roundToHalf(num).toFixed(2)
+}
+
+/**
  * Convert parsed AI response to SampleData format
  * @param aiData - Data from Gemini API
  * @returns Partial SampleData for merging
@@ -48,7 +64,7 @@ export function convertToSampleData(
                             credits: String(course.credits || "0"),
                             grade: String(course.grade || ""),
                             usGrade: String(course.usGrade || ""),
-                            usCredits: String(course.usCredits || ""),
+                            usCredits: formatUsCredits(course.usCredits),
                             conversionSource: String(course.conversionSource || "AI_INFERRED"),
                         })
                     )

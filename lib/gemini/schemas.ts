@@ -170,7 +170,7 @@ IMPORTANT RULES:
    - India: 60-100=A, 50-59=B, 40-49=C, <40=F
    - UK: First=A, 2:1=B+, 2:2=B, Third=C, Pass=D, Fail=F
    - For unknown scales, use best judgment and set conversionSource to "AI_INFERRED"
-4. Convert credits: 1 Academic Year = 30 US Semester Credits
+4. Convert credits: 1 Academic Year = 30 US Semester Credits. Round usCredits to nearest 0.5 (e.g., 1.62 → 1.50, 0.95 → 1.00, 4.28 → 4.50)
 5. Determine course level: Years 1-2 = "LD", Years 3-4 = "UD", Graduate = "GR"
 6. Be precise with dates, names, and numbers
 7. If information is not found, use "N/A"
