@@ -158,6 +158,7 @@ async function stage1ParsePdf(
  */
 async function stage2ProcessData(
     parsedData: ParsedPdfResponse,
+    gradingScaleContext?: string,
     onProgress?: ProgressCallback
 ): Promise<{ data: TranscriptResponse; warnings: string[] }> {
     const client = getGeminiClient()
@@ -191,6 +192,9 @@ async function stage2ProcessData(
 3. Get references using lookup_references
 4. Generate grade conversion table
 5. Generate equivalence statement and evaluation notes
+
+Background Information on Grading System:
+${gradingScaleContext || "No specific online grading scale found."}
 
 Parsed PDF Data:
 ${JSON.stringify(parsedData, null, 2)}`,
@@ -300,39 +304,54 @@ ${JSON.stringify(parsedData, null, 2)}`,
 }
 
 // ============================================================================
-// Stage 3: Website Search
+// Stage 1.5: Institution Info Search (Website + Grading Scale)
 // ============================================================================
 
 /**
- * Stage 3: Search for institution websites using Google Search
+ * Stage 1.5: Search for institution websites and grading scales
  * 
  * @param institutionNames - Array of institution names to search
- * @returns Array of APA-formatted website citations
+ * @returns Object with official website citations and grading scale context
  */
-export async function searchInstitutionWebsites(institutionNames: string[]): Promise<string[]> {
+export async function searchInstitutionInfo(institutionNames: string[]): Promise<{
+    officialWebsiteCitations: string[],
+    gradingScaleContext: string
+}> {
     if (institutionNames.length === 0) {
-        return []
+        return { officialWebsiteCitations: [], gradingScaleContext: "" }
     }
 
     const client = getGeminiClient()
 
-    const prompt = `Search for the official websites of the following educational institutions and return APA-formatted citations.
-
+    const prompt = `Perform a comprehensive search for the following educational institutions.
+    
 Institutions to search:
 ${institutionNames.map((name, i) => `${i + 1}. ${name}`).join("\n")}
 
 Instructions:
-1. Use Google Search to find each institution's official website URL
-2. Format each as APA citation: Institution Name. (n.d.). Home. Retrieved from URL
-3. Return ONLY a JSON array with citation strings, no other text
+1. SEARCH TASK 1: Find the official website URL for each institution.
+   - Format as APA citation: Institution Name. (n.d.). Home. Retrieved from URL
+   
+2. SEARCH TASK 2: Find the specific grading scale information for each institution, preferably from Scholaro.
+   - Search query format: "Institution Name grading scale Scholaro"
+   - Summarize the grading scale found (e.g., "0-10 scale, passing is 5", "A-F scale").
+
+3. OUTPUT FORMAT: Return a SINGLE JSON object with two fields:
+   - "officialWebsiteCitations": Array of strings (APA citations for official websites)
+   - "gradingScaleContext": A single string summarizing the grading systems found for all institutions.
 
 Example response:
-["Peking University. (n.d.). Home. Retrieved from https://www.pku.edu.cn", "Tsinghua University. (n.d.). Home. Retrieved from https://www.tsinghua.edu.cn"]
+{
+  "officialWebsiteCitations": [
+    "Peking University. (n.d.). Home. Retrieved from https://www.pku.edu.cn"
+  ],
+  "gradingScaleContext": "Peking University uses a 0-100 scale where 60 is proper passing. For Scholaro, 90-100 is A, 80-89 is B..."
+}
 
-Your response (JSON array only):`
+Your response (JSON object only):`
 
     try {
-        console.log("=== STAGE 3: SEARCHING INSTITUTION WEBSITES ===")
+        console.log("=== STAGE 1.5: SEARCHING INSTITUTION INFO ===")
         console.log("Institutions:", institutionNames)
 
         const result = await client.models.generateContent({
@@ -343,47 +362,45 @@ Your response (JSON array only):`
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         })
 
-        console.log("Full API result candidates:", JSON.stringify(result.candidates?.[0]?.content?.parts, null, 2))
-
         const textPart = result.candidates?.[0]?.content?.parts?.find((p: Part) => p.text)
         const response = textPart?.text || ""
 
-        console.log("Website search response:", response)
-
-        if (!response || response.trim() === "") {
-            console.warn("Website search returned empty response")
-            return []
-        }
+        console.log("Search response:", response.substring(0, 500) + "...")
 
         let jsonText = response.trim()
 
-        console.log("Raw jsonText:", jsonText.substring(0, 500))
-
-        const jsonArrayMatch = jsonText.match(/\[[\s\S]*\]/)
-        if (jsonArrayMatch) {
-            jsonText = jsonArrayMatch[0]
-        } else {
-            if (jsonText.startsWith("```")) {
-                jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, "")
-                jsonText = jsonText.replace(/\n?```[\s\S]*$/, "")
-            }
-        }
-
-        if (!jsonText || jsonText.trim() === "" || !jsonText.includes("[")) {
-            console.warn("Website search response is not a valid JSON array")
-            return []
+        // Clean markdown code blocks
+        if (jsonText.startsWith("```")) {
+            jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?```[\s\S]*$/, "")
+        } else if (jsonText.includes("```json")) {
+            // Sometimes it might be embedded
+            const match = jsonText.match(/```json\n([\s\S]*?)\n```/)
+            if (match) jsonText = match[1]
         }
 
         try {
-            const citations = JSON.parse(jsonText) as string[]
-            return Array.isArray(citations) ? citations : []
+            // First try parsing as is
+            const parsed = JSON.parse(jsonText)
+
+            return {
+                officialWebsiteCitations: Array.isArray(parsed.officialWebsiteCitations) ? parsed.officialWebsiteCitations : [],
+                gradingScaleContext: typeof parsed.gradingScaleContext === 'string' ? parsed.gradingScaleContext : JSON.stringify(parsed.gradingScaleContext || "")
+            }
         } catch (parseError) {
-            console.warn("Failed to parse website search JSON:", parseError)
-            return []
+            console.warn("Failed to parse search JSON:", parseError)
+            // Fallback: try to extract array if main parse fails
+            const arrayMatch = jsonText.match(/\[[\s\S]*\]/)
+            if (arrayMatch) {
+                try {
+                    const arr = JSON.parse(arrayMatch[0])
+                    return { officialWebsiteCitations: arr, gradingScaleContext: "" }
+                } catch (e) { }
+            }
+            return { officialWebsiteCitations: [], gradingScaleContext: "" }
         }
     } catch (error) {
-        console.warn("Website search failed:", error)
-        return []
+        console.warn("Institution info search failed:", error)
+        return { officialWebsiteCitations: [], gradingScaleContext: "" }
     }
 }
 
@@ -412,9 +429,25 @@ export async function analyzePdfWithGemini(
         // ========== Stage 1: Pure PDF Parsing ==========
         const parsedData = await stage1ParsePdf(pdfBuffer, onProgress)
 
+        // ========== Stage 1.5: Institution Info Search (Website + Grading Scale) ==========
+        onProgress?.("searching_websites", "Searching institution info & grading scales...")
+
+        const institutionNames = parsedData.credentials
+            .map((c) => c.awardingInstitution)
+            .filter((name, index, self) => self.indexOf(name) === index)
+
+        // Search for both official websites and grading scale info (Scholaro)
+        const { officialWebsiteCitations, gradingScaleContext } = await searchInstitutionInfo(institutionNames)
+
+        console.log("=== SEARCH RESULTS ===")
+        console.log("Grading Context:", gradingScaleContext.substring(0, 200) + "...")
+        console.log("Official Websites:", officialWebsiteCitations)
+
         // ========== Stage 2: Data Processing ==========
+        // Pass the grading scale context to Stage 2
         const { data: processedData, warnings: stage2Warnings } = await stage2ProcessData(
             parsedData,
+            gradingScaleContext,
             onProgress
         )
         warnings.push(...stage2Warnings)
@@ -441,23 +474,19 @@ export async function analyzePdfWithGemini(
             }
         }
 
-        // ========== Stage 3: Website Search ==========
-        onProgress?.("searching_websites", "Searching institution websites...")
-
-        const institutionNames = processedData.credentials
-            .map((c) => c.awardingInstitution)
-            .filter((name, index, self) => self.indexOf(name) === index)
-
-        const websiteCitations = await searchInstitutionWebsites(institutionNames)
-
-        if (websiteCitations.length > 0) {
-            console.log("=== WEBSITE CITATIONS ===")
-            console.log(websiteCitations)
-
-            for (const citation of websiteCitations) {
-                processedData.references.push({ citation })
+        // Add official website citations LAST (and do NOT add detailed grading info/Scholaro links to refs)
+        if (officialWebsiteCitations.length > 0) {
+            const existingCitations = new Set(
+                processedData.references.map(r => r.citation)
+            )
+            for (const citation of officialWebsiteCitations) {
+                if (!existingCitations.has(citation)) {
+                    processedData.references.push({ citation })
+                }
             }
         }
+
+
 
         // ========== Complete ==========
         onProgress?.("complete", "Analysis complete!")

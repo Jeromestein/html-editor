@@ -22,6 +22,11 @@ Upload a transcript/diploma PDF and let Gemini AI extract data automatically usi
 └───────────────────────────────┬─────────────────────────────────────┘
                                 ▼
 ┌─────────────────────────────────────────────────────────────────────┐
+│  STAGE 1.5: Institution Search (Official Website + Scholaro Grading)│
+│  └── Find official URL + Scholaro grading scale (for Stage 2)       │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
 │  STAGE 2: Data Processing (gemini-3-flash-preview + Function Calls) │
 │  ├── Tool: lookup_grade_conversion_batch (Supabase)                 │
 │  ├── Tool: lookup_references                                        │
@@ -33,11 +38,6 @@ Upload a transcript/diploma PDF and let Gemini AI extract data automatically usi
 ┌─────────────────────────────────────────────────────────────────────┐
 │  STAGE 2.5: Direct Database Lookup (executeReferenceLookup)         │
 │  └── Merge authoritative references (IAU Handbook, Europa World)    │
-└───────────────────────────────┬─────────────────────────────────────┘
-                                ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  STAGE 3: Website Search (gemini-3-flash-preview + Google Search)   │
-│  └── Search institution websites, append APA citations              │
 └───────────────────────────────┬─────────────────────────────────────┘
                                 ▼
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -81,12 +81,11 @@ Bilingual format `{English Name (Original Name)}` is required for:
 |------|-------|-------------|
 | 1 | `uploading` | Uploading document... |
 | 2 | `parsing_pdf` | Analyzing document structure... (Stage 1) |
-| 3 | `extracting_courses` | Extracting courses... (Stage 1) |
+| 3 | `searching_websites` | Searching institution info & grading scales... (Stage 1.5) |
 | 4 | `converting_grades` | Looking up grade conversion rules... (Stage 2) |
 | 5 | `finding_refs` | Finding references... (Stage 2) |
 | 6 | `calculating_gpa` | Calculating GPA... (Local) |
-| 7 | `searching_websites` | Searching institution websites... (Stage 3) |
-| 8 | `complete` | Analysis complete! |
+| 7 | `complete` | Analysis complete! |
 
 ## Function Calling Tools
 

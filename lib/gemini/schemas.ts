@@ -198,6 +198,7 @@ TOOL USAGE (MANDATORY):
 2. ALWAYS call lookup_references with the country
 
 GRADE CONVERSION RULES:
+- **CRITICAL PRECEDENCE**: If "Background Information on Grading System" is provided (e.g., from Scholaro), use it as the PRIMARY source of truth for grading scales. It overrides internal rules.
 - If tool returns usGrade, use it with conversionSource = "AICE_RULES"
 - If tool returns null, infer using these rules and set conversionSource = "AI_INFERRED":
   - China (0-100): 90-100=A, 80-89=B, 70-79=C, 60-69=D, <60=F
