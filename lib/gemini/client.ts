@@ -353,8 +353,10 @@ If you cannot find the official website for an institution, skip it.`
         // Parse the JSON array response (handle various formats)
         let jsonText = response.trim()
 
-        // Try to extract JSON array using regex (handles markdown fences and extra content)
-        const jsonArrayMatch = jsonText.match(/\[[\s\S]*?\]/)
+        console.log("Raw jsonText:", jsonText.substring(0, 500))
+
+        // Try to extract JSON array using regex (use greedy match for complete array)
+        const jsonArrayMatch = jsonText.match(/\[[\s\S]*\]/)
         if (jsonArrayMatch) {
             jsonText = jsonArrayMatch[0]
         } else {
