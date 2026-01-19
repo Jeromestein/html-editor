@@ -23,8 +23,8 @@ export const CourseSchema = z.object({
 })
 
 export const GradeConversionSchema = z.object({
-    grade: z.string().describe("Original grade (e.g., 85-100, 5, A)"),
-    usGrade: z.string().describe("US equivalent (A, B, C, D, F)"),
+    grade: z.string().describe("Original grade with scale info (e.g., '9.0 - 10.0 (out of 10)', '5 - bardzo dobry (out of 5)')"),
+    usGrade: z.string().describe("U.S. equivalent grade (A, B, C, D, F)"),
 })
 
 export const CredentialSchema = z.object({
@@ -107,6 +107,19 @@ FORMAT RULES:
    Do NOT use: "4 years", "4.5 years", "5 years"
 3. INSTITUTION NAME: Use format "English Name (Original Name in Native Language)".
    Example: "Royal Institute of Technology (Kungliga Tekniska högskolan, KTH)"
+
+GRADE CONVERSION TABLE FORMAT:
+1. The gradeConversion array should include the country's grading scale with:
+   - Original Grade: Include the grade range/value AND the scale (e.g., "out of 5", "out of 10", "out of 100")
+   - Local Grade Name: Include the grade name in the original language when available
+   - U.S. Grade: Use "U.S. Grade" terminology (A, B, C, D, F)
+2. Examples for different countries:
+   - Poland: "5.0 - bardzo dobry (out of 5)" → "A"
+   - Poland: "4.5 - dobry plus (out of 5)" → "A-"
+   - Russia: "5 - отлично (out of 5)" → "A"
+   - Sweden: "A - Utmärkt" → "A"
+   - China: "90-100 (out of 100)" → "A"
+3. Always include the maximum grade scale for clarity (out of 5, out of 10, out of 100, etc.)
 
 TOOL USAGE (MANDATORY):
 1. ALWAYS call lookup_grade_conversion for each unique grade in the document.

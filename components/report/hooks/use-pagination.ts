@@ -190,7 +190,10 @@ export const usePagination = ({ data, readOnly, measurements }: UsePaginationPro
                 const isLastOfCredential = pageIndex === effectiveCoursePages.length - 1
                 const capacity = pageIndex === 0 ? (rowsPerFirstPage > 0 ? rowsPerFirstPage : DEFAULT_ROWS_PER_FIRST_PAGE) : (rowsPerFullPage > 0 ? rowsPerFullPage : DEFAULT_ROWS_PER_FULL_PAGE)
                 const rowsUsed = page.courses.length
-                const gradeConversionOverhead = credential.gradeConversion.length + 6
+                // GPA Points table has 14 rows (fixed), grade conversion table has variable rows
+                // Use the larger of the two for layout calculations, plus 6 rows for headers/margins
+                const gpaPointsTableRows = 14
+                const gradeConversionOverhead = Math.max(credential.gradeConversion.length, gpaPointsTableRows) + 6
 
                 let showGradeConversion = false
                 let needsExtraPage = false

@@ -38,6 +38,23 @@ Documents use **fixed defaults** instead of dynamic measurement:
 - Document items have variable heights that are hard to measure accurately
 - Fixed estimates based on US Letter layout work reliably
 
+## Grade Conversion Section
+
+The Grade Conversion section contains two side-by-side tables:
+- **Left**: Original Grade → U.S. Grade (variable rows based on credential)
+- **Right**: GPA Points reference table (fixed 14 rows)
+
+Height calculation uses the taller of the two:
+
+```typescript
+const gpaPointsTableRows = 14  // Fixed: A+ to F/WF, P/CR
+const gradeConversionOverhead = Math.max(
+    credential.gradeConversion.length, 
+    gpaPointsTableRows
+) + 6  // +6 for headers/margins
+```
+
+
 ## Course Row Pagination
 
 ### 1. Row Units (Multiline Course Support)

@@ -188,11 +188,29 @@ Use English words instead of numbers.
 - ✓ `Four years`, `Four and a half years`, `Five years`
 - ✗ `4 years`, `4.5 years`, `5 years`
 
+**Grade Conversion Table:**
+
+| Original Grade | U.S. Grade |
+|----------------|------------|
+| 5.0 - bardzo dobry (out of 5) | A |
+| 4.5 - dobry plus (out of 5) | A- |
+| 4.0 - dobry (out of 5) | B+ |
+
+Format rules:
+- **Original Grade**: Include range/value + scale (e.g., "out of 5") + local name when available
+- **U.S. Grade**: Use "U.S. Grade" terminology (A, B, C, D, F)
+- Examples for different countries:
+  - Poland: `5.0 - bardzo dobry (out of 5)` → A
+  - Russia: `5 - отлично (out of 5)` → A
+  - Sweden: `A - Utmärkt` → A
+  - China: `90-100 (out of 100)` → A
+
 These formats apply to:
 - `awardingInstitution` in credentials
 - `issuedBy` in documents
 - `program` in credentials
 - `standardProgramLength` in credentials
+- `gradeConversion[]` in credentials
 
 ## Error Handling
 
