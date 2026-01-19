@@ -452,7 +452,8 @@ export function PdfUploadDialog({
                                         <tr>
                                             <td className="px-3 py-2 font-medium bg-gray-50">References</td>
                                             <td className="px-3 py-2">
-                                                {result.data.references.length} reference(s) found
+                                                {/* references is a string with bullet points separated by newlines */}
+                                                {(result.data.references as string).split('\n').filter(line => line.trim()).length} reference(s) found
                                             </td>
                                         </tr>
                                     )}

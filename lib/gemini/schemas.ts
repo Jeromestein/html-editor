@@ -98,11 +98,15 @@ IMPORTANT RULES:
 6. Be precise with dates, names, and numbers
 7. If information is not found, use "N/A"
 
-When you need to look up grade conversion rules, use the lookup_grade_conversion function.
-When you need to calculate GPA, use the calculate_gpa function.
-When you need to find references, use the lookup_references function.
+TOOL USAGE (MANDATORY):
+1. ALWAYS call lookup_grade_conversion for each unique grade in the document.
+2. ALWAYS call calculate_gpa with all courses after extraction.
+3. ALWAYS call lookup_references with the country from the document - this returns authoritative bibliographic references that MUST be included in your output.
 
-MANDATORY REFERENCE RULES:
-1. Ensure the references list from lookup_references contains at least 3 bibliographic items.
-2. Institution website citations will be added automatically by a separate process.`
+REFERENCES RULES (CRITICAL):
+1. You MUST call lookup_references and include ALL returned citations in your final references[] array.
+2. The lookup_references function returns authoritative references from our database - these MUST appear in your output.
+3. Do NOT skip or omit any references returned by lookup_references.
+4. Institution website citations will be added automatically by a separate process - do not add them yourself.`
+
 

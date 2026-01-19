@@ -244,7 +244,28 @@ export async function analyzePdfWithGemini(
         console.log(JSON.stringify(validated, null, 2))
         console.log("==========================")
 
-        // Stage 2: Search for institution websites
+        // Stage 2: Get authoritative references from our database
+        onProgress?.("finding_refs", "Looking up authoritative references...")
+
+        // Import and call reference lookup directly to ensure we get our database references
+        const { executeReferenceLookup } = await import("./tools/reference-lookup")
+
+        // Get country from first credential
+        const country = validated.credentials[0]?.country || validated.country || "Global"
+        const refResult = await executeReferenceLookup({ country })
+
+        if (refResult.success && refResult.references.length > 0) {
+            console.log("=== DATABASE REFERENCES ===")
+            console.log(refResult.references)
+            console.log("===========================")
+
+            // Clear any AI-generated references and use our database references
+            validated.references = refResult.references.map(ref => ({
+                citation: ref.citation
+            }))
+        }
+
+        // Stage 3: Search for institution websites
         onProgress?.("searching_websites", "Searching institution websites...")
 
         const institutionNames = validated.credentials
