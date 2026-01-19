@@ -15,6 +15,16 @@ Use this skill when the user provides educational credentials or documents and a
 * Guidance on handling specific country credentials (especially China or North America).
 * Authoritative sources to cite in an evaluation report.
 
+## Bilingual Format
+
+Institution names should follow: `English Name (Original Name in Native Language)`
+
+| Example |
+|---------|
+| `Peking University (北京大学)` |
+| `Lublin University of Technology (Politechnika Lubelska)` |
+| `Warsaw University of Technology (Politechnika Warszawska)` |
+
 ## How to Use
 
 To provide the correct references, the Agent must follow these steps:

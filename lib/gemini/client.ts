@@ -93,7 +93,7 @@ async function stage1ParsePdf(
     console.log("=== STAGE 1: PDF PARSING ===")
 
     const result = await client.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3-pro-preview",
         config: {
             systemInstruction: STAGE1_PDF_PARSING_INSTRUCTION,
             responseMimeType: "application/json" as const,
@@ -124,6 +124,15 @@ async function stage1ParsePdf(
 
     const parsed = JSON.parse(response) as ParsedPdfResponse
     const validated = ParsedPdfResponseSchema.parse(parsed)
+
+    // Sort credentials by graduation year (ascending)
+    validated.credentials.sort((a, b) => {
+        const getYear = (str: string) => {
+            const match = str.match(/\d{4}/)
+            return match ? parseInt(match[0]) : 9999
+        }
+        return getYear(a.yearOfGraduation) - getYear(b.yearOfGraduation)
+    })
 
     // Log extraction stats
     const totalCourses = validated.credentials.reduce(

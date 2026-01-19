@@ -48,6 +48,16 @@ Upload a transcript/diploma PDF and let Gemini AI extract data automatically usi
                       User Review → Import to Report
 ```
 
+## Output Format Standards
+
+Bilingual format `{English Name (Original Name)}` is required for:
+
+| Field | Example |
+|-------|---------|
+| Institution | `Lublin University of Technology (Politechnika Lubelska)` |
+| Program | `Computer Science (Informatyka)` |
+| Original Grade | `5.0 (very good)` / `4.5 (good plus)` |
+
 ## SDK
 
 - **Primary**: `@google/genai` (v1.37+)

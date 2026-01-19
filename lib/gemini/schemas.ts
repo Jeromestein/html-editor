@@ -77,7 +77,7 @@ export const CourseSchema = z.object({
 })
 
 export const GradeConversionSchema = z.object({
-    grade: z.string().describe("Original grade with scale info (e.g., '9.0 - 10.0 (out of 10)', '5 - bardzo dobry (out of 5)')"),
+    grade: z.string().describe("Original grade with descriptor in format: 'value (descriptor)' e.g., '5.0 (very good)', '4.5 (good plus)', '3.0 (satisfactory)'"),
     usGrade: z.string().describe("U.S. equivalent grade (A, B, C, D, F)"),
 })
 
@@ -160,11 +160,14 @@ COURSE LEVEL RULES:
 
 FORMAT RULES:
 1. INSTITUTION NAME: Use format "English Name (Original Name in Native Language)"
-   Example: "Peking University (北京大学)"
-2. PROGRAM: Keep both English and original names if available
-3. STANDARD PROGRAM LENGTH: Use English words (e.g., "Four years", not "4 years")
-4. CREDITS/GRADES: Extract exactly as shown, do not convert
-5. If information is not found, use "N/A"
+   Example: "Peking University (北京大学)", "Lublin University of Technology (Politechnika Lubelska)"
+2. PROGRAM: Use format "English Name (Original Name)" when original differs from English
+   Example: "Computer Science (Informatyka)", "Engineering (工程学)"
+3. ORIGINAL GRADE: Preserve original descriptors in parentheses
+   Example: "5.0 (very good)", "4.5 (good plus)", "очень хорошо (very good)"
+4. STANDARD PROGRAM LENGTH: Use English words (e.g., "Four years", not "4 years")
+5. CREDITS/GRADES: Extract exactly as shown, do not convert
+6. If information is not found, use "N/A"
 
 LANGUAGE HANDLING:
 - Set isEnglish to true if document contains usable English content
@@ -211,11 +214,12 @@ CREDIT CONVERSION:
 
 GRADE CONVERSION TABLE:
 Generate gradeConversion[] array showing the scale used:
-- Format: "grade value - local name (out of max)" → "US Grade"
+- Format: "value (descriptor)" → "US Grade"
+- Use bilingual format: "value (original_descriptor)" preserving source language descriptors
 - Examples:
-  - China: "90-100 (out of 100)" → "A"
-  - Poland: "5.0 - bardzo dobry (out of 5)" → "A"
-  - Sweden: "A - Utmärkt" → "A"
+  - Poland: "5.0 (very good)" → "A", "4.5 (good plus)" → "B+", "3.0 (satisfactory)" → "C"
+  - China: "90-100 (优秀)" → "A", "80-89 (良好)" → "B"
+  - Russia: "5 (отлично)" → "A", "4 (хорошо)" → "B"
 
 EQUIVALENCE STATEMENT:
 Generate equivalenceStatement like:

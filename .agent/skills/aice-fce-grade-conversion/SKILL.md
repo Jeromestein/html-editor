@@ -35,6 +35,15 @@ Convert international grades and credits to US equivalents based on AICE 2025 st
 
 AI-inferred grades display as: `A (AI_INFERRED)`
 
+### Bilingual Format Rule
+When displaying original data, preserve source language with format `{English (Original)}`:
+
+| Field | Example |
+|-------|---------|
+| Institution | `Warsaw University of Technology (Politechnika Warszawska)` |
+| Grade | `5.0 (very good)` / `4.5 (good plus)` / `3.0 (satisfactory)` |
+| Program | `Computer Science (Informatyka)` |
+
 ## Credit Conversion
 
 **Golden Rule**: 1 Academic Year = 30-32 US Semester Credits
