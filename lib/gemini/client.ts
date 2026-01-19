@@ -319,9 +319,15 @@ If you cannot find the official website for an institution, skip it.`
         })
 
         const textPart = result.candidates?.[0]?.content?.parts?.find((p: Part) => p.text)
-        const response = textPart?.text || "[]"
+        const response = textPart?.text || ""
 
         console.log("Website search response:", response)
+
+        // Handle empty response
+        if (!response || response.trim() === "") {
+            console.warn("Website search returned empty response")
+            return []
+        }
 
         // Parse the JSON array response (handle various formats)
         let jsonText = response.trim()
@@ -338,8 +344,19 @@ If you cannot find the official website for an institution, skip it.`
             }
         }
 
-        const citations = JSON.parse(jsonText) as string[]
-        return Array.isArray(citations) ? citations : []
+        // Validate before parsing
+        if (!jsonText || jsonText.trim() === "" || !jsonText.includes("[")) {
+            console.warn("Website search response is not a valid JSON array")
+            return []
+        }
+
+        try {
+            const citations = JSON.parse(jsonText) as string[]
+            return Array.isArray(citations) ? citations : []
+        } catch (parseError) {
+            console.warn("Failed to parse website search JSON:", parseError)
+            return []
+        }
     } catch (error) {
         console.warn("Website search failed:", error)
         return []

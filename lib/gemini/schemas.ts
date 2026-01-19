@@ -85,7 +85,7 @@ export const transcriptResponseJsonSchema = zodToJsonSchema(
 export const TRANSCRIPT_ANALYSIS_INSTRUCTION = `You are an expert at analyzing academic transcripts, diplomas, and educational documents for Foreign Credential Evaluation (FCE).
 
 IMPORTANT RULES:
-1. Only process English documents. If primarily in another language, set isEnglish to false.
+1. LANGUAGE HANDLING: Set isEnglish to true if the document contains enough English content to extract meaningful information (student name, courses, grades, etc.), even if it also contains content in other languages. Only set isEnglish to false if the document is entirely in a non-English language with no usable English content. Set detectedLanguage to the primary language of the original document (e.g., "Swedish", "Chinese").
 2. Extract ALL courses with their year, name, credits, and grades.
 3. Convert grades to US equivalents using AICE standards:
    - China (0-100): 85-100=A, 75-84=B, 60-74=C, <60=F
@@ -105,3 +105,4 @@ When you need to find references, use the lookup_references function.
 MANDATORY REFERENCE RULES:
 1. Ensure the references list from lookup_references contains at least 3 bibliographic items.
 2. Institution website citations will be added automatically by a separate process.`
+
