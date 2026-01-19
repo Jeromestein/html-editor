@@ -4,7 +4,7 @@
  * Exports all function tool declarations and a unified dispatcher.
  */
 
-import type { FunctionDeclaration } from "@google/generative-ai"
+import type { FunctionDeclaration } from "@google/genai"
 
 // Import tool declarations and executors
 import {

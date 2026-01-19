@@ -4,8 +4,8 @@
  * Allows Gemini to calculate GPA and total credits for a set of courses.
  */
 
-import type { FunctionDeclaration } from "@google/generative-ai"
-import { SchemaType } from "@google/generative-ai"
+import type { FunctionDeclaration } from "@google/genai"
+import { Type } from "@google/genai"
 import { calculateStats } from "@/lib/gpa"
 import type { Course } from "@/lib/report-data"
 
@@ -14,20 +14,20 @@ export const gpaCalculatorDeclaration: FunctionDeclaration = {
     name: "calculate_gpa",
     description: "Calculate GPA and total credits for a list of courses. Uses AICE 4.35-point scale.",
     parameters: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
             courses: {
-                type: SchemaType.ARRAY,
+                type: Type.ARRAY,
                 description: "Array of courses with usGrade and usCredits",
                 items: {
-                    type: SchemaType.OBJECT,
+                    type: Type.OBJECT,
                     properties: {
                         usGrade: {
-                            type: SchemaType.STRING,
+                            type: Type.STRING,
                             description: "US grade (A, B, C, D, F, P, etc.)",
                         },
                         usCredits: {
-                            type: SchemaType.STRING,
+                            type: Type.STRING,
                             description: "US semester credits as string",
                         },
                     },

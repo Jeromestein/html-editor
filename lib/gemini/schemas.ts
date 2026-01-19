@@ -1,11 +1,11 @@
 /**
  * Gemini API Schemas
  * 
- * Contains Zod schemas for runtime validation and ResponseSchema for Gemini API.
+ * Contains Zod schemas for runtime validation and JSON schema for Gemini API.
  */
 
-import { SchemaType, type ResponseSchema } from "@google/generative-ai"
 import { z } from "zod"
+import { zodToJsonSchema } from "zod-to-json-schema"
 
 // ============================================================================
 // Zod Schemas for structured output validation
@@ -70,90 +70,13 @@ export type Course = z.infer<typeof CourseSchema>
 export type Credential = z.infer<typeof CredentialSchema>
 
 // ============================================================================
-// ResponseSchema for Gemini API
+// JSON Schema for Gemini API (using zod-to-json-schema)
 // ============================================================================
 
-export const transcriptResponseSchema: ResponseSchema = {
-    type: SchemaType.OBJECT,
-    properties: {
-        isEnglish: { type: SchemaType.BOOLEAN, description: "Whether the document is in English" },
-        detectedLanguage: { type: SchemaType.STRING, description: "Detected language of the document" },
-        name: { type: SchemaType.STRING, description: "Full name of the student" },
-        dob: { type: SchemaType.STRING, description: "Date of birth (format: Month DD, YYYY) or N/A" },
-        country: { type: SchemaType.STRING, description: "Country where the institution is located" },
-        credentials: {
-            type: SchemaType.ARRAY,
-            items: {
-                type: SchemaType.OBJECT,
-                properties: {
-                    awardingInstitution: { type: SchemaType.STRING, description: "Full name in format: English Name (Original Name in Native Language)" },
-                    country: { type: SchemaType.STRING, description: "Country of the institution" },
-                    program: { type: SchemaType.STRING, description: "Name of the program or major" },
-                    admissionRequirements: { type: SchemaType.STRING, description: "Admission requirements if stated, else N/A" },
-                    grantsAccessTo: { type: SchemaType.STRING, description: "What this credential grants access to" },
-                    standardProgramLength: { type: SchemaType.STRING, description: "Duration of the program" },
-                    yearsAttended: { type: SchemaType.STRING, description: "Start year - End year" },
-                    yearOfGraduation: { type: SchemaType.STRING, description: "Graduation year" },
-                    totalYearCredits: { type: SchemaType.STRING, description: "Typical total credits per academic year" },
-                    equivalenceStatement: { type: SchemaType.STRING, description: "US equivalence statement with degree and major, e.g. 'Bachelor's degree with a major in Computer Science'" },
-                    courses: {
-                        type: SchemaType.ARRAY,
-                        items: {
-                            type: SchemaType.OBJECT,
-                            properties: {
-                                year: { type: SchemaType.STRING, description: "Academic year" },
-                                name: { type: SchemaType.STRING, description: "Course name" },
-                                credits: { type: SchemaType.STRING, description: "Original credits" },
-                                grade: { type: SchemaType.STRING, description: "Original grade" },
-                                usGrade: { type: SchemaType.STRING, description: "US grade (A, B, C, D, F)" },
-                                usCredits: { type: SchemaType.STRING, description: "US semester credits" },
-                                level: { type: SchemaType.STRING, description: "LD, UD, or GR" },
-                                conversionSource: { type: SchemaType.STRING, description: "AICE_RULES or AI_INFERRED" },
-                            },
-                            required: ["year", "name", "credits", "grade", "usGrade", "usCredits", "level", "conversionSource"],
-                        },
-                    },
-                    gradeConversion: {
-                        type: SchemaType.ARRAY,
-                        items: {
-                            type: SchemaType.OBJECT,
-                            properties: {
-                                grade: { type: SchemaType.STRING, description: "Original grade" },
-                                usGrade: { type: SchemaType.STRING, description: "US equivalent" },
-                            },
-                            required: ["grade", "usGrade"],
-                        },
-                    },
-                },
-                required: ["awardingInstitution", "country", "program", "admissionRequirements", "grantsAccessTo", "standardProgramLength", "yearsAttended", "yearOfGraduation", "totalYearCredits", "equivalenceStatement", "courses", "gradeConversion"],
-            },
-        },
-        documents: {
-            type: SchemaType.ARRAY,
-            items: {
-                type: SchemaType.OBJECT,
-                properties: {
-                    title: { type: SchemaType.STRING, description: "Document title" },
-                    issuedBy: { type: SchemaType.STRING, description: "Issuing institution in format: English Name (Original Name in Native Language)" },
-                    dateIssued: { type: SchemaType.STRING, description: "Issue date or N/A" },
-                    certificateNo: { type: SchemaType.STRING, description: "Certificate number or N/A" },
-                },
-                required: ["title", "issuedBy", "dateIssued", "certificateNo"],
-            },
-        },
-        references: {
-            type: SchemaType.ARRAY,
-            items: {
-                type: SchemaType.OBJECT,
-                properties: {
-                    citation: { type: SchemaType.STRING, description: "APA formatted citation" },
-                },
-                required: ["citation"],
-            },
-        },
-    },
-    required: ["isEnglish", "detectedLanguage", "name", "dob", "country", "credentials", "documents", "references"],
-}
+export const transcriptResponseJsonSchema = zodToJsonSchema(
+    TranscriptResponseSchema,
+    { target: "openApi3" }
+)
 
 // ============================================================================
 // System Instructions

@@ -7,8 +7,8 @@
  * TODO: Future optimization - migrate to Supabase for faster lookups.
  */
 
-import type { FunctionDeclaration } from "@google/generative-ai"
-import { SchemaType } from "@google/generative-ai"
+import type { FunctionDeclaration } from "@google/genai"
+import { Type } from "@google/genai"
 import * as fs from "fs"
 import * as path from "path"
 
@@ -17,18 +17,18 @@ export const referenceLookupDeclaration: FunctionDeclaration = {
     name: "lookup_references",
     description: "Look up authoritative bibliographic references for a credential evaluation based on country and education level.",
     parameters: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
             country: {
-                type: SchemaType.STRING,
+                type: Type.STRING,
                 description: "Country of education (e.g., 'China', 'USA', 'Global')",
             },
             degreeLevel: {
-                type: SchemaType.STRING,
+                type: Type.STRING,
                 description: "Degree level: 'undergraduate', 'graduate', 'secondary'",
             },
             year: {
-                type: SchemaType.NUMBER,
+                type: Type.NUMBER,
                 description: "Year of credential (for edition matching)",
             },
         },

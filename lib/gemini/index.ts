@@ -5,7 +5,14 @@
  */
 
 // Client
-export { getGeminiClient, analyzePdfWithGemini, searchInstitutionWebsites, type AnalyzePdfResult } from "./client"
+export {
+    getGeminiClient,
+    analyzePdfWithGemini,
+    searchInstitutionWebsites,
+    type AnalyzePdfResult,
+    type ProgressPhase,
+    type ProgressCallback,
+} from "./client"
 
 // Schemas
 export {
@@ -14,7 +21,7 @@ export {
     CredentialSchema,
     DocumentSchema,
     GradeConversionSchema,
-    transcriptResponseSchema,
+    transcriptResponseJsonSchema,
     TRANSCRIPT_ANALYSIS_INSTRUCTION,
     type TranscriptResponse,
     type Course,

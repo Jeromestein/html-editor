@@ -2,37 +2,55 @@
  * Gemini API Client
  * 
  * Handles Gemini client initialization and PDF analysis with function calling.
+ * Uses @google/genai SDK with progress callback support.
  */
 
-import { GoogleGenerativeAI, type Content, type Part } from "@google/generative-ai"
+import { GoogleGenAI, type Content, type Part, type FunctionCall } from "@google/genai"
 import {
     TranscriptResponseSchema,
-    transcriptResponseSchema,
+    transcriptResponseJsonSchema,
     TRANSCRIPT_ANALYSIS_INSTRUCTION,
     type TranscriptResponse,
 } from "./schemas"
 import { toolDeclarations, executeTool } from "./tools"
 
 // Singleton instance for Gemini client
-let geminiClient: GoogleGenerativeAI | null = null
+let geminiClient: GoogleGenAI | null = null
 
 /**
  * Get or create a Gemini client instance
  * @throws Error if GEMINI_API_KEY is not set
  */
-export function getGeminiClient(): GoogleGenerativeAI {
+export function getGeminiClient(): GoogleGenAI {
     if (!geminiClient) {
         const apiKey = process.env.GEMINI_API_KEY
         if (!apiKey) {
             throw new Error("GEMINI_API_KEY environment variable is not set")
         }
-        geminiClient = new GoogleGenerativeAI(apiKey)
+        geminiClient = new GoogleGenAI({ apiKey })
     }
     return geminiClient
 }
 
 // Maximum number of function call rounds
 const MAX_FUNCTION_CALL_ROUNDS = 10
+
+/**
+ * Progress phase types for UI feedback
+ */
+export type ProgressPhase =
+    | "uploading"
+    | "detecting"
+    | "extracting_student"
+    | "extracting_courses"
+    | "converting_grades"
+    | "calculating_gpa"
+    | "finding_refs"
+    | "generating"
+    | "searching_websites"
+    | "complete"
+
+export type ProgressCallback = (phase: ProgressPhase, detail?: string) => void
 
 /**
  * Result type for PDF analysis
@@ -45,54 +63,89 @@ export type AnalyzePdfResult = {
 }
 
 /**
+ * Map function call name to progress phase
+ */
+function getFunctionCallPhase(name: string): ProgressPhase {
+    switch (name) {
+        case "lookup_grade_conversion":
+            return "converting_grades"
+        case "calculate_gpa":
+            return "calculating_gpa"
+        case "lookup_references":
+            return "finding_refs"
+        default:
+            return "generating"
+    }
+}
+
+/**
  * Analyze PDF directly using Gemini API with structured output and function calling
  * @param pdfBuffer - PDF file as ArrayBuffer
+ * @param onProgress - Optional callback for progress updates
  * @returns Structured data for report (type-safe) with warnings
  */
-export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<AnalyzePdfResult> {
+export async function analyzePdfWithGemini(
+    pdfBuffer: ArrayBuffer,
+    onProgress?: ProgressCallback
+): Promise<AnalyzePdfResult> {
     const client = getGeminiClient()
     const warnings: string[] = []
 
-    const model = client.getGenerativeModel({
-        model: "gemini-3-flash-preview",
-        systemInstruction: TRANSCRIPT_ANALYSIS_INSTRUCTION,
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: transcriptResponseSchema,
-        },
-        tools: [{ functionDeclarations: toolDeclarations }],
-    })
+    // Notify: detecting document type
+    onProgress?.("detecting", "Starting AI analysis...")
 
     // Convert ArrayBuffer to base64 for Gemini
     const base64Data = Buffer.from(pdfBuffer).toString("base64")
 
     try {
+        // Prepare model configuration
+        const modelConfig = {
+            model: "gemini-3-flash-preview",
+            systemInstruction: TRANSCRIPT_ANALYSIS_INSTRUCTION,
+            config: {
+                responseMimeType: "application/json" as const,
+                responseSchema: transcriptResponseJsonSchema,
+            },
+            tools: [{ functionDeclarations: toolDeclarations }],
+        }
+
         // First call with PDF content
         console.log("=== INITIAL REQUEST ===")
-        let result = await model.generateContent([
-            {
-                inlineData: {
-                    mimeType: "application/pdf",
-                    data: base64Data,
-                },
-            },
-            { text: "Analyze this academic document and extract structured information. Use the tools available to look up grade conversion rules, calculate GPA, and find references." },
-        ])
+        onProgress?.("extracting_student", "Extracting student information...")
 
-        let response = result.response
+        let result = await client.models.generateContent({
+            ...modelConfig,
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        {
+                            inlineData: {
+                                mimeType: "application/pdf",
+                                data: base64Data,
+                            },
+                        },
+                        { text: "Analyze this academic document and extract structured information. Use the tools available to look up grade conversion rules, calculate GPA, and find references." },
+                    ],
+                },
+            ],
+        })
+
         let rounds = 0
 
         // Function calling loop
         while (rounds < MAX_FUNCTION_CALL_ROUNDS) {
             rounds++
 
-            const candidate = response.candidates?.[0]
+            const candidate = result.candidates?.[0]
             if (!candidate) {
                 throw new Error("No response candidate from Gemini")
             }
 
             // Check for function calls
-            const functionCalls = candidate.content.parts.filter((p: Part) => "functionCall" in p)
+            const functionCalls = (candidate.content?.parts || []).filter(
+                (p: Part) => p.functionCall !== undefined
+            )
 
             if (functionCalls.length === 0) {
                 // No function calls - this is the final response
@@ -118,7 +171,7 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<Anal
                 },
                 {
                     role: "model",
-                    parts: candidate.content.parts,
+                    parts: candidate.content?.parts || [],
                 },
             ]
 
@@ -126,13 +179,17 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<Anal
             const functionResponseParts: Part[] = []
 
             for (const part of functionCalls) {
-                if ("functionCall" in part && part.functionCall) {
-                    const { name, args } = part.functionCall
+                if (part.functionCall) {
+                    const { name, args } = part.functionCall as FunctionCall
+
+                    // Notify progress for this function call
+                    const phase = getFunctionCallPhase(name || "")
+                    onProgress?.(phase, `Processing ${name}...`)
 
                     // Execute the tool
                     const { result: toolResult, warning } = await executeTool(
-                        name,
-                        args as Record<string, unknown>
+                        name || "",
+                        (args as Record<string, unknown>) || {}
                     )
 
                     // Collect warnings
@@ -143,30 +200,35 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<Anal
                     // Add function response
                     functionResponseParts.push({
                         functionResponse: {
-                            name,
-                            response: toolResult as object,
+                            name: name || "",
+                            response: toolResult as Record<string, unknown>,
                         },
                     })
                 }
             }
 
-            // Add function responses to history (must use 'function' role, not 'user')
+            // Add function responses to history
             history.push({
-                role: "function",
+                role: "user",
                 parts: functionResponseParts,
             })
 
-            // Create chat with history and send continuation request
-            const chat = model.startChat({ history })
-            const continueResult = await chat.sendMessage("Continue with the analysis using the function results provided.")
-            response = continueResult.response
+            onProgress?.("generating", "Generating final report...")
+
+            // Continue with function results
+            result = await client.models.generateContent({
+                ...modelConfig,
+                contents: history,
+            })
         }
 
         if (rounds >= MAX_FUNCTION_CALL_ROUNDS) {
             warnings.push(`Max function call rounds (${MAX_FUNCTION_CALL_ROUNDS}) reached`)
         }
 
-        const finalResponse = response.text()
+        const finalCandidate = result.candidates?.[0]
+        const textPart = finalCandidate?.content?.parts?.find((p: Part) => p.text)
+        const finalResponse = textPart?.text || ""
 
         console.log("=== GEMINI RAW RESPONSE ===")
         console.log(finalResponse)
@@ -183,6 +245,8 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<Anal
         console.log("==========================")
 
         // Stage 2: Search for institution websites
+        onProgress?.("searching_websites", "Searching institution websites...")
+
         const institutionNames = validated.credentials
             .map((c) => c.awardingInstitution)
             .filter((name, index, self) => self.indexOf(name) === index) // unique
@@ -199,6 +263,8 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<Anal
                 validated.references.push({ citation })
             }
         }
+
+        onProgress?.("complete", "Analysis complete!")
 
         return {
             isEnglish: validated.isEnglish !== false,
@@ -226,15 +292,6 @@ export async function searchInstitutionWebsites(institutionNames: string[]): Pro
 
     const client = getGeminiClient()
 
-    // Use Gemini 2.0 Flash with Google Search (no function calling)
-    const model = client.getGenerativeModel({
-        model: "gemini-2.0-flash",
-        generationConfig: {
-            responseMimeType: "application/json",
-        },
-        tools: [{ googleSearch: {} } as any],
-    })
-
     const prompt = `Search for the official websites of the following educational institutions and return APA-formatted citations.
 
 Institutions to search:
@@ -252,8 +309,17 @@ If you cannot find the official website for an institution, skip it.`
         console.log("=== STAGE 2: SEARCHING INSTITUTION WEBSITES ===")
         console.log("Institutions:", institutionNames)
 
-        const result = await model.generateContent(prompt)
-        const response = result.response.text()
+        const result = await client.models.generateContent({
+            model: "gemini-2.0-flash",
+            config: {
+                responseMimeType: "application/json",
+                tools: [{ googleSearch: {} }],
+            },
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+        })
+
+        const textPart = result.candidates?.[0]?.content?.parts?.find((p: Part) => p.text)
+        const response = textPart?.text || "[]"
 
         console.log("Website search response:", response)
 
@@ -261,7 +327,7 @@ If you cannot find the official website for an institution, skip it.`
         let jsonText = response.trim()
 
         // Try to extract JSON array using regex (handles markdown fences and extra content)
-        const jsonArrayMatch = jsonText.match(/\[[\s\S]*?\]/);
+        const jsonArrayMatch = jsonText.match(/\[[\s\S]*?\]/)
         if (jsonArrayMatch) {
             jsonText = jsonArrayMatch[0]
         } else {

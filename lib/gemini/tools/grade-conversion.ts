@@ -4,8 +4,8 @@
  * Allows Gemini to look up grade conversion rules from Supabase.
  */
 
-import type { FunctionDeclaration } from "@google/generative-ai"
-import { SchemaType } from "@google/generative-ai"
+import type { FunctionDeclaration } from "@google/genai"
+import { Type } from "@google/genai"
 import { lookupGradeRule } from "@/lib/grade-conversion"
 
 // Function declaration for Gemini
@@ -13,18 +13,18 @@ export const gradeConversionDeclaration: FunctionDeclaration = {
     name: "lookup_grade_conversion",
     description: "Look up grade conversion rules from the database. Returns US grade equivalent for a given country and grade.",
     parameters: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
             country: {
-                type: SchemaType.STRING,
+                type: Type.STRING,
                 description: "Country of education (e.g., 'China', 'Russia', 'India', 'UK')",
             },
             grade: {
-                type: SchemaType.STRING,
+                type: Type.STRING,
                 description: "Original grade to convert (e.g., '85', 'A', 'First Class')",
             },
             educationLevel: {
-                type: SchemaType.STRING,
+                type: Type.STRING,
                 description: "Education level: 'undergraduate' or 'graduate'",
             },
         },
