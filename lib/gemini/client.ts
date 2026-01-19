@@ -60,7 +60,10 @@ export async function analyzePdfWithGemini(pdfBuffer: ArrayBuffer): Promise<Anal
             responseMimeType: "application/json",
             responseSchema: transcriptResponseSchema,
         },
-        tools: [{ functionDeclarations: toolDeclarations }],
+        tools: [{
+            functionDeclarations: toolDeclarations,
+            googleSearch: {},
+        } as any],
     })
 
     // Convert ArrayBuffer to base64 for Gemini

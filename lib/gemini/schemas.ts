@@ -177,4 +177,8 @@ IMPORTANT RULES:
 
 When you need to look up grade conversion rules, use the lookup_grade_conversion function.
 When you need to calculate GPA, use the calculate_gpa function.
-When you need to find references, use the lookup_references function.`
+When you need to find references, use the lookup_references function.
+
+MANDATORY REFERENCE RULES:
+1. You MUST use the built-in Google Search to find the official website for each awarding institution found in the document. Add these website citations to the references list.
+2. Ensure the final references list contains at least 3 items (combining books/databases from lookup_references and websites from search).`

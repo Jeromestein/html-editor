@@ -168,24 +168,27 @@ export async function executeReferenceLookup(args: {
         const countryKey = args.country.toLowerCase()
 
         // If we have country-specific references, use those
+        let relevantRefs: Reference[] = []
         if (countrySpecificIds[countryKey]) {
-            const specificRefs = refs.filter((r) => countrySpecificIds[countryKey].includes(r.id))
-            const references = specificRefs.map((ref) => {
-                const edition = getBestEdition(ref, args.year)
-                return {
-                    citation: formatCitation(ref, edition),
-                    isbn: edition.isbn || undefined,
-                }
-            })
-            return { success: true, references }
+            relevantRefs = refs.filter((r) => countrySpecificIds[countryKey].includes(r.id))
         }
 
-        // For all other countries, use global defaults
-        // These are the most universally applicable references
+        // For all other countries (or to fill up to 3 refs), use global defaults
         const globalDefaultIds = ["iau_handbook", "europa_world", "whed_online"]
         const globalRefs = refs.filter((r) => globalDefaultIds.includes(r.id))
 
-        const references = globalRefs.map((ref) => {
+        // If we have fewer than 3 refs, add global ones until we have at least 3
+        // (Avoid duplicates if a global ref was already matched by country specific list - though unlikely with current data)
+        if (relevantRefs.length < 3) {
+            for (const globalRef of globalRefs) {
+                if (relevantRefs.length >= 3) break
+                if (!relevantRefs.find(r => r.id === globalRef.id)) {
+                    relevantRefs.push(globalRef)
+                }
+            }
+        }
+
+        const references = relevantRefs.map((ref) => {
             const edition = getBestEdition(ref, args.year)
             return {
                 citation: formatCitation(ref, edition),
