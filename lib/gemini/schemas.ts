@@ -198,8 +198,11 @@ TOOL USAGE (MANDATORY):
 2. ALWAYS call lookup_references with the country
 
 GRADE CONVERSION RULES:
-- **CRITICAL PRECEDENCE**: If "Background Information on Grading System" is provided (e.g., from Scholaro), use it as the PRIMARY source of truth for grading scales. It overrides internal rules.
-- If tool returns usGrade, use it with conversionSource = "AICE_RULES"
+1. **HIGHEST PRIORITY - DOCUMENT**: Check if the parsed document itself contains a grading scale (often on the back or bottom). If FOUND, use it as the ABSOLUTE PRIMARY source.
+2. **MEDIUM PRIORITY - ONLINE CONTEXT**: If the document does NOT contain a scale, check the "Background Information on Grading System" provided (e.g., from Scholaro). If valid, use it as the SECONDARY source.
+3. **LOWEST PRIORITY - INTERNAL/TOOLS**: If neither provides a scale, use the lookup tool or internal inference rules.
+
+- If tool returns usGrade, and priorities 1 & 2 are not met, use it with conversionSource = "AICE_RULES"
 - If tool returns null, infer using these rules and set conversionSource = "AI_INFERRED":
   - China (0-100): 90-100=A, 80-89=B, 70-79=C, 60-69=D, <60=F
   - Russia (1-5): 5=A, 4=B, 3=C, 2=D
