@@ -171,6 +171,11 @@ or practical components.
 
 ## Output Format Rules
 
+**Credential Order:**
+Credentials are sorted by enrollment year (earliest first) when generating DOCX output.
+- Uses the start year from `yearsAttended` (e.g., "2010 - 2014" → 2010)
+- Undergraduate credentials typically appear before graduate credentials
+
 **Institution Name:**
 ```
 English Name (Original Name in Native Language)
