@@ -7,36 +7,47 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Loader2, Save, FolderOpen } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { saveReport, updateReport, fetchReports, fetchReportContent, type ReportMetadata } from "@/lib/api"
 import type { SampleData } from "@/lib/report-data"
 
 type SaveReportDialogProps = {
     data: SampleData
-    onSaved?: () => void
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    defaultName?: string
+    currentId?: string | null
+    onSaved?: (id: string, name: string) => void
 }
 
-export function SaveReportDialog({ data, onSaved }: SaveReportDialogProps) {
-    const [open, setOpen] = useState(false)
-    const [name, setName] = useState("")
+export function SaveReportDialog({
+    data,
+    open,
+    onOpenChange,
+    defaultName = "",
+    currentId,
+    onSaved
+}: SaveReportDialogProps) {
+    const [name, setName] = useState(defaultName)
     const [loading, setLoading] = useState(false)
     const [reports, setReports] = useState<ReportMetadata[]>([])
     const [isOverwrite, setIsOverwrite] = useState(false)
 
+    // Sync name with defaultName when dialog opens
     useEffect(() => {
         if (open) {
+            setName(defaultName)
             setLoading(true)
             fetchReports()
                 .then(setReports)
                 .catch((error) => console.error(error))
                 .finally(() => setLoading(false))
         }
-    }, [open])
+    }, [open, defaultName])
 
     useEffect(() => {
         // Check if the current name matches any existing report
@@ -55,26 +66,28 @@ export function SaveReportDialog({ data, onSaved }: SaveReportDialogProps) {
 
         setLoading(true)
         try {
+            let savedId: string
             if (isOverwrite) {
-                const reportId = reports.find(r => r.name.trim() === name.trim())?.id
-                if (reportId) {
+                const existingReport = reports.find(r => r.name.trim() === name.trim())
+                if (existingReport) {
                     // Update existing
-                    await updateReport(reportId, data, name)
+                    const result = await updateReport(existingReport.id, data, name)
+                    savedId = result.id
                 } else {
                     // Fallback if ID not found (shouldn't happen due to check)
-                    await saveReport(data, name)
+                    const result = await saveReport(data, name)
+                    savedId = result.id
                 }
             } else {
                 // Create new
-                await saveReport(data, name)
+                const result = await saveReport(data, name)
+                savedId = result.id
             }
 
-            setOpen(false)
+            onOpenChange(false)
             setName("")
-            if (onSaved) onSaved()
+            if (onSaved) onSaved(savedId, name)
             alert("Report saved successfully!")
-            // Refresh list to show new timestamp/item
-            fetchReports().then(setReports).catch(console.error)
         } catch (error: any) {
             console.error(error)
             alert(`Failed to save report: ${error?.message || "Unknown error"}`)
@@ -84,13 +97,7 @@ export function SaveReportDialog({ data, onSaved }: SaveReportDialogProps) {
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                    <Save size={16} />
-                    Save
-                </Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Save Report</DialogTitle>
@@ -146,11 +153,12 @@ export function SaveReportDialog({ data, onSaved }: SaveReportDialogProps) {
 }
 
 type LoadReportDialogProps = {
-    onLoad: (data: SampleData) => void
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    onLoad: (data: SampleData, meta: { id: string; name: string }) => void
 }
 
-export function LoadReportDialog({ onLoad }: LoadReportDialogProps) {
-    const [open, setOpen] = useState(false)
+export function LoadReportDialog({ open, onOpenChange, onLoad }: LoadReportDialogProps) {
     const [reports, setReports] = useState<ReportMetadata[]>([])
     const [loading, setLoading] = useState(false)
     const [loadingId, setLoadingId] = useState<string | null>(null)
@@ -168,13 +176,12 @@ export function LoadReportDialog({ onLoad }: LoadReportDialogProps) {
         }
     }, [open])
 
-    const handleLoad = async (id: string) => {
-        setLoadingId(id)
+    const handleLoad = async (report: ReportMetadata) => {
+        setLoadingId(report.id)
         try {
-            const content = await fetchReportContent(id)
+            const content = await fetchReportContent(report.id)
             if (content) {
-                onLoad(content)
-                setOpen(false)
+                onLoad(content, { id: report.id, name: report.name })
             }
         } catch (error) {
             console.error(error)
@@ -185,13 +192,7 @@ export function LoadReportDialog({ onLoad }: LoadReportDialogProps) {
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                    <FolderOpen size={16} />
-                    Load
-                </Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Load Report</DialogTitle>
@@ -212,7 +213,7 @@ export function LoadReportDialog({ onLoad }: LoadReportDialogProps) {
                                 <div
                                     key={report.id}
                                     className="flex items-center justify-between p-2 hover:bg-slate-100 rounded-md cursor-pointer border border-transparent hover:border-slate-200 transition-colors"
-                                    onClick={() => handleLoad(report.id)}
+                                    onClick={() => handleLoad(report)}
                                 >
                                     <div className="overflow-hidden">
                                         <div className="font-medium truncate">{report.name || "Untitled Report"}</div>
