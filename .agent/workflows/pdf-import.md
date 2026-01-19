@@ -93,6 +93,17 @@ Looks up APA-format bibliographic references.
 - `references[]` (APA citations)
 - `equivalenceStatement` (US degree equivalence with major)
 
+**Institution Name Format:**
+For non-English institutions, names include original language:
+```
+English Name (Original Name in Native Language)
+```
+Example: `Gyumri State Pedagogical Institute (Գdelays Պdelays Մdelays)`
+
+This applies to:
+- `awardingInstitution` in credentials
+- `issuedBy` in documents
+
 ## Error Handling
 
 | Error | Solution |

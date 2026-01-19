@@ -28,7 +28,7 @@ export const GradeConversionSchema = z.object({
 })
 
 export const CredentialSchema = z.object({
-    awardingInstitution: z.string().describe("Full name of the institution"),
+    awardingInstitution: z.string().describe("Full name of the institution in format: English Name (Original Name in Native Language), e.g. 'Gyumri State Pedagogical Institute (Գdelays Պdelays Մdelays-Նdelays)'"),
     country: z.string().describe("Country of the institution"),
     program: z.string().describe("Name of the program or major"),
     admissionRequirements: z.string().describe("Admission requirements if stated, else N/A"),
@@ -44,7 +44,7 @@ export const CredentialSchema = z.object({
 
 export const DocumentSchema = z.object({
     title: z.string().describe("Document title (e.g., Bachelor's Degree Diploma)"),
-    issuedBy: z.string().describe("Issuing institution"),
+    issuedBy: z.string().describe("Issuing institution in format: English Name (Original Name in Native Language)"),
     dateIssued: z.string().describe("Issue date or N/A"),
     certificateNo: z.string().describe("Certificate/diploma number or N/A"),
 })
@@ -86,7 +86,7 @@ export const transcriptResponseSchema: ResponseSchema = {
             items: {
                 type: SchemaType.OBJECT,
                 properties: {
-                    awardingInstitution: { type: SchemaType.STRING, description: "Full name of the institution" },
+                    awardingInstitution: { type: SchemaType.STRING, description: "Full name in format: English Name (Original Name in Native Language)" },
                     country: { type: SchemaType.STRING, description: "Country of the institution" },
                     program: { type: SchemaType.STRING, description: "Name of the program or major" },
                     admissionRequirements: { type: SchemaType.STRING, description: "Admission requirements if stated, else N/A" },
@@ -134,7 +134,7 @@ export const transcriptResponseSchema: ResponseSchema = {
                 type: SchemaType.OBJECT,
                 properties: {
                     title: { type: SchemaType.STRING, description: "Document title" },
-                    issuedBy: { type: SchemaType.STRING, description: "Issuing institution" },
+                    issuedBy: { type: SchemaType.STRING, description: "Issuing institution in format: English Name (Original Name in Native Language)" },
                     dateIssued: { type: SchemaType.STRING, description: "Issue date or N/A" },
                     certificateNo: { type: SchemaType.STRING, description: "Certificate number or N/A" },
                 },
