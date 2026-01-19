@@ -58,9 +58,12 @@ PDF Upload
 Stage 1: Gemini AI (gemini-3-flash-preview) + Function Calling
   ├── Function Call: lookup_grade_conversion (Supabase)
   ├── Function Call: calculate_gpa (AICE 4.35-point scale)
-  └── Function Call: lookup_references (JSON database, min 3 refs)
+  └── Extracts student info, courses, documents
   ↓
-Stage 2: Gemini AI (gemini-2.0-flash) + Google Search
+Stage 2: Direct Database Lookup (executeReferenceLookup)
+  └── Get 3 authoritative references (IAU Handbook, Europa World, WHED)
+  ↓
+Stage 3: Gemini AI (gemini-3-flash-preview) + Google Search
   └── Search institution websites (APA citations)
   ↓
 Merge Results → Structured Output (Zod validated)
@@ -68,8 +71,9 @@ Merge Results → Structured Output (Zod validated)
 User Review → Import to Report
 ```
 
-> **Note:** Stage 1 and Stage 2 use different models because Gemini 3 Preview
-> does not support mixing Function Calling with built-in tools like Google Search.
+> **Note:** References are now fetched directly from the database (Stage 2)
+> instead of relying on Gemini function calls, ensuring consistent results.
+> Stage 3 uses the same model with Google Search for website lookups.
 
 ## Function Calling Tools
 
@@ -109,15 +113,22 @@ Looks up APA-format bibliographic references.
 
 **Minimum References**: Automatically fills with global defaults if fewer than 3 references found.
 
-## Stage 2: Institution Website Search
+## Stage 2: Database Reference Lookup
 
-After Stage 1 completes, a second API call uses `gemini-2.0-flash` with Google Search to find official websites for each awarding institution.
+After Stage 1 completes, the backend directly calls `executeReferenceLookup` to fetch authoritative references from our JSON database:
 
+- **Source**: `.agent/skills/aice-fce-reference/resources/references.json`
+- **Output**: 3 APA-formatted citations (IAU Handbook, Europa World, WHED)
+- **Replaces**: Any AI-generated references (ensures consistency)
+
+## Stage 3: Institution Website Search
+
+After Stage 2, a third API call uses `gemini-3-flash-preview` with Google Search to find official websites for each awarding institution.
+
+- **Model**: `gemini-3-flash-preview` with `googleSearch` tool
 - **Input**: Unique institution names from extracted credentials
-- **Output**: APA-formatted website citations (e.g., `University Name. (n.d.). Home. https://example.edu`)
+- **Output**: APA-formatted website citations (e.g., `University Name. (n.d.). Home. Retrieved from URL`)
 - **Merge**: Citations appended to the `references[]` array
-
-This is separate from Stage 1 because Gemini 3 Preview does not support combining Function Calling with Google Search.
 
 ## Key Files
 

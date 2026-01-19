@@ -318,26 +318,30 @@ export async function searchInstitutionWebsites(institutionNames: string[]): Pro
 Institutions to search:
 ${institutionNames.map((name, i) => `${i + 1}. ${name}`).join("\n")}
 
-For each institution, search for its official website URL and format as an APA citation:
-Format: Institution Name. (n.d.). Home. URL
+Instructions:
+1. Use Google Search to find each institution's official website URL
+2. Format each as APA citation: Institution Name. (n.d.). Home. Retrieved from URL
+3. Return ONLY a JSON array with citation strings, no other text
 
-Return a JSON array of citation strings. Example:
-["Peking University. (n.d.). Home. https://www.pku.edu.cn", "Tsinghua University. (n.d.). Home. https://www.tsinghua.edu.cn"]
+Example response:
+["Peking University. (n.d.). Home. Retrieved from https://www.pku.edu.cn", "Tsinghua University. (n.d.). Home. Retrieved from https://www.tsinghua.edu.cn"]
 
-If you cannot find the official website for an institution, skip it.`
+Your response (JSON array only):`
 
     try {
-        console.log("=== STAGE 2: SEARCHING INSTITUTION WEBSITES ===")
+        console.log("=== STAGE 3: SEARCHING INSTITUTION WEBSITES ===")
         console.log("Institutions:", institutionNames)
 
         const result = await client.models.generateContent({
-            model: "gemini-2.0-flash",
+            model: "gemini-3-flash-preview",
             config: {
-                responseMimeType: "application/json",
                 tools: [{ googleSearch: {} }],
             },
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         })
+
+        // Log full response for debugging
+        console.log("Full API result candidates:", JSON.stringify(result.candidates?.[0]?.content?.parts, null, 2))
 
         const textPart = result.candidates?.[0]?.content?.parts?.find((p: Part) => p.text)
         const response = textPart?.text || ""
