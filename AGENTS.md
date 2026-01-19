@@ -1,6 +1,6 @@
 # Project Documentation
 
-FCE Report Editor - Configuration and rules reference.
+AET Smart Editor - AICE FCE Report Editor
 
 ## Rules
 

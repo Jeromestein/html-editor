@@ -8,8 +8,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "FCE Report Editor - Online HTML Editor and PDF Export",
-  description: "Professional online document editor that supports HTML editing and PDF export",
+  title: "AET Smart Editor - Online HTML Editor and PDF Export",
+  description: "Professional online document editor that supports PDF import, HTML editing and PDF export",
   generator: "Jiayi",
   icons: {
     icon: [
