@@ -229,10 +229,29 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
                 nextLast = Math.max(1, Math.floor(availableLast / rowHeight))
             }
 
-            // Documents per page: Use fixed defaults from constants
-            // No dynamic calculation needed - fixed layout estimates work better
-            nextDocumentsPerPage = DEFAULT_DOCS_PER_FIRST_PAGE
-            nextDocumentsPerFullPage = DEFAULT_DOCS_PER_FULL_PAGE
+            // Documents per page: Calculate dynamically based on available space
+            if (documentItemHeight > 0 && documentsListOffset > 0) {
+                const availableSpace = documentsListOffset - documentSafetyPadding
+                const gap = documentItemGap
+                // Formula: N * Height + (N - 1) * Gap <= Available
+                // N * (Height + Gap) <= Available + Gap
+                nextDocumentsPerPage = Math.floor((availableSpace + gap) / (documentItemHeight + gap))
+                nextDocumentsPerPage = Math.max(1, nextDocumentsPerPage)
+            } else {
+                nextDocumentsPerPage = DEFAULT_DOCS_PER_FIRST_PAGE
+            }
+
+            // For full pages, assume mostly empty page with just the title ("Documents (continued)")
+            // Estimate title height ~50px based on SectionTitle sizing
+            if (contentHeight > 0 && documentItemHeight > 0) {
+                const titleHeight = 50
+                const availableFull = contentHeight - titleHeight - documentSafetyPadding
+                const gap = documentItemGap
+                nextDocumentsPerFullPage = Math.floor((availableFull + gap) / (documentItemHeight + gap))
+                nextDocumentsPerFullPage = Math.max(1, nextDocumentsPerFullPage)
+            } else {
+                nextDocumentsPerFullPage = DEFAULT_DOCS_PER_FULL_PAGE
+            }
 
             const changed =
                 nextFirst !== rowsPerFirstPage ||
