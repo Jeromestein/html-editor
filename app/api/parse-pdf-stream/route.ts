@@ -62,21 +62,16 @@ export async function POST(request: NextRequest) {
                 // Analyze PDF with Gemini
                 const aiResult = await analyzePdfWithGemini(buffer, onProgress)
 
-                // Check if document is in English
-                if (!aiResult.isEnglish) {
-                    sendEvent("error", {
-                        message: `The AI detected ${aiResult.detectedLanguage} content. Currently only English documents are supported.`,
-                        detectedLanguage: aiResult.detectedLanguage,
-                    })
-                    controller.close()
-                    return
-                }
-
                 // Convert to SampleData format
                 const parsedData = convertToSampleData(aiResult.data || {})
 
                 // Collect warnings
                 const warnings: string[] = [...(aiResult.warnings || [])]
+
+                // Add language warning if document was not primarily in English
+                if (!aiResult.isEnglish && aiResult.detectedLanguage) {
+                    warnings.push(`Document contains ${aiResult.detectedLanguage} content. Some information may have been translated or inferred.`)
+                }
 
                 if (!parsedData.credentials || parsedData.credentials.length === 0) {
                     warnings.push("No credential information was found in the document.")

@@ -6,6 +6,11 @@ description: How to use the PDF analysis feature to auto-fill FCE reports from u
 
 Upload a transcript/diploma PDF and let Gemini AI extract data automatically, with integrated Function Calling for grade conversion, GPA calculation, and reference generation.
 
+## SDK
+
+- **Primary**: `@google/genai` (v1.37+) for main analysis with Function Calling
+- **Legacy**: `@google/generative-ai` (v0.24) retained for gradual migration
+
 ## Prerequisites
 
 1. **GEMINI_API_KEY** in `.env`
@@ -14,15 +19,36 @@ Upload a transcript/diploma PDF and let Gemini AI extract data automatically, wi
    ```
    Get your key: https://aistudio.google.com/apikey
 
-2. **English documents only**
+2. **Multi-language support**: Documents with mixed languages are supported. If the document contains non-English content, a warning is shown but processing continues as long as meaningful data can be extracted.
 
 ## Usage
 
-1. Click **"Import PDF"** in toolbar
+1. Click **"AI Parse PDF"** in toolbar
 2. Upload PDF (drag & drop or click)
-3. Wait for AI analysis (~30-60s) (Uses `gemini-3-flash-preview` with Function Calling)
+3. Watch real-time progress (8-step log-style UI with SSE streaming)
 4. Review extracted data (grades, credits, GPA, references, equivalence)
 5. Click **"Import Data"**
+
+## Real-time Progress (SSE)
+
+The import process shows 8 steps with live status updates:
+
+| Step | Description |
+|------|-------------|
+| 1 | Uploading document... |
+| 2 | Detecting document type... |
+| 3 | Extracting student info... |
+| 4 | Extracting courses... |
+| 5 | Looking up grade conversion rules... (function call) |
+| 6 | Calculating GPA... (function call) |
+| 7 | Finding references... (function call) |
+| 8 | Generating final report... |
+
+**Status Icons:**
+- ✓ Green checkmark = Completed
+- ◉ Blue spinner = In progress
+- ○ Gray circle = Pending
+- ✗ Red X = Error**
 
 ## Architecture
 
@@ -97,11 +123,13 @@ This is separate from Stage 1 because Gemini 3 Preview does not support combinin
 
 | File | Purpose |
 |------|---------|
-| `lib/gemini/client.ts` | Gemini API client with function calling loop + `searchInstitutionWebsites()` |
-| `lib/gemini/schemas.ts` | Zod schemas and ResponseSchema |
-| `lib/gemini/tools/` | Function tool implementations |
+| `lib/gemini/client.ts` | Gemini API client with progress callback + `searchInstitutionWebsites()` |
+| `lib/gemini/schemas.ts` | Zod schemas + `zod-to-json-schema` for Gemini |
+| `lib/gemini/tools/` | Function tool implementations (using `@google/genai` Type format) |
 | `lib/pdf-parser.ts` | Data conversion to SampleData format |
-| `app/api/parse-pdf/route.ts` | API endpoint |
+| `app/api/parse-pdf-stream/route.ts` | **Primary** SSE streaming endpoint |
+| `app/api/parse-pdf/route.ts` | Legacy non-streaming endpoint (backup) |
+| `components/pdf-upload-dialog.tsx` | UI with log-style progress and AI gradient border |
 
 ## Extracted Fields
 
@@ -126,10 +154,10 @@ This applies to:
 
 | Error | Solution |
 |-------|----------|
-| `NON_ENGLISH_CONTENT` | Use English document |
 | `FILE_TOO_LARGE` | Keep under 10MB |
 | `AI_ERROR` / 429 | Check API key, wait & retry |
 | Function call fails | Returns empty, AI infers, warning collected |
+| Non-English content | Warning added, but processing continues |
 
 ## Warnings
 
