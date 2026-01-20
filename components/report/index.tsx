@@ -112,8 +112,9 @@ export default function ReportEditor({
         ? importedData.documents
         : prev.documents,
     }))
+    setReportMeta({ isDirty: true })
     setPdfDialogOpen(false)
-  }, [setData])
+  }, [setData, setReportMeta])
 
   // Handle Load with unsaved changes warning
   const handleLoadClick = useCallback(() => {
