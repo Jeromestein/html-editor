@@ -346,7 +346,12 @@ export function ReportPage({
                         </div>
                     )}
 
-                    {showAboutPage && <AboutAetPage />}
+                    {showAboutPage && (
+                        <AboutAetPage
+                            evaluatorName={data.evaluatorName}
+                            seniorEvaluatorName={data.seniorEvaluatorName}
+                        />
+                    )}
                 </div>
 
                 <Footer pageIndex={pageIndex} totalPages={totalPages} refNo={data.refNo} />
