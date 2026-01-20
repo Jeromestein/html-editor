@@ -50,7 +50,16 @@ Upload a transcript/diploma PDF and let Gemini AI extract data automatically usi
 
 ## Output Format Standards
 
-Bilingual format `{English Name (Original Name)}` is required for:
+### Date Format
+All dates must use the format: **`MMM D, YYYY`** (e.g., `Feb 2, 2022`, `Dec 15, 2019`)
+
+### Course Year Format
+Course years must be a **single year only**, not a range:
+- ✅ Correct: `2010`, `2011`, `2012`
+- ❌ Incorrect: `2010-2011`, `2011/2012`
+
+### Bilingual Format
+`{English Name (Original Name)}` is required for:
 
 | Field | Example |
 |-------|---------|

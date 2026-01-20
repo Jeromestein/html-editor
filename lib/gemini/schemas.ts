@@ -15,7 +15,7 @@ import { zodToJsonSchema } from "zod-to-json-schema"
 // ============================================================================
 
 export const RawCourseSchema = z.object({
-    year: z.string().describe("Academic year (e.g., 2015-2016)"),
+    year: z.string().describe("Academic year as single year only (e.g., 2015, 2016). Do NOT use ranges like 2015-2016."),
     name: z.string().describe("Course name"),
     credits: z.string().describe("Original credits as string"),
     grade: z.string().describe("Original grade received"),
@@ -39,13 +39,13 @@ export const ParsedPdfResponseSchema = z.object({
     isEnglish: z.boolean().describe("Whether the document is in English"),
     detectedLanguage: z.string().describe("Detected language of the document"),
     name: z.string().describe("Full name of the student"),
-    dob: z.string().describe("Date of birth (format: Month DD, YYYY) or N/A"),
+    dob: z.string().describe("Date of birth in format: MMM D, YYYY (e.g., Feb 2, 2022, Dec 15, 2019) or N/A"),
     country: z.string().describe("Country where the institution is located"),
     credentials: z.array(RawCredentialSchema),
     documents: z.array(z.object({
         title: z.string().describe("Document title"),
         issuedBy: z.string().describe("Issuing institution"),
-        dateIssued: z.string().describe("Issue date or N/A"),
+        dateIssued: z.string().describe("Issue date in format: MMM D, YYYY (e.g., Feb 2, 2022) or N/A"),
         certificateNo: z.string().describe("Certificate/diploma number or N/A"),
     })),
 })
@@ -66,7 +66,7 @@ export const parsedPdfResponseJsonSchema = zodToJsonSchema(
 // ============================================================================
 
 export const CourseSchema = z.object({
-    year: z.string().describe("Academic year (e.g., 2015-2016)"),
+    year: z.string().describe("Academic year as single year only (e.g., 2015, 2016). Do NOT use ranges like 2015-2016."),
     name: z.string().describe("Course name"),
     credits: z.string().describe("Original credits as string"),
     grade: z.string().describe("Original grade received"),
@@ -99,7 +99,7 @@ export const CredentialSchema = z.object({
 export const DocumentSchema = z.object({
     title: z.string().describe("Document title (e.g., Bachelor's Degree Diploma)"),
     issuedBy: z.string().describe("Issuing institution in format: English Name (Original Name in Native Language)"),
-    dateIssued: z.string().describe("Issue date or N/A"),
+    dateIssued: z.string().describe("Issue date in format: MMM D, YYYY (e.g., Feb 2, 2022) or N/A"),
     certificateNo: z.string().describe("Certificate/diploma number or N/A"),
 })
 
@@ -111,7 +111,7 @@ export const TranscriptResponseSchema = z.object({
     isEnglish: z.boolean().describe("Whether the document is in English"),
     detectedLanguage: z.string().describe("Detected language of the document"),
     name: z.string().describe("Full name of the student"),
-    dob: z.string().describe("Date of birth (format: Month DD, YYYY) or N/A"),
+    dob: z.string().describe("Date of birth in format: MMM D, YYYY (e.g., Feb 2, 2022, Dec 15, 2019) or N/A"),
     country: z.string().describe("Country where the institution is located"),
     credentials: z.array(CredentialSchema),
     documents: z.array(DocumentSchema),
@@ -166,8 +166,10 @@ FORMAT RULES:
 3. ORIGINAL GRADE: Preserve original descriptors in parentheses
    Example: "5.0 (very good)", "4.5 (good plus)", "очень хорошо (very good)"
 4. STANDARD PROGRAM LENGTH: Use English words (e.g., "Four years", not "4 years")
-5. CREDITS/GRADES: Extract exactly as shown, do not convert
-6. If information is not found, use "N/A"
+5. DATE FORMAT: All dates must use format MMM D, YYYY (e.g., Feb 2, 2022, Dec 15, 2019)
+6. COURSE YEAR FORMAT: Use single year only (e.g., 2015, 2016). Do NOT use ranges like 2015-2016 or 2015/2016.
+7. CREDITS/GRADES: Extract exactly as shown, do not convert
+8. If information is not found, use "N/A"
 
 LANGUAGE HANDLING:
 - Set isEnglish to true if document contains usable English content
