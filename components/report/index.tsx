@@ -14,7 +14,7 @@
 "use client"
 
 import { useMemo, useState, useCallback, useEffect } from "react"
-import { type SampleData } from "@/lib/report-data"
+import { type SampleData, buildSampleData } from "@/lib/report-data"
 
 import { ReportToolbar } from "./ui/report-toolbar"
 import { ReportPage } from "./ui/report-page"
@@ -55,7 +55,7 @@ export default function ReportEditor({
     deleteCourse,
     addCourse,
     addDocument,
-    handleReset,
+    handleReset: _handleReset,
     rehydrate,
   } = useReportData({ initialData, readOnly })
 
@@ -121,16 +121,28 @@ export default function ReportEditor({
     setLoadDialogOpen(true)
   }, [reportMeta.isDirty])
 
-  // Handle successful load - update metadata
+  // Handle successful load - navigate to URL
   const handleLoadComplete = useCallback((loadedData: SampleData, meta: { id: string; name: string }) => {
-    rehydrate(loadedData, { id: meta.id, name: meta.name })
+    // rehydrate(loadedData, { id: meta.id, name: meta.name }) // No need to rehydrate locally, we will navigate
     setLoadDialogOpen(false)
-  }, [rehydrate])
+    // Navigate to the report URL
+    const slug = encodeURIComponent(meta.name)
+    window.location.href = `/${slug}`
+  }, [])
 
-  // Handle successful save - update metadata
+  // Handle successful save - update URL
   const handleSaveComplete = useCallback((savedId: string, savedName: string) => {
     setReportMeta({ id: savedId, name: savedName, isDirty: false })
     setSaveDialogOpen(false)
+
+    // Update URL without full reload if possible, but for simplicity/correctness with server components:
+    // If the name changed, we should push the new URL.
+    const newPath = `/${encodeURIComponent(savedName)}`
+    if (window.location.pathname !== newPath) {
+      window.history.pushState(null, '', newPath)
+      // Also update document title manually since we aren't reloading
+      document.title = `${savedName} - AET Smart Editor`
+    }
   }, [setReportMeta])
 
   const firstCoursePageIndex = useMemo(() => {
@@ -139,6 +151,35 @@ export default function ReportEditor({
     return reportPages.findIndex((page) => page.showCourseSection)
   }, [reportPages])
   const measurementPageIndex = firstCoursePageIndex === -1 ? 0 : firstCoursePageIndex
+
+  const handleReset = useCallback(() => {
+    if (typeof window !== "undefined" && window.confirm("Reset data to sample?")) {
+      // If we are on a specific report URL, redirect to home for a fresh start
+      if (window.location.pathname !== '/') {
+        window.location.href = '/'
+      } else {
+        // Already at home, just reset state
+        setData(buildSampleData())
+        setReportMeta({ id: null, name: "Unnamed Draft", isDirty: false })
+      }
+    }
+  }, [setData, setReportMeta])
+
+  // Need to verify this hook usage for Reset, previously it was passed to ReportToolbar
+  // We need to override the handleReset from useReportData if we want the redirection logic?
+  // Actually, useReportData returns handleReset. We should probably wrap it or pass this new one.
+  // The logic in useReportData is:
+  /*
+    const handleReset = useCallback(() => {
+        if (readOnly) return
+        if (typeof window !== "undefined" && window.confirm("Reset data to sample?")) {
+            setData(buildSampleData())
+            setReportMetaState({ id: null, name: "Unnamed Draft", isDirty: false })
+        }
+    }, [readOnly])
+  */
+  // My new handleReset handles the redirect. I should pass THIS one to ReportToolbar.
+
 
   const handlePrint = () => window.print()
 

@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+
 import { SampleData } from './report-data'
 
 export type ReportMetadata = {
@@ -10,75 +10,82 @@ export type ReportMetadata = {
 
 export const TABLE_NAME = 'aet_fce_aice_report'
 
+const API_URL = '/api/save-load-report'
+
 export async function saveReport(data: SampleData, name: string) {
-    // We'll treat 'name' as a unique identifier for simplicity in this user flow, 
-    // or just always insert a new one if user wants. 
-    // For now, let's just insert a new row every time "Save" is clicked 
-    // or we could try to update if we had an ID.
-    // Given the request, "Save" implies persistence.
+    const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, content: data }),
+    })
 
-    // To allow updating, we would need to track the current report ID in the editor state.
-    // For this first pass, let's just insert.
-
-    const { data: result, error } = await supabase
-        .from(TABLE_NAME)
-        .insert({
-            name: name,
-            content: data as any, // jsonb
-        })
-        .select()
-
-    if (error) {
-        throw error
+    if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || 'Failed to save report')
     }
 
-    return result?.[0]
+    return response.json()
 }
 
 export async function updateReport(id: string, data: SampleData, name: string) {
-    const { data: result, error } = await supabase
-        .from(TABLE_NAME)
-        .update({
-            name: name,
-            content: data as any
-        })
-        .eq('id', id)
-        .select()
+    const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name, content: data }), // Sending ID triggers update logic
+    })
 
-    if (error) {
-        throw error
+    if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || 'Failed to update report')
     }
 
-    if (!result || result.length === 0) {
-        throw new Error("Update failed: No rows affected. Check RLS or ID.")
-    }
-
-    return result[0]
+    return response.json()
 }
 
 export async function fetchReports(): Promise<ReportMetadata[]> {
-    const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .select('id, created_at, updated_at, name')
-        .order('updated_at', { ascending: false })
+    const response = await fetch(`${API_URL}?list=true`)
 
-    if (error) {
-        throw error
+    if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || 'Failed to fetch reports')
     }
 
-    return data || []
+    return response.json()
 }
 
 export async function fetchReportContent(id: string): Promise<SampleData | null> {
-    const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .select('content')
-        .eq('id', id)
-        .single()
+    const response = await fetch(`${API_URL}?id=${id}`)
 
-    if (error) {
-        throw error
+    if (!response.ok) {
+        if (response.status === 404) return null
+        const err = await response.json()
+        throw new Error(err.error || 'Failed to fetch report content')
     }
 
-    return data?.content || null
+    return response.json()
+}
+
+export async function fetchReportByName(name: string): Promise<{ id: string, content: SampleData, name: string, updated_at: string } | null> {
+    const encodedName = encodeURIComponent(name)
+    const response = await fetch(`${API_URL}?name=${encodedName}`)
+
+    if (!response.ok) {
+        if (response.status === 404) return null
+        const err = await response.json()
+        throw new Error(err.error || 'Failed to fetch report by name')
+    }
+
+    return response.json()
+}
+
+export async function checkReportExists(name: string): Promise<boolean> {
+    const encodedName = encodeURIComponent(name)
+    const response = await fetch(`${API_URL}?check=${encodedName}`)
+
+    if (!response.ok) {
+        return false
+    }
+
+    const data = await response.json()
+    return !!data.exists
 }
