@@ -15,7 +15,7 @@ export const EVALUATOR_PROFILES: EvaluatorProfile[] = [
         isSenior: true,
         bio: [
             "Mr. Yan obtained his degree of Bachelor of Arts in Philosophy from Nanjing University, the People's Republic of China in 1991 and the degree of Master of Arts in Philosophy from the University of Miami in 1998.",
-            "He worked over 10 years in a prominent evaluation institution as a senior associate director and team leader for Asian-pacific countries. He has completed over 5000 foreign credential evaluation of documents from numerous foreign countries for various universities, licensing boards, U.S. government, and immigration services.",
+            "He worked over 10 years in a prominent evaluation institution as a senior associate director and team leader for Asian-pacific countries. He has completed over 10000 foreign credential evaluations of documents from numerous foreign countries for various universities, licensing boards, U.S. government, and immigration services.",
             "He is a leading expert in the evaluation of credentials from the People's Republic of China and was invited several times to be a keynote speaker to hundreds of admission counselors of U.S. universities for evaluating complex credentials from the People's Republic of China."
         ]
     },
@@ -24,7 +24,7 @@ export const EVALUATOR_PROFILES: EvaluatorProfile[] = [
         title: "Evaluator",
         isSenior: false,
         bio: [
-            "Mr. Chen obtained his degree of Bachelor of Vehicle Engineering from Shandong Jianzhu University, China in 2014 and the degree of Master of Mechanical Engineering from the University of South Florida in 2018.",
+            "Mr. Chen obtained his degree of Bachelor of Science in Vehicle Engineering from Shandong Jianzhu University, China in 2014 and the degree of Master of Science in Mechanical Engineering from the University of South Florida in 2018.",
             "He has worked as an Evaluator at American Education & Translation Services since January 2019. In this role, he evaluates international transcripts and diplomas regarding mechanical engineering and other technical fields, drafts credential reports for education and immigration purposes."
         ]
     },
