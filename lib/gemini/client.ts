@@ -178,15 +178,13 @@ async function stage2ProcessData(
         tools: [{ functionDeclarations: toolDeclarations }],
     }
 
-    // Initial request with parsed data as context
-    let result = await client.models.generateContent({
-        ...modelConfig,
-        contents: [
-            {
-                role: "user",
-                parts: [
-                    {
-                        text: `Process this parsed academic document data and:
+    // Initial request setup with history tracking
+    const history: Content[] = [
+        {
+            role: "user",
+            parts: [
+                {
+                    text: `Process this parsed academic document data and:
 1. Convert all grades to US equivalents using lookup_grade_conversion_batch
 2. Calculate US credits (1 Year = 30 US Credits)
 3. Get references using lookup_references
@@ -198,10 +196,14 @@ ${gradingScaleContext || "No specific online grading scale found."}
 
 Parsed PDF Data:
 ${JSON.stringify(parsedData, null, 2)}`,
-                    },
-                ],
-            },
-        ],
+                },
+            ],
+        },
+    ]
+
+    let result = await client.models.generateContent({
+        ...modelConfig,
+        contents: history,
     })
 
     let rounds = 0
@@ -215,6 +217,12 @@ ${JSON.stringify(parsedData, null, 2)}`,
             throw new Error("No response candidate from Gemini")
         }
 
+        // Append model response to history
+        history.push({
+            role: "model",
+            parts: candidate.content?.parts || [],
+        })
+
         const functionCalls = (candidate.content?.parts || []).filter(
             (p: Part) => p.functionCall !== undefined
         )
@@ -225,20 +233,6 @@ ${JSON.stringify(parsedData, null, 2)}`,
         }
 
         console.log(`=== STAGE 2 ROUND ${rounds}: ${functionCalls.length} FUNCTION CALL(S) ===`)
-
-        // Build conversation history
-        const history: Content[] = [
-            {
-                role: "user",
-                parts: [
-                    { text: `Process this parsed data: ${JSON.stringify(parsedData)}` },
-                ],
-            },
-            {
-                role: "model",
-                parts: candidate.content?.parts || [],
-            },
-        ]
 
         // Process function calls
         const functionResponseParts: Part[] = []
