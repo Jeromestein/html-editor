@@ -181,7 +181,7 @@ export const AboutAetPage = ({ evaluatorName = "Hongjian Chen", seniorEvaluatorN
         <div className="mb-4">
             {/* <h3 className="font-bold text-blue-900 mb-2 underline decoration-blue-900/30">Company Profile</h3> */}
             <p className="mb-2 text-justify">
-                Founded in 2009 in Miami, FL, American Education & Translation Services (AET) has established itself as a premier provider of translation and credential evaluation services. AET is a Corporate Member of the American Translators Association (ATA) and a member of the Association of International Educators (NAFSA). Our evaluation services are approved by the Illinois State Board of Education, New Mexico Public Education Department, and Ohio State Board of Education.
+                Founded in 2009 in Miami, FL, American Education & Translation Services (AET) has established itself as a premier provider of translation and credential evaluation services. AET is a Corporate Member of the American Translators Association (ATA) and a member of the Association of International Educators (NAFSA). Our evaluation services are accepted by the US Federal Government (such as USCIS, FDA, etc), most state governments, some licensing boards, and numerous U.S. institutions of higher education.
             </p>
             <p className="text-justify">
                 We provide certified translation services in over 100 languages and have served thousands of clients including universities, licensing boards, and government agencies. We offer convenient online services and have multiple office locations to serve our clients.
@@ -189,9 +189,9 @@ export const AboutAetPage = ({ evaluatorName = "Hongjian Chen", seniorEvaluatorN
         </div>
 
         {/* Contact Information - Horizontal Grid Layout */}
-        <div className="mb-4">
+        {/* <div className="mb-4">
             {/* <h3 className="font-bold text-blue-900 mb-2 underline decoration-blue-900/30">Contact Information</h3> */}
-            <div className="grid grid-cols-2 gap-6">
+        {/* <div className="grid grid-cols-2 gap-6">
                 {OFFICE_LOCATIONS.map((office, index) => (
                     <div key={index} className="text-xs">
                         <div className="font-bold text-gray-800">{office.name}</div>
@@ -201,7 +201,7 @@ export const AboutAetPage = ({ evaluatorName = "Hongjian Chen", seniorEvaluatorN
                     </div>
                 ))}
             </div>
-        </div>
+        </div> */}
 
         <EvaluatorProfiles evaluatorName={evaluatorName} seniorEvaluatorName={seniorEvaluatorName} />
     </div>
