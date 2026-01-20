@@ -1,5 +1,66 @@
 import { ReportTitle } from "../ui/shared"
 
+// Evaluator profile data - corresponds to signatures in signatures.tsx
+type EvaluatorProfile = {
+    name: string
+    title: string
+    bio: string[]
+    isSenior: boolean
+}
+
+const EVALUATOR_PROFILES: EvaluatorProfile[] = [
+    {
+        name: "Luguan Yan",
+        title: "Director of Evaluation",
+        isSenior: true,
+        bio: [
+            "Mr. Yan obtained his degree of Bachelor of Arts in Philosophy from Nanjing University, the People's Republic of China in 1991 and the degree of Master of Arts in Philosophy from the University of Miami in 1998.",
+            "He worked over 10 years in a prominent evaluation institution as a senior associate director and team leader for Asian-pacific countries. He has completed over 5000 foreign credential evaluation of documents from numerous foreign countries for various universities, licensing boards, U.S. government, and immigration services.",
+            "He is a leading expert in the evaluation of credentials from the People's Republic of China and was invited several times to be a keynote speaker to hundreds of admission counselors of U.S. universities for evaluating complex credentials from the People's Republic of China."
+        ]
+    },
+    {
+        name: "Hongjian Chen",
+        title: "Credential Evaluator",
+        isSenior: false,
+        bio: [
+            "Mr. Chen holds a Bachelor's degree in English from Beijing Foreign Studies University and a Master's degree in Education from the University of Southern California.",
+            "With over 5 years of experience in international credential evaluation, Mr. Chen specializes in evaluating educational documents from East Asian countries including China, Japan, South Korea, and Taiwan.",
+            "He is proficient in both English and Mandarin Chinese, enabling him to accurately interpret and evaluate complex academic documents from Chinese-language institutions."
+        ]
+    }
+]
+
+// Evaluator Profiles component - displays all evaluator introductions
+const EvaluatorProfiles = () => (
+    <div className="mt-8">
+        <ReportTitle>
+            Evaluator Profiles
+        </ReportTitle>
+        <div className="grid grid-cols-2 gap-8 mt-4">
+            {EVALUATOR_PROFILES.map((profile, index) => (
+                <div key={index} className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-bold text-lg text-blue-900">
+                            {profile.name}, {profile.title}
+                        </h3>
+                        {profile.isSenior && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                Senior
+                            </span>
+                        )}
+                    </div>
+                    {profile.bio.map((paragraph, pIndex) => (
+                        <p key={pIndex} className="text-justify mb-2 text-xs">
+                            {paragraph}
+                        </p>
+                    ))}
+                </div>
+            ))}
+        </div>
+    </div>
+)
+
 export const AboutAetPage = () => (
     <div className="mt-8 text-xs leading-relaxed font-sans">
         <ReportTitle>
@@ -51,22 +112,6 @@ export const AboutAetPage = () => (
             </div>
         </div>
 
-        <ReportTitle>
-            Senior Evaluator Profile
-        </ReportTitle>
-        <div className="flex gap-6 mt-4">
-            <div className="flex-1">
-                <h3 className="font-bold text-lg text-blue-900 mb-2">Luguan Yan, Director of Evaluation</h3>
-                <p className="text-justify mb-2">
-                    Mr. Yan obtained his degree of Bachelor of Arts in Philosophy from Nanjing University, the People’s Republic of China in 1991 and the degree of Master of Arts in Philosophy from the University of Miami in 1998.
-                </p>
-                <p className="text-justify mb-2">
-                    He worked over 10 years in a prominent evaluation institution as a senior associate director and team leader for Asian-pacific countries. He has completed over 5000 foreign credential evaluation of documents from numerous foreign countries for various universities, licensing boards, U.S. government, and immigration services.
-                </p>
-                <p className="text-justify">
-                    He is a leading expert in the evaluation of credentials from the People’s Republic of China and was invited several times to be a keynote speaker to hundreds of admission counselors of U.S. universities for evaluating complex credentials from the People’s Republic of China.
-                </p>
-            </div>
-        </div>
+        <EvaluatorProfiles />
     </div>
 )
