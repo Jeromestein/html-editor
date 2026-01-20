@@ -342,7 +342,7 @@ export function ReportPage({
                                 sectionNum={notesNum}
                             />
                             <Signatures data={data} updateDataField={updateDataField} readOnly={readOnly} />
-                            <Seal />
+                            {/* <Seal /> */}
                         </div>
                     )}
 
