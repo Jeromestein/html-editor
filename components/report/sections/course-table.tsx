@@ -91,7 +91,7 @@ export const CourseTable = ({
                             </td>
                             <td className="border border-gray-300 p-0 editable-cell">
                                 <EditableInput
-                                    value={course.usGrade || ""}
+                                    value={course.usGrade === "P" ? "PASS" : course.usGrade || ""}
                                     onChange={(value) => updateCourse(course.id, "usGrade", value)}
                                     className="text-left px-2 h-full"
                                     readOnly={readOnly}
