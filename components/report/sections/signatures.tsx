@@ -16,7 +16,7 @@ export const Signatures = ({
     readOnly = false,
 }: SignaturesProps) => {
     return (
-        <div className="grid grid-cols-2 gap-8 mt-8">
+        <div className="grid grid-cols-2 gap-8 mt-2">
             <div>
                 <div className="mb-1 pb-1">
                     <EditableImage

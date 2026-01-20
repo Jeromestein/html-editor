@@ -21,7 +21,7 @@ export const EVALUATOR_PROFILES: EvaluatorProfile[] = [
     },
     {
         name: "Hongjian Chen",
-        title: "Engineering Translator & Evaluator Associate",
+        title: "Evaluator",
         isSenior: false,
         bio: [
             "Mr. Chen obtained his degree of Bachelor of Vehicle Engineering from Shandong Jianzhu University, China in 2014 and the degree of Master of Mechanical Engineering from the University of South Florida in 2018.",
