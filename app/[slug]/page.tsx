@@ -14,6 +14,17 @@ interface PageProps {
 // or we can use on-demand revalidation. For an editor, dynamic is safer.
 export const revalidate = 0
 
+export async function generateMetadata({ params }: PageProps) {
+    const { slug: rawSlug } = await params
+    const slug = decodeURIComponent(rawSlug)
+
+    // Optimistic title based on URL, or fetch valid name if needed. 
+    // Since slug is the name, we can just use it directly!
+    return {
+        title: `${slug} - AET Smart Editor`,
+    }
+}
+
 export default async function ReportPage({ params }: PageProps) {
     const { slug: rawSlug } = await params
     const slug = decodeURIComponent(rawSlug)
@@ -44,5 +55,9 @@ export default async function ReportPage({ params }: PageProps) {
         notFound()
     }
 
-    return <ReportEditor initialData={report.content} />
+    return <ReportEditor
+        initialData={report.content}
+        initialName={report.name}
+        initialId={report.id}
+    />
 }

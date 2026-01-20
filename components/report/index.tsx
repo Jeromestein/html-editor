@@ -27,6 +27,8 @@ import { useReportData } from "./hooks/use-report-data"
 
 type ReportEditorProps = {
   initialData?: SampleData
+  initialName?: string
+  initialId?: string
   readOnly?: boolean
   showToolbar?: boolean
   onReady?: () => void
@@ -34,6 +36,8 @@ type ReportEditorProps = {
 
 export default function ReportEditor({
   initialData,
+  initialName = "Unnamed Draft",
+  initialId,
   readOnly = false,
   showToolbar = true,
   onReady,
@@ -57,7 +61,7 @@ export default function ReportEditor({
     addDocument,
     handleReset: _handleReset,
     rehydrate,
-  } = useReportData({ initialData, readOnly })
+  } = useReportData({ initialData, readOnly, initialName, initialId: initialId || undefined })
 
   const { measurements, refs } = useDynamicMeasure({ data, onReady })
   const reportPages = usePagination({ data, readOnly, measurements })
@@ -120,6 +124,13 @@ export default function ReportEditor({
     }
     setLoadDialogOpen(true)
   }, [reportMeta.isDirty])
+
+  // Sync document title with report name
+  useEffect(() => {
+    if (reportMeta.name && reportMeta.name !== "Unnamed Draft") {
+      document.title = `${reportMeta.name} - AET Smart Editor`
+    }
+  }, [reportMeta.name])
 
   // Handle successful load - navigate to URL
   const handleLoadComplete = useCallback((loadedData: SampleData, meta: { id: string; name: string }) => {

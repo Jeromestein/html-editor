@@ -32,6 +32,8 @@ import {
 export type UseReportDataOptions = {
     initialData?: SampleData
     readOnly?: boolean
+    initialName?: string
+    initialId?: string | null
 }
 
 // Report metadata for tracking save status
@@ -76,13 +78,15 @@ export type UseReportDataReturn = {
 export function useReportData({
     initialData,
     readOnly = false,
+    initialName = "Unnamed Draft",
+    initialId = null,
 }: UseReportDataOptions = {}): UseReportDataReturn {
     const [data, setData] = useState<SampleData>(() => initialData ?? buildSampleData())
 
     // Report metadata state
     const [reportMeta, setReportMetaState] = useState<ReportMeta>({
-        id: null,
-        name: "Unnamed Draft",
+        id: initialId,
+        name: initialName,
         isDirty: false,
     })
 
