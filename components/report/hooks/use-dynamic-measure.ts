@@ -134,10 +134,10 @@ export const useDynamicMeasure = ({ data, onReady }: UseDynamicMeasureProps) => 
                     const rowRect = rowEl.getBoundingClientRect()
 
                     if (contentRect.height > 0 && rowRect.height > 0) {
-                        // Use minimum of measured height or 26px (single-line row)
-                        // This prevents multiline rows from affecting pagination for all rows
-                        const singleLineRowHeight = 26
-                        rowHeight = Math.min(rowRect.height, singleLineRowHeight)
+                        // Use measured height directly.
+                        // Previously clamped to 26px, but rows are now taller (30px+).
+                        // Clamping too low causes capacity overestimation and overflow.
+                        rowHeight = rowRect.height
                         headerHeight = headerRect.height
                         contentHeight = contentRect.height
                         headerOffset = Math.max(0, startRect.top - contentRect.top)
