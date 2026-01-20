@@ -1,3 +1,6 @@
+import { Info } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover"
+import { EVALUATOR_PROFILES } from "./about-aet-page"
 import { EditableInput, EditableImage } from "../ui/editable-elements"
 import { SampleData, UpdateDataField } from "../types"
 
@@ -13,7 +16,7 @@ export const Signatures = ({
     readOnly = false,
 }: SignaturesProps) => {
     return (
-        <div className="grid grid-cols-2 gap-8 mt-8">
+        <div className="grid grid-cols-2 gap-8 mt-2">
             <div>
                 <div className="mb-1 pb-1">
                     <EditableImage
@@ -34,7 +37,35 @@ export const Signatures = ({
                         readOnly={readOnly}
                     />
                 </div>
-                <div className="text-xs text-gray-500 text-center">Evaluator</div>
+                <div className="text-xs text-gray-500 text-center flex items-center justify-center gap-1">
+                    Evaluator
+                    {!readOnly && (
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <button
+                                    className="text-gray-400 hover:text-blue-600 outline-none transition-colors no-print"
+                                    title="Select Evaluator"
+                                >
+                                    <Info className="h-3 w-3" />
+                                </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-56 p-2">
+                                <div className="text-xs font-semibold mb-2 px-2 text-gray-900 border-b pb-1">Select Evaluator</div>
+                                <div className="max-h-[300px] overflow-y-auto space-y-0.5">
+                                    {EVALUATOR_PROFILES.filter(p => !p.isSenior).map((p) => (
+                                        <div
+                                            key={p.name}
+                                            className="text-xs px-2 py-1.5 hover:bg-blue-50 text-gray-700 hover:text-blue-700 rounded cursor-pointer transition-colors"
+                                            onClick={() => updateDataField("evaluatorName", p.name)}
+                                        >
+                                            {p.name}
+                                        </div>
+                                    ))}
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                    )}
+                </div>
             </div>
             <div>
                 <div className="mb-1 pb-1">

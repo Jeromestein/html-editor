@@ -13,12 +13,13 @@
 
 "use client"
 
-import { useMemo, useState, useCallback } from "react"
-import { type SampleData } from "@/lib/report-data"
+import { useMemo, useState, useCallback, useEffect } from "react"
+import { type SampleData, buildSampleData } from "@/lib/report-data"
 
 import { ReportToolbar } from "./ui/report-toolbar"
 import { ReportPage } from "./ui/report-page"
 import { PdfUploadDialog } from "@/components/pdf-upload-dialog"
+import { SaveReportDialog, LoadReportDialog } from "./ui/report-dialogs"
 
 import { useDynamicMeasure } from "./hooks/use-dynamic-measure"
 import { usePagination } from "./hooks/use-pagination"
@@ -26,6 +27,8 @@ import { useReportData } from "./hooks/use-report-data"
 
 type ReportEditorProps = {
   initialData?: SampleData
+  initialName?: string
+  initialId?: string
   readOnly?: boolean
   showToolbar?: boolean
   onReady?: () => void
@@ -33,6 +36,8 @@ type ReportEditorProps = {
 
 export default function ReportEditor({
   initialData,
+  initialName = "Unnamed Draft",
+  initialId,
   readOnly = false,
   showToolbar = true,
   onReady,
@@ -41,6 +46,9 @@ export default function ReportEditor({
   const {
     data,
     setData,
+    reportMeta,
+    setReportName,
+    setReportMeta,
     updateEquivalenceField,
     updateGradeConversion,
     updateDataField,
@@ -51,9 +59,9 @@ export default function ReportEditor({
     deleteCourse,
     addCourse,
     addDocument,
-    handleReset,
+    handleReset: _handleReset,
     rehydrate,
-  } = useReportData({ initialData, readOnly })
+  } = useReportData({ initialData, readOnly, initialName, initialId: initialId || undefined })
 
   const { measurements, refs } = useDynamicMeasure({ data, onReady })
   const reportPages = usePagination({ data, readOnly, measurements })
@@ -72,6 +80,24 @@ export default function ReportEditor({
   // PDF import dialog state
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false)
 
+  // Save/Load dialog states
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false)
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (reportMeta.isDirty) {
+        e.preventDefault()
+        // Legacy browsers require returnValue to be set
+        // Using empty string as modern browsers ignore custom messages anyway
+        return ""
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [reportMeta.isDirty])
+
   const handleImportPdf = useCallback((importedData: Partial<SampleData>) => {
     // Merge imported data with existing data
     setData((prev) => ({
@@ -86,8 +112,50 @@ export default function ReportEditor({
         ? importedData.documents
         : prev.documents,
     }))
+    setReportMeta({ isDirty: true })
     setPdfDialogOpen(false)
-  }, [setData])
+  }, [setData, setReportMeta])
+
+  // Handle Load with unsaved changes warning
+  const handleLoadClick = useCallback(() => {
+    if (reportMeta.isDirty) {
+      if (!window.confirm("You have unsaved changes. Loading a new report will discard them. Continue?")) {
+        return
+      }
+    }
+    setLoadDialogOpen(true)
+  }, [reportMeta.isDirty])
+
+  // Sync document title with report name
+  useEffect(() => {
+    if (reportMeta.name && reportMeta.name !== "Unnamed Draft") {
+      document.title = `${reportMeta.name} - AET Smart Editor`
+    }
+  }, [reportMeta.name])
+
+  // Handle successful load - navigate to URL
+  const handleLoadComplete = useCallback((loadedData: SampleData, meta: { id: string; name: string }) => {
+    // rehydrate(loadedData, { id: meta.id, name: meta.name }) // No need to rehydrate locally, we will navigate
+    setLoadDialogOpen(false)
+    // Navigate to the report URL
+    const slug = encodeURIComponent(meta.name)
+    window.location.href = `/${slug}`
+  }, [])
+
+  // Handle successful save - update URL
+  const handleSaveComplete = useCallback((savedId: string, savedName: string) => {
+    setReportMeta({ id: savedId, name: savedName, isDirty: false })
+    setSaveDialogOpen(false)
+
+    // Update URL without full reload if possible, but for simplicity/correctness with server components:
+    // If the name changed, we should push the new URL.
+    const newPath = `/${encodeURIComponent(savedName)}`
+    if (window.location.pathname !== newPath) {
+      window.history.pushState(null, '', newPath)
+      // Also update document title manually since we aren't reloading
+      document.title = `${savedName} - AET Smart Editor`
+    }
+  }, [setReportMeta])
 
   const firstCoursePageIndex = useMemo(() => {
     const pageWithCourses = reportPages.findIndex((page) => page.courses.length > 0)
@@ -95,6 +163,35 @@ export default function ReportEditor({
     return reportPages.findIndex((page) => page.showCourseSection)
   }, [reportPages])
   const measurementPageIndex = firstCoursePageIndex === -1 ? 0 : firstCoursePageIndex
+
+  const handleReset = useCallback(() => {
+    if (typeof window !== "undefined" && window.confirm("Reset data to sample?")) {
+      // If we are on a specific report URL, redirect to home for a fresh start
+      if (window.location.pathname !== '/') {
+        window.location.href = '/'
+      } else {
+        // Already at home, just reset state
+        setData(buildSampleData())
+        setReportMeta({ id: null, name: "Unnamed Draft", isDirty: false })
+      }
+    }
+  }, [setData, setReportMeta])
+
+  // Need to verify this hook usage for Reset, previously it was passed to ReportToolbar
+  // We need to override the handleReset from useReportData if we want the redirection logic?
+  // Actually, useReportData returns handleReset. We should probably wrap it or pass this new one.
+  // The logic in useReportData is:
+  /*
+    const handleReset = useCallback(() => {
+        if (readOnly) return
+        if (typeof window !== "undefined" && window.confirm("Reset data to sample?")) {
+            setData(buildSampleData())
+            setReportMetaState({ id: null, name: "Unnamed Draft", isDirty: false })
+        }
+    }, [readOnly])
+  */
+  // My new handleReset handles the redirect. I should pass THIS one to ReportToolbar.
+
 
   const handlePrint = () => window.print()
 
@@ -143,6 +240,21 @@ export default function ReportEditor({
         onImport={handleImportPdf}
       />
 
+      {/* Save/Load Dialogs */}
+      <SaveReportDialog
+        data={data}
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        defaultName={reportMeta.name}
+        currentId={reportMeta.id}
+        onSaved={handleSaveComplete}
+      />
+      <LoadReportDialog
+        open={loadDialogOpen}
+        onOpenChange={setLoadDialogOpen}
+        onLoad={handleLoadComplete}
+      />
+
       {/* Table and editable element styles */}
       <style>{`
         .editable-cell:hover {
@@ -165,14 +277,17 @@ export default function ReportEditor({
 
       {showToolbar && (
         <ReportToolbar
-          data={data}
-          onLoad={(newData) => rehydrate(newData)}
-          onReset={handleReset}
           onPrint={handlePrint}
           onImportPdf={() => setPdfDialogOpen(true)}
           onDownloadDocx={handleDownloadDocx}
+          reportMeta={reportMeta}
+          onNameChange={setReportName}
+          onSave={() => setSaveDialogOpen(true)}
+          onLoad={handleLoadClick}
+          onReset={handleReset}
         />
       )}
+
 
       <div className="page-stack mt-8 print:mt-0">
         {reportPages.map((pageData, index) => {
@@ -224,5 +339,3 @@ export default function ReportEditor({
     </div>
   )
 }
-
-

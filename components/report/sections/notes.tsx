@@ -26,6 +26,6 @@ export const Notes = ({ evaluationNotes, updateDataField, readOnly, sectionNum }
             className="text-xs text-gray-500 text-justify mb-4 leading-tight min-h-[3rem]"
             readOnly={readOnly}
         />
-        <Remarks />
+        {/* <Remarks /> */}
     </>
 )

@@ -2,6 +2,22 @@
 import type { SampleData, Credential, CredentialDocument, Course, GradeConversionRow } from "./report-data"
 
 /**
+ * Round a number to nearest 0.5
+ */
+function roundToHalf(value: number): number {
+    return Math.round(value * 2) / 2
+}
+
+/**
+ * Format usCredits with 0.5 rounding
+ */
+function formatUsCredits(rawCredits: unknown): string {
+    const num = parseFloat(String(rawCredits || "0"))
+    if (isNaN(num)) return "0.00"
+    return roundToHalf(num).toFixed(2)
+}
+
+/**
  * Convert parsed AI response to SampleData format
  * @param aiData - Data from Gemini API
  * @returns Partial SampleData for merging
@@ -35,7 +51,7 @@ export function convertToSampleData(
                 standardProgramLength: String(cred.standardProgramLength || "N/A"),
                 yearsAttended: String(cred.yearsAttended || "N/A"),
                 yearOfGraduation: String(cred.yearOfGraduation || "N/A"),
-                equivalenceStatement: "", // To be filled by evaluator
+                equivalenceStatement: String(cred.equivalenceStatement || ""),
                 gpa: "", // Will be calculated
                 totalCredits: "", // Will be calculated
                 courses: Array.isArray(cred.courses)
@@ -44,9 +60,12 @@ export function convertToSampleData(
                             id: (index + 1) * 1000 + courseIndex + 1,
                             year: String(course.year || ""),
                             name: String(course.name || ""),
-                            level: "L", // Default level
+                            level: String(course.level || "LD"),
                             credits: String(course.credits || "0"),
                             grade: String(course.grade || ""),
+                            usGrade: String(course.usGrade || ""),
+                            usCredits: formatUsCredits(course.usCredits),
+                            conversionSource: String(course.conversionSource || "AI_INFERRED"),
                         })
                     )
                     : [],
@@ -54,7 +73,9 @@ export function convertToSampleData(
                     ? cred.gradeConversion.map(
                         (gc: Record<string, unknown>): GradeConversionRow => ({
                             grade: String(gc.grade || ""),
-                            usGrade: String(gc.usGrade || ""),
+                            usGrade: gc.conversionSource === "AI_INFERRED"
+                                ? `${String(gc.usGrade || "")} (AI)`
+                                : String(gc.usGrade || ""),
                         })
                     )
                     : [],
@@ -72,6 +93,18 @@ export function convertToSampleData(
                 certificateNo: String(doc.certificateNo || "N/A"),
             })
         )
+    }
+
+    // References - convert array of {citation} objects to bullet-point string
+    if (Array.isArray(aiData.references) && aiData.references.length > 0) {
+        result.references = aiData.references
+            .map((ref: Record<string, unknown>) => `• ${String(ref.citation || "")}`)
+            .join("\n")
+    }
+
+    // Evaluation Notes
+    if (typeof aiData.evaluationNotes === "string" && aiData.evaluationNotes.trim()) {
+        result.evaluationNotes = aiData.evaluationNotes
     }
 
     return result

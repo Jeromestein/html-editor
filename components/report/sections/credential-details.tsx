@@ -30,10 +30,11 @@ export const CredentialDetails = ({
                 <table className="w-full text-sm border-collapse mb-3 table-fixed">
                     <tbody>
                         <DetailRow label="Name of Awarding Institution">
-                            <EditableInput
+                            <EditableTextarea
                                 value={credential!.awardingInstitution}
                                 onChange={(value) => handleCredentialFieldChange("awardingInstitution", value)}
-                                className="font-semibold"
+                                rows={1}
+                                className="font-semibold leading-snug"
                                 readOnly={readOnly}
                             />
                         </DetailRow>

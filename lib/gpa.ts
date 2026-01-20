@@ -35,23 +35,36 @@ export function calculateStats(courses: Course[]) {
     let gpaCredits = 0
 
     for (const course of courses) {
-        const creditsStr = (course.credits || "0").trim()
-        const credits = parseFloat(creditsStr)
+        // Use US credits for calculation
+        const creditsStr = (course.usCredits || course.credits || "0").trim()
+
+        // Check if credits are wrapped in parentheses (e.g., "(9.00)")
+        // These credits should NOT be counted in totalCredits
+        const isExcludedFromTotal = /^\(.*\)$/.test(creditsStr)
+
+        // Extract the numeric value (remove parentheses if present)
+        const numericStr = isExcludedFromTotal
+            ? creditsStr.slice(1, -1).trim()
+            : creditsStr
+        const credits = parseFloat(numericStr)
 
         // Skip invalid credits
         if (isNaN(credits)) continue
 
-        let grade = (course.grade || "").trim().toUpperCase()
+        // Use US grade for calculation
+        let grade = (course.usGrade || course.grade || "").trim().toUpperCase()
 
         // Normalize grade
         if (ALIASES.hasOwnProperty(grade)) {
             grade = ALIASES[grade]
         }
 
-        // Always add to total credits if it's a valid grade entry
-        // (Assuming any listed course with credits counts towards total unless explicitly excluded, 
-        // but the rules say "totalCredits counts all valid grades including P/F")
-        totalCredits += credits
+        // Add to total credits only if NOT wrapped in parentheses
+        // Parenthesized credits (e.g., "(9.00)") are excluded from total
+        // but still count towards GPA if applicable
+        if (!isExcludedFromTotal) {
+            totalCredits += credits
+        }
 
         // Check if it counts towards GPA
         if (GRADE_POINTS.hasOwnProperty(grade)) {

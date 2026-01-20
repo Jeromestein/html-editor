@@ -342,11 +342,16 @@ export function ReportPage({
                                 sectionNum={notesNum}
                             />
                             <Signatures data={data} updateDataField={updateDataField} readOnly={readOnly} />
-                            <Seal />
+                            {/* <Seal /> */}
                         </div>
                     )}
 
-                    {showAboutPage && <AboutAetPage />}
+                    {showAboutPage && (
+                        <AboutAetPage
+                            evaluatorName={data.evaluatorName}
+                            seniorEvaluatorName={data.seniorEvaluatorName}
+                        />
+                    )}
                 </div>
 
                 <Footer pageIndex={pageIndex} totalPages={totalPages} refNo={data.refNo} />
