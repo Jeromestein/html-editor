@@ -39,6 +39,11 @@ export const ReportToolbar = ({
         }
     }, [reportMeta.name, isEditing])
 
+    // Update browser tab title when report name changes
+    useEffect(() => {
+        document.title = `${reportMeta.name} - AET Smart Editor`
+    }, [reportMeta.name])
+
     useEffect(() => {
         if (isEditing && inputRef.current) {
             inputRef.current.focus()
