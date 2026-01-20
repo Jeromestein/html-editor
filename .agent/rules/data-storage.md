@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Data Storage
 
 Supabase configuration for report persistence.
@@ -16,4 +20,4 @@ Supabase configuration for report persistence.
 ## API
 
 - Client: `@supabase/supabase-js`
-- Implementation: `lib/api.ts`
+- Implementation: `lib/report-store.ts`

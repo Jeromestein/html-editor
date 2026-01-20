@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
-import { saveReport, updateReport, fetchReports, fetchReportContent, type ReportMetadata } from "@/lib/api"
+import { saveReport, updateReport, fetchReports, fetchReportContent, type ReportMetadata } from "@/lib/report-store"
 import type { SampleData } from "@/lib/report-data"
 
 type SaveReportDialogProps = {
