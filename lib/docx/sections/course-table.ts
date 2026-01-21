@@ -15,7 +15,8 @@ import {
     ShadingType,
     AlignmentType,
 } from 'docx'
-import { Course, Credential } from '../../report-data'
+import { Credential } from '../../report-data'
+import { toCourseTitleCase } from '../../title-case'
 import { TEXT_STYLES, SPACING, COLUMN_WIDTHS, CELL_BORDERS, COLORS } from '../styles'
 
 export function createCourseTable(credential: Credential): (Paragraph | Table)[] {
@@ -48,7 +49,7 @@ export function createCourseTable(credential: Credential): (Paragraph | Table)[]
             new TableRow({
                 children: [
                     createDataCell(course.year, year),
-                    createDataCell(course.name, title, AlignmentType.LEFT),
+                    createDataCell(toCourseTitleCase(course.name), title, AlignmentType.LEFT),
                     createDataCell(course.credits, credits),
                     createDataCell(course.grade, grade),
                 ],

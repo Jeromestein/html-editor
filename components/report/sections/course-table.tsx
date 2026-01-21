@@ -2,6 +2,7 @@ import { RefObject } from "react"
 import { Trash2, Plus } from "lucide-react"
 import { EditableInput, EditableTextarea } from "../ui/editable-elements"
 import { Course, UpdateCourseRow } from "../types"
+import { toCourseTitleCase } from "@/lib/title-case"
 
 type CourseTableProps = {
     courses: Course[]
@@ -54,62 +55,65 @@ export const CourseTable = ({
                     </tr>
                 </thead>
                 <tbody>
-                    {courses.map((course, index) => (
-                        <tr key={course.id} className="group hover:bg-blue-50" ref={index === 0 ? rowRef : undefined}>
-                            <td className="border border-gray-300 p-0 editable-cell">
-                                <EditableInput
-                                    value={course.year}
-                                    onChange={(value) => updateCourse(course.id, "year", value)}
-                                    className="text-center h-full"
-                                    readOnly={readOnly}
-                                />
-                            </td>
-                            <td className="border border-gray-300 p-0 editable-cell">
-                                {course.name.includes('\n') ? (
-                                    <EditableTextarea
-                                        value={course.name}
-                                        onChange={(value) => updateCourse(course.id, "name", value)}
-                                        className="text-left px-2 text-xs leading-snug"
-                                        readOnly={readOnly}
-                                    />
-                                ) : (
+                    {courses.map((course, index) => {
+                        const courseTitle = toCourseTitleCase(course.name)
+                        return (
+                            <tr key={course.id} className="group hover:bg-blue-50" ref={index === 0 ? rowRef : undefined}>
+                                <td className="border border-gray-300 p-0 editable-cell">
                                     <EditableInput
-                                        value={course.name}
-                                        onChange={(value) => updateCourse(course.id, "name", value)}
-                                        className="text-left px-2 h-[30px]"
+                                        value={course.year}
+                                        onChange={(value) => updateCourse(course.id, "year", value)}
+                                        className="text-center h-full"
                                         readOnly={readOnly}
                                     />
-                                )}
-                            </td>
-                            <td className="border border-gray-300 p-0 editable-cell">
-                                <EditableInput
-                                    value={course.usCredits || ""}
-                                    onChange={(value) => updateCourse(course.id, "usCredits", value)}
-                                    className="text-left px-2 h-full"
-                                    readOnly={readOnly}
-                                />
-                            </td>
-                            <td className="border border-gray-300 p-0 editable-cell">
-                                <EditableInput
-                                    value={course.usGrade === "P" ? "PASS" : course.usGrade || ""}
-                                    onChange={(value) => updateCourse(course.id, "usGrade", value)}
-                                    className="text-left px-2 h-full"
-                                    readOnly={readOnly}
-                                />
-                            </td>
-                            {showActions && (
-                                <td className="border border-gray-300 p-0 no-print">
-                                    <button
-                                        onClick={() => deleteCourse(course.id)}
-                                        className="w-full h-full flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                                        title="Delete Row"
-                                    >
-                                        <Trash2 size={10} />
-                                    </button>
                                 </td>
-                            )}
-                        </tr>
-                    ))}
+                                <td className="border border-gray-300 p-0 editable-cell">
+                                    {course.name.includes('\n') ? (
+                                        <EditableTextarea
+                                            value={courseTitle}
+                                            onChange={(value) => updateCourse(course.id, "name", value)}
+                                            className="text-left px-2 text-xs leading-snug"
+                                            readOnly={readOnly}
+                                        />
+                                    ) : (
+                                        <EditableInput
+                                            value={courseTitle}
+                                            onChange={(value) => updateCourse(course.id, "name", value)}
+                                            className="text-left px-2 h-[30px]"
+                                            readOnly={readOnly}
+                                        />
+                                    )}
+                                </td>
+                                <td className="border border-gray-300 p-0 editable-cell">
+                                    <EditableInput
+                                        value={course.usCredits || ""}
+                                        onChange={(value) => updateCourse(course.id, "usCredits", value)}
+                                        className="text-left px-2 h-full"
+                                        readOnly={readOnly}
+                                    />
+                                </td>
+                                <td className="border border-gray-300 p-0 editable-cell">
+                                    <EditableInput
+                                        value={course.usGrade === "P" ? "PASS" : course.usGrade || ""}
+                                        onChange={(value) => updateCourse(course.id, "usGrade", value)}
+                                        className="text-left px-2 h-full"
+                                        readOnly={readOnly}
+                                    />
+                                </td>
+                                {showActions && (
+                                    <td className="border border-gray-300 p-0 no-print">
+                                        <button
+                                            onClick={() => deleteCourse(course.id)}
+                                            className="w-full h-full flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                            title="Delete Row"
+                                        >
+                                            <Trash2 size={10} />
+                                        </button>
+                                    </td>
+                                )}
+                            </tr>
+                        )
+                    })}
                 </tbody>
                 {showTotals && (
                     <tfoot className="font-bold bg-white">
