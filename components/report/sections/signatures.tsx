@@ -4,6 +4,16 @@ import { EVALUATOR_PROFILES } from "./about-aet-page"
 import { EditableInput, EditableImage } from "../ui/editable-elements"
 import { SampleData, UpdateDataField } from "../types"
 
+const EVALUATOR_SIGNATURES: Record<string, string> = {
+    "Hongjian Chen": "/hongjian-chen-signature.png",
+    "Luguan Yan": "/luguan-yan-signature.png",
+    "Zhihua Zhao": "/zhihua-zhao-signature.jpg",
+    "Tong Liu": "/tong-liu-signature.jpg",
+    "Peiheng Li": "/peiheng-li-signature.jpg",
+    "Yue Qi": "/yue-qi-signature.jpg",
+    "Jianjun Zhao": "/jianjun-zhao-signature.png",
+}
+
 type SignaturesProps = {
     data: SampleData
     updateDataField: UpdateDataField
@@ -15,6 +25,11 @@ export const Signatures = ({
     updateDataField,
     readOnly = false,
 }: SignaturesProps) => {
+    const handleEvaluatorSelect = (name: string) => {
+        updateDataField("evaluatorName", name)
+        updateDataField("evaluatorSignature", EVALUATOR_SIGNATURES[name] || "")
+    }
+
     return (
         <div className="grid grid-cols-2 gap-8 mt-2">
             <div>
@@ -56,7 +71,7 @@ export const Signatures = ({
                                         <div
                                             key={p.name}
                                             className="text-xs px-2 py-1.5 hover:bg-blue-50 text-gray-700 hover:text-blue-700 rounded cursor-pointer transition-colors"
-                                            onClick={() => updateDataField("evaluatorName", p.name)}
+                                            onClick={() => handleEvaluatorSelect(p.name)}
                                         >
                                             {p.name}
                                         </div>
