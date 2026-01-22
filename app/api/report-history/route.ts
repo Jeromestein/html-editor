@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
                 .from(HISTORY_TABLE_NAME)
                 .select('content')
                 .eq('id', versionId)
-                .single()
+                .maybeSingle()
 
             if (error) throw error
             if (!data) return NextResponse.json(null, { status: 404 })
