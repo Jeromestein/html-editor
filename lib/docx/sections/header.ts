@@ -69,7 +69,7 @@ export function createPageHeader(): Header {
                                             transformation: { width: 45, height: 45 },
                                             altText: {
                                                 title: 'AET Logo',
-                                                description: 'American Evaluation & Translation Services Logo',
+                                                description: 'American Education & Translation Services Logo',
                                                 name: 'AET Logo',
                                             },
                                         }),

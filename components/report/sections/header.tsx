@@ -9,7 +9,7 @@ export const Header = () => (
             <div>
                 <div className="text-3xl font-black text-blue-900 tracking-wider font-serif leading-none">AET</div>
                 <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1 leading-none">
-                    American Evaluation & Translation Services
+                    American Education & Translation Services
                 </div>
             </div>
         </div>
