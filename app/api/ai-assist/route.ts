@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
-import { type Content, type FunctionCall, type Part } from "@google/genai"
-import { getGeminiClient, toolDeclarations, executeTool } from "@/lib/gemini"
+import { type Content, type Part } from "@google/genai"
+import { getGeminiClient } from "@/lib/gemini"
+import { executeReportLookup, executeReportUpdate } from "@/lib/gemini/tools/report-storage"
 
-const SYSTEM_INSTRUCTION = `You are a helpful assistant that can read and update the current report stored in Supabase.
-Use the lookup_report tool to fetch the report by ID, and update_report to patch the JSON content.
+const SYSTEM_INSTRUCTION = `You are a helpful assistant that can read and update the current report JSON.
+You will be given the current report JSON and a conversation.
+If changes are needed, return a JSON object with:
+- "message": a plain-text reply to the user
+- "patch": a partial JSON object to merge into the report
 Patch rules: objects are merged, arrays are replaced.
-Always use the provided reportId when calling tools.`
+If no changes are needed, return "patch": null.`
 
-const MAX_FUNCTION_CALL_ROUNDS = 8
+const MODEL_NAME = "gemini-3-flash-preview"
 
 type AssistantMessage = {
   role: "user" | "assistant"
@@ -25,11 +29,18 @@ type AssistResponse = {
   updated: boolean
 }
 
+type ModelReply = {
+  message: string
+  patch: Record<string, unknown> | null
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse<AssistResponse>> {
   try {
+    console.log("[ai-assist] request received")
     const body = (await request.json()) as Partial<AssistRequest>
 
     if (!body.reportId || !body.messages || body.messages.length === 0) {
+      console.warn("[ai-assist] missing reportId or messages")
       return NextResponse.json(
         {
           success: false,
@@ -41,90 +52,111 @@ export async function POST(request: NextRequest): Promise<NextResponse<AssistRes
     }
 
     const client = getGeminiClient()
-    const history: Content[] = body.messages.map((message) => ({
-      role: message.role,
-      parts: [{ text: message.content }],
-    }))
+    console.log("[ai-assist] reportId:", body.reportId)
+    console.log("[ai-assist] messages count:", body.messages.length)
 
-    const modelConfig = {
-      model: "gemini-3-flash-preview",
-      config: {
-        systemInstruction: `${SYSTEM_INSTRUCTION}\nCurrent reportId: ${body.reportId}`,
-      },
-      tools: [{ functionDeclarations: toolDeclarations }],
+    const lookupResult = await executeReportLookup({ reportId: body.reportId })
+    if (!lookupResult.success || !lookupResult.report) {
+      console.warn("[ai-assist] report lookup failed:", lookupResult.warning)
+      return NextResponse.json(
+        {
+          success: false,
+          message: lookupResult.warning || "Report not found.",
+          updated: false,
+        },
+        { status: 404 }
+      )
     }
 
-    let result = await client.models.generateContent({
-      ...modelConfig,
-      contents: history,
+    const conversation = body.messages
+      .map((message) => `${message.role === "assistant" ? "Assistant" : "User"}: ${message.content}`)
+      .join("\n")
+
+    const contents: Content[] = [
+      {
+        role: "user",
+        parts: [
+          {
+            text: `Report JSON:\n${JSON.stringify(lookupResult.report.content, null, 2)}\n\nConversation:\n${conversation}\n\nReturn a JSON object with "message" and "patch".`,
+          },
+        ],
+      },
+    ]
+
+    const result = await client.models.generateContent({
+      model: MODEL_NAME,
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        responseMimeType: "application/json",
+      },
+      contents,
     })
 
-    let rounds = 0
-    let updated = false
+    const candidate = result.candidates?.[0]
+    const responseText = candidate?.content?.parts
+      ?.filter((part: Part) => part.text)
+      .map((part: Part) => part.text)
+      .join("") || ""
 
-    while (rounds < MAX_FUNCTION_CALL_ROUNDS) {
-      rounds += 1
-
-      const candidate = result.candidates?.[0]
-      if (!candidate) {
-        throw new Error("No response candidate from Gemini")
-      }
-
-      history.push({
-        role: "model",
-        parts: candidate.content?.parts || [],
-      })
-
-      const functionCalls = (candidate.content?.parts || []).filter(
-        (part: Part) => part.functionCall !== undefined
+    if (!responseText) {
+      console.warn("[ai-assist] empty response from model")
+      return NextResponse.json(
+        {
+          success: false,
+          message: "AI assist returned empty response.",
+          updated: false,
+        },
+        { status: 500 }
       )
-
-      if (functionCalls.length === 0) {
-        break
-      }
-
-      const functionResponseParts: Part[] = []
-
-      for (const part of functionCalls) {
-        if (!part.functionCall) continue
-
-        const { name, args } = part.functionCall as FunctionCall
-
-        if (name === "update_report") {
-          updated = true
-        }
-
-        const { result: toolResult } = await executeTool(
-          name || "",
-          (args as Record<string, unknown>) || {}
-        )
-
-        functionResponseParts.push({
-          functionResponse: {
-            name: name || "",
-            response: toolResult as Record<string, unknown>,
-          },
-        })
-      }
-
-      history.push({
-        role: "user",
-        parts: functionResponseParts,
-      })
-
-      result = await client.models.generateContent({
-        ...modelConfig,
-        contents: history,
-      })
     }
 
-    const finalCandidate = result.candidates?.[0]
-    const textPart = finalCandidate?.content?.parts?.find((part: Part) => part.text)
-    const finalText = textPart?.text || ""
+    let modelReply: ModelReply
+    try {
+      modelReply = JSON.parse(responseText) as ModelReply
+    } catch (error) {
+      console.warn("[ai-assist] failed to parse model JSON:", responseText)
+      return NextResponse.json(
+        {
+          success: false,
+          message: "AI assist returned invalid JSON.",
+          updated: false,
+        },
+        { status: 500 }
+      )
+    }
 
+    const patch = modelReply.patch
+    let updated = false
+    let finalMessage = modelReply.message || ""
+
+    if (patch && typeof patch === "object" && Object.keys(patch).length > 0) {
+      const updateResult = await executeReportUpdate({
+        reportId: body.reportId,
+        patch,
+      })
+
+      if (!updateResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: updateResult.warning || "Failed to update report.",
+            updated: false,
+          },
+          { status: 500 }
+        )
+      }
+
+      updated = true
+    }
+
+    if (!finalMessage && updated) {
+      finalMessage = "Report updated."
+    }
+
+    console.log("[ai-assist] response length:", finalMessage.length)
     return NextResponse.json({
       success: true,
-      message: finalText,
+      message: finalMessage,
       updated,
     })
   } catch (error) {
