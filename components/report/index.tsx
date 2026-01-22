@@ -14,7 +14,7 @@
 "use client"
 
 import { useMemo, useState, useCallback, useEffect } from "react"
-import { type SampleData, buildSampleData } from "@/lib/report-data"
+import { type SampleData, buildSampleData, rehydrateData } from "@/lib/report-data"
 
 import { ReportToolbar } from "./ui/report-toolbar"
 import { ReportPage } from "./ui/report-page"
@@ -177,6 +177,11 @@ export default function ReportEditor({
     }
   }, [setData, setReportMeta])
 
+  const handleRestoreVersion = useCallback((restoredData: SampleData) => {
+    setData(rehydrateData(restoredData))
+    setReportMeta({ isDirty: true })
+  }, [setData, setReportMeta])
+
   // Need to verify this hook usage for Reset, previously it was passed to ReportToolbar
   // We need to override the handleReset from useReportData if we want the redirection logic?
   // Actually, useReportData returns handleReset. We should probably wrap it or pass this new one.
@@ -285,6 +290,7 @@ export default function ReportEditor({
           onSave={() => setSaveDialogOpen(true)}
           onLoad={handleLoadClick}
           onReset={handleReset}
+          onRestoreVersion={handleRestoreVersion}
         />
       )}
 

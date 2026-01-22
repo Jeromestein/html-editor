@@ -5,6 +5,8 @@ import { Printer, Sparkles, FileDown, RotateCcw, Save, FolderOpen, FileText } fr
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import type { ReportMeta } from "../hooks/use-report-data"
+import { ReportHistory } from "./report-history"
+import type { SampleData } from "@/lib/report-data"
 
 type ReportToolbarProps = {
     onPrint: () => void
@@ -16,6 +18,7 @@ type ReportToolbarProps = {
     onSave: () => void
     onLoad: () => void
     onReset: () => void
+    onRestoreVersion: (data: SampleData) => void
 }
 
 export const ReportToolbar = ({
@@ -27,6 +30,7 @@ export const ReportToolbar = ({
     onSave,
     onLoad,
     onReset,
+    onRestoreVersion,
 }: ReportToolbarProps) => {
     // Title editing state
     const [isEditing, setIsEditing] = useState(false)
@@ -141,6 +145,11 @@ export const ReportToolbar = ({
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 flex-shrink-0">
+                    <ReportHistory
+                        reportId={reportMeta.id}
+                        isDirty={reportMeta.isDirty}
+                        onRestore={onRestoreVersion}
+                    />
                     <Button variant="outline" size="sm" onClick={onLoad} className="gap-1.5">
                         <FolderOpen size={16} />
                         Load

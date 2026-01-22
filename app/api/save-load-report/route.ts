@@ -80,7 +80,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json()
-        const { name, content, id } = body
+        const { name, content, id, created_by } = body
+        const createdBy = created_by === 'ai' ? 'ai' : 'user'
 
         if (!name || !content) {
             return NextResponse.json({ error: 'Name and Content are required' }, { status: 400 })
@@ -119,6 +120,18 @@ export async function POST(req: NextRequest) {
         if (error) throw error
         if (!resultData || resultData.length === 0) {
             throw new Error('Operation failed: No rows returned')
+        }
+
+        const historyResult = await supabase
+            .from('report_history')
+            .insert({
+                report_id: resultData[0].id,
+                content,
+                created_by: createdBy,
+            })
+
+        if (historyResult.error) {
+            throw historyResult.error
         }
 
         return NextResponse.json(resultData[0])
