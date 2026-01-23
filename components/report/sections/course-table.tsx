@@ -154,6 +154,13 @@ export const CourseTable = ({
                     </button>
                 )
             }
+            {/* <div className="mt-2 text-[10px] text-gray-500 leading-snug">
+                <div>*  Transferred Course and Credit From ____</div>
+                <div>^  Denotes Credits for These Courses Were Not Provide</div>
+                <div>@  Denotes Courses Repeated Later for a Better Grade</div>
+                <div>#  Denotes Repeated Courses</div>
+                <div className="mt-2">This GPA Includes the Calculation of All the Grades. The GPA for the Calculation of the Highest Grades of Each Course Maybe Provided Upon Request.</div>
+            </div> */}
         </>
     )
 }
