@@ -141,3 +141,26 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 })
     }
 }
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const body = await req.json()
+        const { id } = body
+
+        if (!id) {
+            return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+        }
+
+        const { error } = await supabase
+            .from(DB_TABLE_NAME)
+            .delete()
+            .eq('id', id)
+
+        if (error) throw error
+
+        return NextResponse.json({ success: true })
+    } catch (error: any) {
+        console.error('API Error:', error)
+        return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+}

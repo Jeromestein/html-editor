@@ -21,6 +21,8 @@ type ReportToolbarProps = {
     onRestoreVersion: (data: SampleData) => void
     showAssistant: boolean
     onToggleAssistant: () => void
+    showLeftSidebar: boolean
+    onToggleLeftSidebar: () => void
 }
 
 export const ReportToolbar = ({
@@ -35,6 +37,8 @@ export const ReportToolbar = ({
     onRestoreVersion,
     showAssistant,
     onToggleAssistant,
+    showLeftSidebar,
+    onToggleLeftSidebar,
 }: ReportToolbarProps) => {
     // Title editing state
     const [isEditing, setIsEditing] = useState(false)
@@ -87,6 +91,17 @@ export const ReportToolbar = ({
                     AET Smart Editor
                 </h1>
                 <div className="flex gap-2 items-center">
+                    <Button
+                        variant={showLeftSidebar ? "default" : "outline"}
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={onToggleLeftSidebar}
+                        aria-pressed={showLeftSidebar}
+                    >
+                        <FolderOpen size={16} />
+                        Files
+                    </Button>
+
                     {/* AI Button with gradient glow effect */}
                     <button
                         onClick={onImportPdf}

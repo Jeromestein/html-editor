@@ -1,16 +1,3 @@
-/**
- * Report Editor - Main Entry Point
- * 
- * A modular credential evaluation report editor with print support.
- * 
- * Architecture:
- * - Hooks: `useReportData`, `usePagination`, `useDynamicMeasure`
- * - Sections: Pure UI components for each report section
- * - UI: Reusable components (ReportPage, EditableInput, etc.)
- * 
- * @see README.md for full documentation
- */
-
 "use client"
 
 import { useMemo, useState, useCallback, useEffect } from "react"
@@ -21,6 +8,7 @@ import { ReportPage } from "./ui/report-page"
 import { PdfUploadDialog } from "@/components/pdf-upload-dialog"
 import { SaveReportDialog, LoadReportDialog } from "./ui/report-dialogs"
 import { ReportSidePanel } from "./report-side-panel"
+import { FileSidebar } from "./file-sidebar"
 
 import { useDynamicMeasure } from "./hooks/use-dynamic-measure"
 import { usePagination } from "./hooks/use-pagination"
@@ -85,6 +73,7 @@ export default function ReportEditor({
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [loadDialogOpen, setLoadDialogOpen] = useState(false)
   const [showAssistant, setShowAssistant] = useState(false)
+  const [showLeftSidebar, setShowLeftSidebar] = useState(false)
 
   // Warn before leaving with unsaved changes
   useEffect(() => {
@@ -295,11 +284,30 @@ export default function ReportEditor({
           onRestoreVersion={handleRestoreVersion}
           showAssistant={showAssistant}
           onToggleAssistant={() => setShowAssistant((prev) => !prev)}
+          showLeftSidebar={showLeftSidebar}
+          onToggleLeftSidebar={() => setShowLeftSidebar((prev) => !prev)}
         />
       )}
 
 
       <div className="flex flex-1 overflow-hidden">
+        <div className="hidden h-full flex-shrink-0 print:hidden lg:block">
+          <FileSidebar
+            isOpen={true}
+            collapsed={!showLeftSidebar}
+            currentReportId={reportMeta.id}
+            onNavigate={(name) => {
+              // Navigate to the report URL
+              const slug = encodeURIComponent(name)
+              window.location.href = `/${slug}`
+            }}
+            onCreateNew={() => {
+              if (reportMeta.isDirty && !window.confirm("Discard unsaved changes?")) return
+              window.location.href = '/'
+            }}
+          />
+        </div>
+
         <div className="flex-1 overflow-auto pb-10 print:pb-0">
           <div className="page-stack mt-8 print:mt-0">
             {reportPages.map((pageData, index) => {
