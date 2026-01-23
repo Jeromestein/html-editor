@@ -305,6 +305,7 @@ export default function ReportEditor({
               if (reportMeta.isDirty && !window.confirm("Discard unsaved changes?")) return
               window.location.href = '/'
             }}
+            onToggle={() => setShowLeftSidebar(prev => !prev)}
           />
         </div>
 

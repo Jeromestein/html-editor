@@ -91,16 +91,7 @@ export const ReportToolbar = ({
                     AET Smart Editor
                 </h1>
                 <div className="flex gap-2 items-center">
-                    <Button
-                        variant={showLeftSidebar ? "default" : "outline"}
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={onToggleLeftSidebar}
-                        aria-pressed={showLeftSidebar}
-                    >
-                        <FolderOpen size={16} />
-                        Files
-                    </Button>
+                    {/* Files button removed */}
 
                     {/* AI Button with gradient glow effect */}
                     <button

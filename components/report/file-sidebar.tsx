@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
-import { Plus, FileText, MoreVertical, Edit, ArrowUpDown, FolderOpen } from "lucide-react"
+import { Plus, FileText, MoreVertical, Edit, ArrowUpDown, PanelLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
@@ -26,23 +26,28 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { toast } from "@/hooks/use-toast"
-import { fetchReports, updateReport, checkReportExists, ReportMetadata } from "@/lib/report-store"
-import { cn } from "@/lib/utils"
+import { fetchReports, updateReport, checkReportExists, saveReport, ReportMetadata } from "@/lib/report-store"
+import { buildSampleData } from "@/lib/report-data"
 
+import { cn } from "@/lib/utils"
 type FileSidebarProps = {
     isOpen: boolean // Keep isOpen for internal logic if needed, but we rely on collapsed prop for visuals
     collapsed: boolean
     currentReportId: string | null
     onNavigate: (reportName: string) => void
     onCreateNew: () => void
+    onToggle: () => void
 }
 
 type SortOption = "name" | "date"
+type SortOrder = "asc" | "desc"
 
-export function FileSidebar({ isOpen, collapsed, currentReportId, onNavigate, onCreateNew }: FileSidebarProps) {
+export function FileSidebar({ isOpen, collapsed, currentReportId, onNavigate, onCreateNew, onToggle }: FileSidebarProps) {
     const [reports, setReports] = useState<ReportMetadata[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [sortBy, setSortBy] = useState<SortOption>("name")
+    const [sortOrder, setSortOrder] = useState<SortOrder>("desc") // Default to newest first for date, or we can handle logic below
+
 
     // Dialog states
     const [renameDialogOpen, setRenameDialogOpen] = useState(false)
@@ -75,13 +80,15 @@ export function FileSidebar({ isOpen, collapsed, currentReportId, onNavigate, on
 
     const sortedReports = useMemo(() => {
         return [...reports].sort((a, b) => {
+            let comparison = 0
             if (sortBy === "name") {
-                return a.name.localeCompare(b.name)
+                comparison = a.name.localeCompare(b.name)
             } else {
-                return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+                comparison = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
             }
+            return sortOrder === "asc" ? comparison : -comparison
         })
-    }, [reports, sortBy])
+    }, [reports, sortBy, sortOrder])
 
     const handleRenameClick = (report: ReportMetadata) => {
         setSelectedReport(report)
@@ -90,8 +97,43 @@ export function FileSidebar({ isOpen, collapsed, currentReportId, onNavigate, on
     }
 
     const handleSortToggle = () => {
-        setSortBy(prev => prev === "name" ? "date" : "name")
+        setSortOrder(prev => prev === "asc" ? "desc" : "asc")
     }
+
+    const handleCreateDraft = async () => {
+        try {
+            setIsActionLoading(true)
+            // Check if "draft" exists
+            const exists = await checkReportExists("draft")
+            if (exists) {
+                toast({
+                    title: "Draft already exists",
+                    description: "Please rename or delete the existing 'draft' report first.",
+                    variant: "destructive",
+                })
+                // Highlight the draft
+                const draft = reports.find(r => r.name === "draft")
+                if (draft) onNavigate(draft.name)
+                return
+            }
+
+            // Create new draft
+            const sample = buildSampleData()
+            await saveReport(sample, "draft")
+
+            toast({ title: "Draft created" })
+            loadReports()
+            onNavigate("draft")
+        } catch (error) {
+            console.error("Failed to create draft", error)
+            toast({ title: "Failed to create draft", variant: "destructive" })
+        } finally {
+            setIsActionLoading(false)
+        }
+    }
+
+
+
 
     const handleRenameConfirm = async () => {
         if (!selectedReport) return
@@ -142,80 +184,87 @@ export function FileSidebar({ isOpen, collapsed, currentReportId, onNavigate, on
             "flex h-full flex-col border-r border-gray-200 bg-white shrink-0 transition-all duration-300",
             collapsed ? "w-[50px]" : "w-[250px]"
         )}>
-            <div className={cn("flex items-center p-3 border-b h-[50px]", collapsed ? "justify-center" : "justify-between")}>
-                {collapsed ? (
+            <div className={cn("flex flex-col border-b bg-gray-50/50", collapsed ? "p-3 items-center" : "p-3 gap-3")}>
+                <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between")}>
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <FolderOpen size={20} className="text-gray-500" />
+                                <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8 text-gray-500 hover:text-gray-900">
+                                    <PanelLeft size={20} />
+                                </Button>
                             </TooltipTrigger>
-                            <TooltipContent side="right">Files</TooltipContent>
+                            <TooltipContent side="right">{collapsed ? "Expand" : "Collapse"}</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
-                ) : (
-                    <>
-                        <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                            <FolderOpen size={16} />
-                            Files
-                        </h2>
-                        <div className="flex items-center gap-1">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onCreateNew}>
-                                            <Plus size={14} />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>New Report</TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
 
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleSortToggle}>
-                                            <ArrowUpDown size={14} className={cn("transition-transform", sortBy === 'date' && "text-blue-600")} />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Sort by {sortBy === 'name' ? 'Date' : 'Name'}</TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                    {!collapsed && (
+                        <h2 className="text-sm font-semibold text-gray-700">Files</h2>
+                    )}
+                </div>
+
+                {!collapsed && (
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1 bg-gray-100 rounded-md p-0.5 flex-1 ring-1 ring-gray-200">
+                            <select
+                                className="bg-transparent text-xs border-none focus:ring-0 text-gray-600 font-medium py-1 px-2 flex-1 cursor-pointer"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                            >
+                                <option value="name">Name</option>
+                                <option value="date">Date</option>
+                            </select>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 rounded-sm text-gray-500 hover:text-gray-900 hover:bg-white shadow-sm"
+                                onClick={handleSortToggle}
+                                title={sortOrder === "asc" ? "Ascending" : "Descending"}
+                            >
+                                <ArrowUpDown size={12} className={sortOrder === "asc" ? "transform rotate-180" : ""} />
+                            </Button>
                         </div>
-                    </>
+
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="outline" size="icon" className="h-8 w-8 shrink-0 bg-white border-dashed border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600" onClick={handleCreateDraft}>
+                                        <Plus size={16} />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>New Draft</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
                 )}
             </div>
 
-            <ScrollArea className="flex-1">
-                <div className="p-2 flex flex-col gap-1">
-                    {isLoading ? (
-                        !collapsed && <div className="p-4 text-center text-xs text-gray-500">Loading...</div>
-                    ) : sortedReports.length === 0 ? (
-                        !collapsed && <div className="p-4 text-center text-xs text-gray-500">No reports found</div>
-                    ) : (
-                        sortedReports.map((report) => (
-                            <div
-                                key={report.id}
-                                className={cn(
-                                    "group flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors hover:bg-gray-100 cursor-pointer",
-                                    currentReportId === report.id ? "bg-blue-50 text-blue-700 hover:bg-blue-100" : "text-gray-700",
-                                    collapsed && "justify-center px-1"
-                                )}
-                                onClick={() => onNavigate(report.name)}
-                                title={collapsed ? report.name : undefined}
-                            >
-                                <div className={cn("flex items-center overflow-hidden", collapsed ? "justify-center w-full" : "gap-2")}>
-                                    <FileText size={collapsed ? 20 : 14} className={cn("shrink-0", currentReportId === report.id ? "text-blue-500" : "text-gray-400")} />
-                                    {!collapsed && (
+            {!collapsed && (
+                <ScrollArea className="flex-1 min-h-0">
+                    <div className="p-2 flex flex-col gap-1">
+                        {isLoading ? (
+                            <div className="p-4 text-center text-xs text-gray-500">Loading...</div>
+                        ) : sortedReports.length === 0 ? (
+                            <div className="p-4 text-center text-xs text-gray-500">No reports found</div>
+                        ) : (
+                            sortedReports.map((report) => (
+                                <div
+                                    key={report.id}
+                                    className={cn(
+                                        "group flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors hover:bg-gray-100 cursor-pointer",
+                                        currentReportId === report.id ? "bg-blue-50 text-blue-700 hover:bg-blue-100" : "text-gray-700"
+                                    )}
+                                    onClick={() => onNavigate(report.name)}
+                                >
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                        <FileText size={14} className={cn("shrink-0", currentReportId === report.id ? "text-blue-500" : "text-gray-400")} />
                                         <div className="flex flex-col overflow-hidden">
                                             <span className="truncate font-medium leading-none">{report.name}</span>
                                             <span className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
                                                 {new Date(report.updated_at).toLocaleDateString()}
                                             </span>
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
 
-                                {!collapsed && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                             <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -229,12 +278,12 @@ export function FileSidebar({ isOpen, collapsed, currentReportId, onNavigate, on
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
-                                )}
-                            </div>
-                        ))
-                    )}
-                </div>
-            </ScrollArea>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </ScrollArea>
+            )}
 
             {/* Rename Dialog */}
             <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
