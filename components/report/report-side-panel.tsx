@@ -4,6 +4,7 @@ import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react"
 import { createClient } from "@supabase/supabase-js"
 import { ImagePlus, Send, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/hooks/use-toast"
@@ -34,12 +35,37 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImages, setSelectedImages] = useState<File[]>([])
   const [isDragging, setIsDragging] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [imageObjectUrls, setImageObjectUrls] = useState<Record<string, string>>({})
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const canSend = useMemo(() => {
     return !isLoading && (input.trim().length > 0 || selectedImages.length > 0)
   }, [input, isLoading, selectedImages.length])
+
+  // Sync object URLs for selected images
+  useEffect(() => {
+    const newUrls: Record<string, string> = {}
+    let hasNew = false
+    selectedImages.forEach((file) => {
+      if (!imageObjectUrls[file.name]) {
+        newUrls[file.name] = URL.createObjectURL(file)
+        hasNew = true
+      }
+    })
+
+    if (hasNew) {
+      setImageObjectUrls((prev) => ({ ...prev, ...newUrls }))
+    }
+  }, [selectedImages, imageObjectUrls])
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(imageObjectUrls).forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [imageObjectUrls])
 
   useEffect(() => {
     if (!reportId) {
@@ -124,6 +150,11 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
     })
 
     if (validFiles.length > 0) {
+      const newUrls: Record<string, string> = {}
+      validFiles.forEach((file) => {
+        newUrls[file.name] = URL.createObjectURL(file)
+      })
+      setImageObjectUrls((prev) => ({ ...prev, ...newUrls }))
       setSelectedImages((prev) => [...prev, ...validFiles])
     }
   }
@@ -351,12 +382,18 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
                   {message.imageUrls.length > 0 && (
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       {message.imageUrls.map((url, imageIndex) => (
-                        <img
+                        <button
                           key={`${url}-${imageIndex}`}
-                          src={url}
-                          alt="Uploaded reference"
-                          className="h-20 w-full rounded object-cover"
-                        />
+                          type="button"
+                          onClick={() => setPreviewImage(url)}
+                          className="h-20 w-full overflow-hidden rounded"
+                        >
+                          <img
+                            src={url}
+                            alt="Uploaded reference"
+                            className="h-full w-full object-cover"
+                          />
+                        </button>
                       ))}
                     </div>
                   )}
@@ -375,13 +412,29 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
               {selectedImages.map((file, index) => (
                 <div
                   key={`${file.name}-${index}`}
-                  className="flex items-center gap-1 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700"
+                  className="group relative flex h-16 w-16 items-center justify-center overflow-hidden rounded border border-gray-200 bg-gray-50"
                 >
-                  <span className="max-w-[140px] truncate">{file.name}</span>
+                  {imageObjectUrls[file.name] ? (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewImage(imageObjectUrls[file.name])}
+                      className="h-full w-full"
+                    >
+                      <img
+                        src={imageObjectUrls[file.name]}
+                        alt={file.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ) : (
+                    <span className="text-[10px] text-gray-500 px-1 text-center truncate w-full">
+                      {file.name}
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={() => removeSelectedImage(index)}
-                    className="rounded-full p-0.5 text-gray-500 hover:text-gray-700"
+                    className="absolute top-0.5 right-0.5 rounded-full bg-black/50 p-0.5 text-white opacity-0 hover:bg-black/70 group-hover:opacity-100"
                     aria-label={`Remove ${file.name}`}
                   >
                     <X size={12} />
@@ -431,6 +484,21 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
           </div>
         </div>
       </div>
+      <Dialog open={Boolean(previewImage)} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-[90vw] gap-2 p-2 sm:max-w-[90vw] md:max-w-[min(90vw,1200px)]">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Image preview</DialogTitle>
+            <DialogDescription>Full-size view of the selected uploaded image.</DialogDescription>
+          </DialogHeader>
+          {previewImage && (
+            <img
+              src={previewImage}
+              alt="Image preview"
+              className="max-h-[80vh] w-full object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
