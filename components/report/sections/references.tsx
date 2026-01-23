@@ -12,7 +12,7 @@ export const References = ({ references, updateDataField, readOnly }: References
         <EditableTextarea
             value={references || ""}
             onChange={(value) => updateDataField("references", value)}
-            className="w-full min-h-[10rem] text-gray-600 whitespace-pre-wrap leading-relaxed"
+            className="w-full text-gray-600 whitespace-pre-wrap leading-relaxed"
             readOnly={readOnly}
         />
     </div>

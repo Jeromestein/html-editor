@@ -73,7 +73,7 @@ export function calculateStats(courses: Course[]) {
             totalPoints += credits * points
             gpaCredits += credits
         } else if (NON_GPA_CREDITS.has(grade)) {
-            // It's P/CR/T - counts for total credits (already added) but NOT GPA
+            // It's PASS/Credit/Transfer - counts for total credits (already added) but NOT GPA
             continue
         } else {
             // Unknown grade - arguably should not count for anything or user needs to fix

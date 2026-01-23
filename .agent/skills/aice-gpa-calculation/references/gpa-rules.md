@@ -6,31 +6,31 @@ Extracted from `lib/gpa.ts` implementation.
 
 ```typescript
 const GRADE_POINTS: Record<string, number> = {
-    "A+": 4.35,
-    "A": 4.00,
-    "A-": 3.65,
-    "B+": 3.35,
-    "B": 3.00,
-    "B-": 2.65,
-    "C+": 2.35,
-    "C": 2.00,
-    "C-": 1.65,
-    "D+": 1.35,
-    "D": 1.00,
-    "D-": 0.65,
-    "F": 0.00,
-    "WF": 0.00,
-}
+  "A+": 4.35,
+  A: 4.0,
+  "A-": 3.65,
+  "B+": 3.35,
+  B: 3.0,
+  "B-": 2.65,
+  "C+": 2.35,
+  C: 2.0,
+  "C-": 1.65,
+  "D+": 1.35,
+  D: 1.0,
+  "D-": 0.65,
+  F: 0.0,
+  WF: 0.0,
+};
 ```
 
 ## Normalization Aliases
 
 ```typescript
 const ALIASES: Record<string, string> = {
-    "FAIL": "F",
-    "PASS": "P",
-    "CREDIT": "CR",
-}
+  FAIL: "F",
+  PASS: "P",
+  CREDIT: "CR",
+};
 ```
 
 ## Non-GPA Credits
@@ -38,7 +38,7 @@ const ALIASES: Record<string, string> = {
 Grades that count toward Total Credits but NOT GPA:
 
 ```typescript
-const NON_GPA_CREDITS = new Set(["P", "CR", "T"])
+const NON_GPA_CREDITS = new Set(["PASS", "Credit", "Transfer"]);
 ```
 
 ## Calculation Logic
