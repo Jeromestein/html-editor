@@ -12,6 +12,7 @@ const EVALUATOR_SIGNATURES: Record<string, string> = {
     "Peiheng Li": "/peiheng-li-signature.jpg",
     "Yue Qi": "/yue-qi-signature.jpg",
     "Jianjun Zhao": "/jianjun-zhao-signature.png",
+    "Beatriz Y. Pineda Gayon": "/beatriz-signature.png",
 }
 
 type SignaturesProps = {
