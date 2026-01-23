@@ -7,6 +7,7 @@ import Image from "next/image"
 import type { ReportMeta } from "../hooks/use-report-data"
 import { ReportHistory } from "./report-history"
 import type { SampleData } from "@/lib/report-data"
+import { ReportAssistant } from "../report-assistant"
 
 type ReportToolbarProps = {
     onPrint: () => void
@@ -91,6 +92,8 @@ export const ReportToolbar = ({
                         <Sparkles size={16} className="text-purple-500" />
                         <span>AI Parse PDF</span>
                     </button>
+
+                    <ReportAssistant reportId={reportMeta.id} />
 
                     <div className="w-px h-6 bg-gray-300 mx-1" />
 
