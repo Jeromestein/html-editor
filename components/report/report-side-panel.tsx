@@ -33,6 +33,7 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImages, setSelectedImages] = useState<File[]>([])
+  const [isDragging, setIsDragging] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -88,14 +89,7 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
     return date.toLocaleString()
   }
 
-  const handleImageClick = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    event.target.value = ""
-
+  const handleFiles = (files: File[]) => {
     if (files.length === 0) return
 
     const remainingSlots = MAX_IMAGES - selectedImages.length
@@ -110,6 +104,14 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
 
     const nextFiles = files.slice(0, remainingSlots)
     const validFiles = nextFiles.filter((file) => {
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not an image.`,
+          variant: "destructive",
+        })
+        return false
+      }
       if (file.size > MAX_IMAGE_SIZE) {
         toast({
           title: "Image too large",
@@ -124,6 +126,52 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
     if (validFiles.length > 0) {
       setSelectedImages((prev) => [...prev, ...validFiles])
     }
+  }
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    event.target.value = ""
+    handleFiles(files)
+  }
+
+  const handlePaste = (event: React.ClipboardEvent) => {
+    const items = Array.from(event.clipboardData.items)
+    const imageFiles: File[] = []
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile()
+        if (file) {
+          imageFiles.push(file)
+        }
+      }
+    }
+
+    if (imageFiles.length > 0) {
+      event.preventDefault()
+      handleFiles(imageFiles)
+    }
+  }
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragging(false)
+    const files = Array.from(event.dataTransfer.files)
+    handleFiles(files)
   }
 
   const removeSelectedImage = (index: number) => {
@@ -251,7 +299,12 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
   }
 
   return (
-    <div className="flex h-full flex-col border-l border-gray-200 bg-white">
+    <div
+      className="flex h-full flex-col border-l border-gray-200 bg-white"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="flex items-start justify-between border-b border-gray-200 px-4 py-3">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Report Assistant</h2>
@@ -264,7 +317,15 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
         </Button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
+      <div className="relative flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
+        {isDragging && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-blue-50/90 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-2 text-blue-600">
+              <ImagePlus size={48} />
+              <p className="text-lg font-medium">Drop images here</p>
+            </div>
+          </div>
+        )}
         <ScrollArea className="min-h-0 flex-1 rounded-md border border-gray-200 bg-white">
           <div ref={scrollRef} className="flex flex-col gap-3 p-4">
             {messages.length === 0 && (
@@ -278,11 +339,10 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-                    message.role === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
+                  className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${message.role === "user"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-800"
+                    }`}
                 >
                   <div className="text-[10px] opacity-70">
                     {formatTimestamp(message.createdAt)}
@@ -334,6 +394,7 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
           <Textarea
             value={input}
             onChange={(event) => setInput(event.target.value)}
+            onPaste={handlePaste}
             placeholder="Ask for an update or suggestion..."
             className="min-h-[90px] text-sm"
             disabled={isLoading}
