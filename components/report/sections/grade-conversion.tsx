@@ -21,7 +21,7 @@ const GPA_POINTS_DATA = [
     { usGrade: "D+", points: "1.35" },
     { usGrade: "D", points: "1.00" },
     { usGrade: "D-", points: "0.65" },
-    { usGrade: "F/WF", points: "0.00" },
+    { usGrade: "F/Withdrawal", points: "0.00" },
     { usGrade: "PASS/Credit", points: "N/A" },
 ]
 
