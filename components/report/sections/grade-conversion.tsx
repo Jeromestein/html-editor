@@ -22,7 +22,7 @@ const GPA_POINTS_DATA = [
     { usGrade: "D", points: "1.00" },
     { usGrade: "D-", points: "0.65" },
     { usGrade: "F/WF", points: "0.00" },
-    { usGrade: "P/CR", points: "N/A" },
+    { usGrade: "PASS/Credit", points: "N/A" },
 ]
 
 // GPA Points reference table (right side)
