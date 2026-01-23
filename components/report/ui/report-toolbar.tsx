@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useRef, useEffect, KeyboardEvent } from "react"
-import { Printer, Sparkles, FileDown, RotateCcw, Save, FolderOpen, FileText } from "lucide-react"
+import { Printer, Sparkles, FileDown, RotateCcw, Save, FolderOpen, FileText, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import type { ReportMeta } from "../hooks/use-report-data"
 import { ReportHistory } from "./report-history"
 import type { SampleData } from "@/lib/report-data"
-import { ReportAssistant } from "../report-assistant"
 
 type ReportToolbarProps = {
     onPrint: () => void
@@ -20,6 +19,8 @@ type ReportToolbarProps = {
     onLoad: () => void
     onReset: () => void
     onRestoreVersion: (data: SampleData) => void
+    showAssistant: boolean
+    onToggleAssistant: () => void
 }
 
 export const ReportToolbar = ({
@@ -32,6 +33,8 @@ export const ReportToolbar = ({
     onLoad,
     onReset,
     onRestoreVersion,
+    showAssistant,
+    onToggleAssistant,
 }: ReportToolbarProps) => {
     // Title editing state
     const [isEditing, setIsEditing] = useState(false)
@@ -93,7 +96,16 @@ export const ReportToolbar = ({
                         <span>AI Parse PDF</span>
                     </button>
 
-                    <ReportAssistant reportId={reportMeta.id} />
+                    <Button
+                        variant={showAssistant ? "default" : "outline"}
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={onToggleAssistant}
+                        aria-pressed={showAssistant}
+                    >
+                        <MessageSquare size={16} />
+                        Chat with Report
+                    </Button>
 
                     <div className="w-px h-6 bg-gray-300 mx-1" />
 
