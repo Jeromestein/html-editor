@@ -5,14 +5,15 @@ import { EditableInput, EditableImage } from "../ui/editable-elements"
 import { SampleData, UpdateDataField } from "../types"
 
 const EVALUATOR_SIGNATURES: Record<string, string> = {
-    "Hongjian Chen": "/hongjian-chen-signature.png",
     "Luguan Yan": "/luguan-yan-signature.png",
-    "Zhihua Zhao": "/zhihua-zhao-signature.jpg",
+    "Hongjian Chen": "/hongjian-chen-signature.png",
     "Tong Liu": "/tong-liu-signature.jpg",
     "Peiheng Li": "/peiheng-li-signature.jpg",
     "Yue Qi": "/yue-qi-signature.jpg",
     "Jianjun Zhao": "/jianjun-zhao-signature.png",
     "Beatriz Y. Pineda Gayon": "/beatriz-signature.png",
+    "Zhihua Zhao": "/zhihua-zhao-signature.png",
+    "Yang Song": "/yang-song-signature.png",
 }
 
 type SignaturesProps = {

@@ -1,16 +1,3 @@
-/**
- * Report Editor - Main Entry Point
- * 
- * A modular credential evaluation report editor with print support.
- * 
- * Architecture:
- * - Hooks: `useReportData`, `usePagination`, `useDynamicMeasure`
- * - Sections: Pure UI components for each report section
- * - UI: Reusable components (ReportPage, EditableInput, etc.)
- * 
- * @see README.md for full documentation
- */
-
 "use client"
 
 import { useMemo, useState, useCallback, useEffect } from "react"
@@ -20,6 +7,8 @@ import { ReportToolbar } from "./ui/report-toolbar"
 import { ReportPage } from "./ui/report-page"
 import { PdfUploadDialog } from "@/components/pdf-upload-dialog"
 import { SaveReportDialog, LoadReportDialog } from "./ui/report-dialogs"
+import { ReportSidePanel } from "./report-side-panel"
+import { FileSidebar } from "./file-sidebar"
 
 import { useDynamicMeasure } from "./hooks/use-dynamic-measure"
 import { usePagination } from "./hooks/use-pagination"
@@ -83,6 +72,8 @@ export default function ReportEditor({
   // Save/Load dialog states
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [loadDialogOpen, setLoadDialogOpen] = useState(false)
+  const [showAssistant, setShowAssistant] = useState(false)
+  const [showLeftSidebar, setShowLeftSidebar] = useState(false)
 
   // Warn before leaving with unsaved changes
   useEffect(() => {
@@ -237,7 +228,7 @@ export default function ReportEditor({
   }, [data])
 
   return (
-    <div className="min-h-screen bg-slate-200 flex flex-col items-center font-sans text-gray-900 pb-10 print:bg-white print:pb-0">
+    <div className="h-screen bg-slate-200 flex flex-col font-sans text-gray-900 print:bg-white">
       {/* PDF Import Dialog */}
       <PdfUploadDialog
         open={pdfDialogOpen}
@@ -291,56 +282,88 @@ export default function ReportEditor({
           onLoad={handleLoadClick}
           onReset={handleReset}
           onRestoreVersion={handleRestoreVersion}
+          showAssistant={showAssistant}
+          onToggleAssistant={() => setShowAssistant((prev) => !prev)}
+          showLeftSidebar={showLeftSidebar}
+          onToggleLeftSidebar={() => setShowLeftSidebar((prev) => !prev)}
         />
       )}
 
 
-      <div className="page-stack mt-8 print:mt-0">
-        {reportPages.map((pageData, index) => {
-          const isFirstCoursePage = index === measurementPageIndex
-          return (
-            <ReportPage
-              key={`report-page-${index}`}
-              pageIndex={index}
-              totalPages={reportPages.length}
-              data={data}
-              credentialIndex={pageData.credentialIndex}
-              documents={pageData.documents}
-              documentsHeading={pageData.documentsHeading}
-              showDocumentsHeading={pageData.showDocumentsHeading}
-              showDocumentsActions={pageData.showDocumentsActions}
-              showCredentialHeading={pageData.showCredentialHeading}
-              showApplicantInfo={pageData.showApplicantInfo}
-              showCredentialTable={pageData.showCredentialTable}
-              showCourseSection={pageData.showCourseSection}
-              showGradeConversion={pageData.showGradeConversion}
-              showTotals={pageData.showTotals}
-              pageCourses={pageData.courses}
-              showSignatures={pageData.showSignatures}
-              showAboutPage={pageData.showAboutPage}
-              isLastPage={pageData.isLastPage}
-              updateEquivalenceField={updateEquivalenceField}
-              updateDataField={updateDataField}
-              updateCredentialField={updateCredentialField}
-              updateCourse={updateCourse}
-              updateGradeConversion={updateGradeConversion}
-              deleteCourse={deleteCourse}
-              updateDocument={updateDocument}
-              addDocument={addDocument}
-              addCourse={addCourse}
-              deleteDocument={deleteDocument}
-              readOnly={readOnly}
-              introContentRef={index === 0 ? introContentRef : undefined}
-              courseContentRef={isFirstCoursePage ? courseContentRef : undefined}
-              tableStartRef={isFirstCoursePage ? tableStartRef : undefined}
-              tableHeaderRef={isFirstCoursePage ? tableHeaderRef : undefined}
-              rowRef={isFirstCoursePage ? rowRef : undefined}
-              documentsListRef={index === 0 ? documentsListRef : undefined}
-              documentItemRef={index === 0 ? documentItemRef : undefined}
-              tailRef={pageData.showSignatures ? tailRef : undefined}
-            />
-          )
-        })}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="hidden h-full flex-shrink-0 print:hidden lg:block">
+          <FileSidebar
+            isOpen={true}
+            collapsed={!showLeftSidebar}
+            currentReportId={reportMeta.id}
+            onNavigate={(name) => {
+              // Navigate to the report URL
+              const slug = encodeURIComponent(name)
+              window.location.href = `/${slug}`
+            }}
+            onCreateNew={() => {
+              if (reportMeta.isDirty && !window.confirm("Discard unsaved changes?")) return
+              window.location.href = '/'
+            }}
+            onToggle={() => setShowLeftSidebar(prev => !prev)}
+          />
+        </div>
+
+        <div className="flex-1 overflow-auto pb-10 print:pb-0">
+          <div className="page-stack mt-8 print:mt-0">
+            {reportPages.map((pageData, index) => {
+              const isFirstCoursePage = index === measurementPageIndex
+              return (
+                <ReportPage
+                  key={`report-page-${index}`}
+                  pageIndex={index}
+                  totalPages={reportPages.length}
+                  data={data}
+                  credentialIndex={pageData.credentialIndex}
+                  documents={pageData.documents}
+                  documentsHeading={pageData.documentsHeading}
+                  showDocumentsHeading={pageData.showDocumentsHeading}
+                  showDocumentsActions={pageData.showDocumentsActions}
+                  showCredentialHeading={pageData.showCredentialHeading}
+                  showApplicantInfo={pageData.showApplicantInfo}
+                  showCredentialTable={pageData.showCredentialTable}
+                  showCourseSection={pageData.showCourseSection}
+                  showGradeConversion={pageData.showGradeConversion}
+                  showTotals={pageData.showTotals}
+                  pageCourses={pageData.courses}
+                  showSignatures={pageData.showSignatures}
+                  showAboutPage={pageData.showAboutPage}
+                  isLastPage={pageData.isLastPage}
+                  updateEquivalenceField={updateEquivalenceField}
+                  updateDataField={updateDataField}
+                  updateCredentialField={updateCredentialField}
+                  updateCourse={updateCourse}
+                  updateGradeConversion={updateGradeConversion}
+                  deleteCourse={deleteCourse}
+                  updateDocument={updateDocument}
+                  addDocument={addDocument}
+                  addCourse={addCourse}
+                  deleteDocument={deleteDocument}
+                  readOnly={readOnly}
+                  introContentRef={index === 0 ? introContentRef : undefined}
+                  courseContentRef={isFirstCoursePage ? courseContentRef : undefined}
+                  tableStartRef={isFirstCoursePage ? tableStartRef : undefined}
+                  tableHeaderRef={isFirstCoursePage ? tableHeaderRef : undefined}
+                  rowRef={isFirstCoursePage ? rowRef : undefined}
+                  documentsListRef={index === 0 ? documentsListRef : undefined}
+                  documentItemRef={index === 0 ? documentItemRef : undefined}
+                  tailRef={pageData.showSignatures ? tailRef : undefined}
+                />
+              )
+            })}
+          </div>
+        </div>
+
+        {showAssistant && (
+          <div className="hidden w-96 flex-shrink-0 bg-white print:hidden lg:block">
+            <ReportSidePanel reportId={reportMeta.id} onClose={() => setShowAssistant(false)} />
+          </div>
+        )}
       </div>
     </div>
   )

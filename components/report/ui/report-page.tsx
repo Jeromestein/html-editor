@@ -315,6 +315,9 @@ export function ReportPage({
                                     onUpdateTotalCredits={(value) => updateEquivalenceField(credentialIndex!, "totalCredits", value)}
                                     onUpdateGpa={(value) => updateEquivalenceField(credentialIndex!, "gpa", value)}
                                     onAddCourse={() => addCourse(credentialIndex!)}
+                                    notes={credential?.courseTableNotes}
+                                    onUpdateNotes={(value) => updateCredentialField(credentialIndex!, "courseTableNotes", value)}
+                                    showNotes={showTotals}
                                 />
                             )}
                             {showGradeConversion && (

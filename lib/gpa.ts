@@ -16,6 +16,8 @@ const GRADE_POINTS: Record<string, number> = {
     "D-": 0.65,
     "F": 0.00,
     "WF": 0.00,
+    "Withdrawal": 0.00,
+    "F/Withdrawal": 0.00,
     // P/PASS/CR/CREDIT/T are 0.00 but handled specially (excluded from GPA)
 }
 
