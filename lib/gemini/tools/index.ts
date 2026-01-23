@@ -20,14 +20,27 @@ import {
     type ReferenceLookupResult,
 } from "./reference-lookup"
 
+import {
+    reportStorageDeclarations,
+    executeReportLookup,
+    executeReportUpdate,
+    type ReportLookupResult,
+    type ReportUpdateResult,
+} from "./report-storage"
+
 // Export all declarations as an array for Gemini
 export const toolDeclarations: FunctionDeclaration[] = [
     gradeConversionDeclaration,
     referenceLookupDeclaration,
+    ...reportStorageDeclarations,
 ]
 
 // Result type union
-export type ToolResult = GradeConversionResult | ReferenceLookupResult
+export type ToolResult =
+    | GradeConversionResult
+    | ReferenceLookupResult
+    | ReportLookupResult
+    | ReportUpdateResult
 
 /**
  * Execute a tool by name with given arguments
@@ -54,6 +67,14 @@ export async function executeTool(
             result = await executeReferenceLookup(args as Parameters<typeof executeReferenceLookup>[0])
             break
 
+        case "lookup_report":
+            result = await executeReportLookup(args as Parameters<typeof executeReportLookup>[0])
+            break
+
+        case "update_report":
+            result = await executeReportUpdate(args as Parameters<typeof executeReportUpdate>[0])
+            break
+
         default:
             console.warn(`Unknown tool: ${name}`)
             result = {
@@ -72,5 +93,9 @@ export async function executeTool(
 }
 
 // Re-export types
-export type { GradeConversionResult, ReferenceLookupResult }
-
+export type {
+    GradeConversionResult,
+    ReferenceLookupResult,
+    ReportLookupResult,
+    ReportUpdateResult,
+}
