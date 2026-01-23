@@ -1,5 +1,6 @@
-import { RefObject } from "react"
-import { Trash2, Plus } from "lucide-react"
+import { RefObject, useState } from "react"
+import { Trash2, Plus, StickyNote } from "lucide-react"
+import CourseNotes from "./course-table-notes"
 import { EditableInput, EditableTextarea } from "../ui/editable-elements"
 import { Course, UpdateCourseRow } from "../types"
 import { toCourseTitleCase } from "@/lib/title-case"
@@ -18,6 +19,9 @@ type CourseTableProps = {
     onUpdateTotalCredits?: (value: string) => void
     onUpdateGpa?: (value: string) => void
     onAddCourse?: () => void
+    notes?: string
+    onUpdateNotes?: (value: string) => void
+    showNotes?: boolean
 }
 
 export const CourseTable = ({
@@ -34,6 +38,9 @@ export const CourseTable = ({
     onUpdateTotalCredits,
     onUpdateGpa,
     onAddCourse,
+    notes,
+    onUpdateNotes,
+    showNotes = false,
 }: CourseTableProps) => {
     if (!courses || courses.length === 0) {
         if (!showEmptyState) return null
@@ -154,13 +161,15 @@ export const CourseTable = ({
                     </button>
                 )
             }
-            {/* <div className="mt-2 text-[10px] text-gray-500 leading-snug">
-                <div>*  Transferred Course and Credit From ____</div>
-                <div>^  Denotes Credits for These Courses Were Not Provide</div>
-                <div>@  Denotes Courses Repeated Later for a Better Grade</div>
-                <div>#  Denotes Repeated Courses</div>
-                <div className="mt-2">This GPA Includes the Calculation of All the Grades. The GPA for the Calculation of the Highest Grades of Each Course Maybe Provided Upon Request.</div>
-            </div> */}
+            {
+                showNotes && (
+                    <CourseNotes
+                        notes={notes}
+                        onUpdateNotes={onUpdateNotes}
+                        readOnly={readOnly}
+                    />
+                )
+            }
         </>
     )
 }

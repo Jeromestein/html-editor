@@ -39,6 +39,7 @@ export type Credential = {
   totalCredits: string
   gradeConversion: GradeConversionRow[]
   courses: Course[]
+  courseTableNotes?: string
 }
 
 export type SampleData = {
