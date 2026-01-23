@@ -449,7 +449,7 @@ export function ReportSidePanel({ reportId, onClose }: ReportSidePanelProps) {
             onChange={(event) => setInput(event.target.value)}
             onPaste={handlePaste}
             placeholder="Ask for an update or suggestion..."
-            className="min-h-[90px] text-sm"
+            className="min-h-[90px] max-h-[30vh] overflow-y-auto text-sm"
             disabled={isLoading}
           />
 

@@ -239,7 +239,7 @@ export default function ReportEditor({
   }, [data])
 
   return (
-    <div className="min-h-screen bg-slate-200 flex flex-col font-sans text-gray-900 print:bg-white">
+    <div className="h-screen bg-slate-200 flex flex-col font-sans text-gray-900 print:bg-white">
       {/* PDF Import Dialog */}
       <PdfUploadDialog
         open={pdfDialogOpen}
