@@ -45,8 +45,16 @@ type SortOrder = "asc" | "desc"
 export function FileSidebar({ isOpen, collapsed, currentReportId, onNavigate, onCreateNew, onToggle }: FileSidebarProps) {
     const [reports, setReports] = useState<ReportMetadata[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [sortBy, setSortBy] = useState<SortOption>("name")
-    const [sortOrder, setSortOrder] = useState<SortOrder>("desc") // Default to newest first for date, or we can handle logic below
+    const [sortBy, setSortBy] = useState<SortOption>(() => {
+        if (typeof window === "undefined") return "name"
+        const stored = window.localStorage.getItem("aet.sidebar.sortBy")
+        return stored === "date" || stored === "name" ? stored : "name"
+    })
+    const [sortOrder, setSortOrder] = useState<SortOrder>(() => {
+        if (typeof window === "undefined") return "desc"
+        const stored = window.localStorage.getItem("aet.sidebar.sortOrder")
+        return stored === "asc" || stored === "desc" ? stored : "desc"
+    }) // Default to newest first for date, or we can handle logic below
 
 
     // Dialog states
@@ -77,6 +85,11 @@ export function FileSidebar({ isOpen, collapsed, currentReportId, onNavigate, on
             loadReports()
         }
     }, [isOpen])
+
+    useEffect(() => {
+        window.localStorage.setItem("aet.sidebar.sortBy", sortBy)
+        window.localStorage.setItem("aet.sidebar.sortOrder", sortOrder)
+    }, [sortBy, sortOrder])
 
     const sortedReports = useMemo(() => {
         return [...reports].sort((a, b) => {

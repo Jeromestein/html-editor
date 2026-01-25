@@ -73,7 +73,14 @@ export default function ReportEditor({
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [loadDialogOpen, setLoadDialogOpen] = useState(false)
   const [showAssistant, setShowAssistant] = useState(false)
-  const [showLeftSidebar, setShowLeftSidebar] = useState(false)
+  const [showLeftSidebar, setShowLeftSidebar] = useState(() => {
+    if (typeof window === "undefined") return false
+    return window.localStorage.getItem("aet.sidebar.open") === "true"
+  })
+
+  useEffect(() => {
+    window.localStorage.setItem("aet.sidebar.open", String(showLeftSidebar))
+  }, [showLeftSidebar])
 
   // Warn before leaving with unsaved changes
   useEffect(() => {
