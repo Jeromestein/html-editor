@@ -104,8 +104,19 @@ export default function ReportEditor({
         : prev.documents,
     }))
     setReportMeta({ isDirty: true })
-    setPdfDialogOpen(false)
   }, [setData, setReportMeta])
+
+  useEffect(() => {
+    const handlePdfImportEvent = (event: Event) => {
+      const detail = (event as CustomEvent<Partial<SampleData>>).detail
+      if (detail) {
+        handleImportPdf(detail)
+      }
+    }
+
+    window.addEventListener("aet:pdf-import", handlePdfImportEvent)
+    return () => window.removeEventListener("aet:pdf-import", handlePdfImportEvent)
+  }, [handleImportPdf])
 
   // Handle Load with unsaved changes warning
   const handleLoadClick = useCallback(() => {
@@ -233,7 +244,6 @@ export default function ReportEditor({
       <PdfUploadDialog
         open={pdfDialogOpen}
         onOpenChange={setPdfDialogOpen}
-        onImport={handleImportPdf}
       />
 
       {/* Save/Load Dialogs */}
