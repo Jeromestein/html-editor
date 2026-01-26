@@ -33,8 +33,8 @@ export function PdfUploadDialog({ open, onOpenChange }: PdfUploadDialogProps) {
   const handleFile = useCallback(
     async (file: File) => {
       if (isProcessing) return
-      await startProcessing(file)
       onOpenChange(false)
+      await startProcessing(file)
     },
     [isProcessing, onOpenChange, startProcessing]
   )
