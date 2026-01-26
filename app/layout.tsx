@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "@/components/ui/toaster"
+import { GlobalProgressWidget } from "@/components/global-progress-widget"
+import { PdfProcessProvider } from "@/contexts/pdf-process-context"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -39,9 +41,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased ${(_geist as any).variable} ${(_geistMono as any).variable}`}>
-        {children}
-        <Toaster />
-        <Analytics />
+        <PdfProcessProvider>
+          {children}
+          <GlobalProgressWidget />
+          <Toaster />
+          <Analytics />
+        </PdfProcessProvider>
       </body>
     </html>
   )
