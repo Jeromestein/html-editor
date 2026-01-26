@@ -7,9 +7,9 @@ import { SampleData, UpdateDataField } from "../types"
 const EVALUATOR_SIGNATURES: Record<string, string> = {
     "Luguan Yan": "/luguan-yan-signature.png",
     "Hongjian Chen": "/hongjian-chen-signature.png",
-    "Tong Liu": "/tong-liu-signature.jpg",
-    "Peiheng Li": "/peiheng-li-signature.jpg",
-    "Yue Qi": "/yue-qi-signature.jpg",
+    "Tong Liu": "/tong-liu-signature.png",
+    "Peiheng Li": "/peiheng-li-signature.png",
+    "Yue Qi": "/yue-qi-signature.png",
     "Jianjun Zhao": "/jianjun-zhao-signature.png",
     "Beatriz Y. Pineda Gayon": "/beatriz-signature.png",
     "Zhihua Zhao": "/zhihua-zhao-signature.png",
